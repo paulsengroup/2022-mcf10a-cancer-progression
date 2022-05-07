@@ -15,7 +15,6 @@ RUN dnf update -y \
                    gawk \
                    perl-Digest-SHA \
                    pigz \
-                   poppler-utils \
                    sed \
                    unzip \
                    zstd \
