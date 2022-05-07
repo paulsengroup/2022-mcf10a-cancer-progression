@@ -1,0 +1,100 @@
+# Copyright (c) 2021 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build Dockerfiles
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-dockerfiles.yml"
+      - "containers/*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-dockerfiles.yml"
+      - "containers/*.Dockerfile"
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image-name: [ "utils" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Collect changed files
+        id: collect-changed-files
+        uses: tj-actions/changed-files@v19
+
+      - name: Process changed files
+        id: process-changed-files
+        run: |
+          prefix="${{ matrix.image-name }}"
+
+          dockerfile="$(ls "containers/$prefix"*.Dockerfile)"
+          name="$prefix"
+          version="$(echo "$dockerfile" | sed -E 's/.*__v(.*)\.Dockerfile$/\1/')"
+          flag=false
+
+          echo ${{ steps.collect-changed-files.outputs.all_changed_and_modified_files }}
+          for file in ${{ steps.collect-changed-files.outputs.all_changed_and_modified_files }}; do
+            if [[ "$file" == "$dockerfile" || "$file" == .github/workflows/build-dockerfiles.yml ]]; then
+              flag=true
+              break
+            fi
+          done
+
+          echo "${{ matrix.image-name }} v$version -> Rebuild: $flag"
+
+          echo "::set-output name=run::$flag"
+          echo "::set-output name=name::$name"
+          echo "::set-output name=version::$version"
+          echo "::set-output name=dockerfile::$dockerfile"
+
+      - name: Generate tags
+        id: generate-tags
+        if: ${{ steps.process-changed-files.outputs.run == 'true' }}
+        working-directory: ${{ github.workspace }}/containers
+        run: |
+          base_tag="ghcr.io/${{ github.repository }}/${{ matrix.image-name }}"
+
+          tags="$base_tag:${{ steps.process-changed-files.outputs.version }}"
+          tags+=",$base_tag:latest"
+          tags+=",$base_tag:$(git rev-parse --short HEAD)"
+
+          echo "Tags: $tags"
+          echo "::set-output name=tags::$tags"
+
+      - name: Login to GitHub Container Registry
+        if: ${{ steps.process-changed-files.outputs.run == 'true' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: ${{ steps.process-changed-files.outputs.run == 'true' }}
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image and push to registries
+        id: docker-build
+        if: ${{ steps.process-changed-files.outputs.run == 'true' }}
+        uses: docker/build-push-action@v3
+        with:
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+          tags: ${{ steps.generate-tags.outputs.tags }}
+          file: ${{ steps.process-changed-files.outputs.dockerfile }}
+          build-args: |
+            CONTAINER_VERSION=${{ steps.process-changed-files.outputs.version }}
+            CONTAINER_TITLE=${{ steps.process-changed-files.outputs.name }}
