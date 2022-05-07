@@ -1,0 +1,14 @@
+# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+#
+# SPDX-License-Identifier: MIT
+
+.idea
+.nextflow*
+.vscode
+containers/images/
+containers/cache/
+data/
+sync.sh
+work/
+scratch/
+venvs/
