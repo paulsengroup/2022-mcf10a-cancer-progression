@@ -15,6 +15,7 @@ RUN dnf update -y \
                    gawk \
                    perl-Digest-SHA \
                    pigz \
+                   python3 \
                    sed \
                    unzip \
                    zstd \
