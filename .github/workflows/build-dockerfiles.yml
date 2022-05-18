@@ -26,7 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image-name: [ "utils" ]
+        image-name: [ "cooltools",
+                      "utils" ]
 
     steps:
       - name: Checkout
