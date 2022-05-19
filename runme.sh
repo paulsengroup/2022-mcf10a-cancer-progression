@@ -60,3 +60,46 @@ wait
 
 scripts/symlink_nfcore_hic_output.sh "$(readlink -f ./data/output/nfcore_hic)" \
                                      "data/output/by_sample"
+
+# shellcheck disable=SC2207
+IFS=$'\n' \
+sample_names=($(echo ./data/output/nfcore_hic/* |
+                tr ' ' '\n' |
+                sed -E 's/.*HiC_[[:digit:]]{3}_(.*)$/\1/g' |
+                sort -u)
+             )
+
+function run_merge_and_zoomify {
+  cooler_image='containers/cache/ghcr.io-paulsengroup-2022-david-hic-cooltools-0.5.1.img'
+  outname="$1"
+  cooler=("${@:2}")
+
+  job_name="zoomify_and_merge_$(basename "$outname" .mcool)"
+
+  sbatch -A "${SLURM_PROJECT_ID-changeme}" \
+    -c 8 --mem 20G -t 04:00:00             \
+    --gres=localscratch:15G                \
+    --job-name="$job_name"                 \
+    --wait                                 \
+    "scripts/merge_and_zoomify.sh"         \
+    "$cooler_image"                        \
+    8 1000N "$outname" "${cooler[@]}"
+}
+
+for sample_name in "${sample_names[@]}"; do
+  coolers=(./data/output/by_sample/HiC_???_"$sample_name"/*_raw.cool)
+  for cooler in "${coolers[@]}"; do
+
+    outname="${cooler%_raw.cool}.mcool"
+    if [ ! -f "$outname" ]; then
+      cooler=("$cooler")
+      run_merge_and_zoomify "$outname" "${cooler[@]}" &
+    fi
+  done
+
+  outname="data/output/by_sample/HiC_$sample_name/HiC_$sample_name.mcool"
+  if [ ! -f "$outname" ]; then
+    run_merge_and_zoomify "$outname" "${coolers[@]}" &
+  fi
+done
+wait
