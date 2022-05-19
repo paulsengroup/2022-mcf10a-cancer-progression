@@ -7,7 +7,6 @@
 set -e
 set -u
 set -o pipefail
-#set -x
 
 function run_workflow() {
     name="$1"
@@ -32,7 +31,7 @@ preproc_steps=(fetch_data
 )
 
 for step in "${preproc_steps[@]}"; do
-    run_workflow "$step"
+  run_workflow "$step"
 done
 
 
@@ -42,16 +41,22 @@ raw_reads_dir="$(readlink -f ./data/input/raw_data/hic)"
 # Furthermore, file names shall not contain single digit fields:
 # For example, mysample_001_R1.fastq.gz is ok, but mysample_1_R1.fastq.gz is not ok!
 for fq in "$raw_reads_dir/"*R1.fastq.gz; do
-    bname="${fq%_R1.fastq.gz}"
-    sample_name="$(basename "$bname")"
-    outdir="$(readlink -f ./data/output/nfcore_hic)"
-    input_name="${bname}_R{1,2}.fastq.gz"
+  bname="${fq%_R1.fastq.gz}"
+  sample_name="$(basename "$bname")"
+  outdir="$(readlink -f ./data/output/nfcore_hic)"
+  input_name="${bname}_R{1,2}.fastq.gz"
 
-    sbatch -A "${SLURM_PROJECT_ID-changeme}" -c 2 --mem 3G -t 4-00:00:00 \
-	    --job-name="nfcore_hic_$sample_name" \
-	    "scripts/run_nfcore_hic.sh"          \
-	    "$(readlink -f .)"                   \
-	    "$outdir"                            \
-	    "$sample_name"                       \
-      "$input_name"
+  sbatch -A "${SLURM_PROJECT_ID-changeme}" \
+    -c 2 --mem 3G -t 4-00:00:00            \
+    --job-name="nfcore_hic_$sample_name"   \
+    --wait                                 \
+    "scripts/run_nfcore_hic.sh"            \
+    "$(readlink -f .)"                     \
+    "$outdir"                              \
+    "$sample_name"                         \
+    "$input_name" &
 done
+wait
+
+scripts/symlink_nfcore_hic_output.sh "$(readlink -f ./data/output/nfcore_hic)" \
+                                     "data/output/by_sample"
