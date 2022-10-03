@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM fedora:35 AS base
+FROM fedora:36 AS base
 
 
 ARG CONTAINER_VERSION
