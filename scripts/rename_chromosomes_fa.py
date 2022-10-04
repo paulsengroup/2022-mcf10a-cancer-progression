@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+#
+# SPDX-License-Identifier: MIT
+
 import argparse
 import re
 import sys
@@ -27,12 +31,14 @@ def import_chrom_name_mappings(path_to_bed):
             id1 = toks[3].strip()
             id2 = toks[0].strip()
             if id1 in mappings:
-                raise RuntimeError(f"Found a duplicate entry for \"{id1}\" at line {i} of file \"{path_to_bed}\"")
+                raise RuntimeError(
+                    f"Found a duplicate entry for \"{id1}\" at line {i} of file \"{path_to_bed}\"")
 
             mappings[id1] = id2
 
     if len(mappings) == 0:
-        raise RuntimeError(f"Unable to import any chromosome from file \"{path_to_bed}\"")
+        raise RuntimeError(
+            f"Unable to import any chromosome from file \"{path_to_bed}\"")
 
     return mappings
 

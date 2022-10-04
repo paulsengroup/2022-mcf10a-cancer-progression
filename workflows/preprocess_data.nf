@@ -17,8 +17,7 @@ workflow {
                          assembly_reports)
 
     rename_chromosomes(genome_assemblies,
-                       generate_chrom_sizes.out.bed,
-                       file("${params.rename_chromosomes_fa_script}"))
+                       generate_chrom_sizes.out.bed)
 
     run_bowtie2_index(rename_chromosomes.out.fa)
 }
@@ -84,7 +83,6 @@ process rename_chromosomes {
     input:
         path fa
         path chrom_sizes_bed
-        path script
 
     output:
         path "${fa.baseName}", emit: fa
@@ -92,6 +90,6 @@ process rename_chromosomes {
     shell:
         out="${fa.baseName}"
         '''
-        gzip -dc '!{fa}' | python3 '!{script}' '!{chrom_sizes_bed}' > '!{out}'
+        gzip -dc '!{fa}' | '!{params.script_dir}/rename_chromosomes_fa.py' '!{chrom_sizes_bed}' > '!{out}'
         '''
 }
