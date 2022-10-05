@@ -20,10 +20,11 @@ workflow {
                        generate_chrom_sizes.out.bed)
 
     run_bowtie2_index(rename_chromosomes.out.fa)
+    archive_bowtie2_index(run_bowtie2_index.out.idx)
 }
 
 process generate_chrom_sizes {
-    publishDir "${params.output_dir}", mode: 'copy'
+    publishDir "${params.output_dir}/chrom_sizes", mode: 'copy'
 
     label 'process_short'
 
@@ -54,15 +55,13 @@ process generate_chrom_sizes {
 }
 
 process run_bowtie2_index {
-    publishDir "${params.output_dir}/bowtie2_idx/", mode: 'copy'
-
     label 'process_high'
 
     input:
         path fa
 
     output:
-        path "*.bt2"
+        path "*.bt2", emit: idx
 
     shell:
         '''
@@ -75,8 +74,27 @@ process run_bowtie2_index {
         '''
 }
 
+process archive_bowtie2_index {
+    publishDir "${params.output_dir}/bowtie2_idx/", mode: 'copy'
+
+    label 'process_medium'
+    label 'process_short'
+
+    input:
+        path idx_files
+
+    output:
+        path "*.tar.zst", emit: tar
+
+    shell:
+        outname = "${idx_files[0].simpleName}.tar.zst"
+        '''
+        tar -chf - *.bt2 | zstd -T!{task.cpus} --adapt -o '!{outname}'
+        '''
+}
+
 process rename_chromosomes {
-    publishDir "${params.output_dir}", mode: 'copy'
+    publishDir "${params.output_dir}/assemblies", mode: 'copy'
 
     label 'process_short'
 
