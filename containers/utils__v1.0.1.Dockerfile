@@ -18,6 +18,7 @@ RUN dnf update -y \
                    python3 \
                    sed \
                    unzip \
+                   xz \
                    zstd \
 &&  dnf clean all
 
