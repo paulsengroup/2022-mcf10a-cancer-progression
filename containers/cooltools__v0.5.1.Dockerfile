@@ -13,10 +13,13 @@ ARG PIP_NO_CACHE_DIR=0
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
+# ucsc-bedgraphtobigwig is required by certain cooltools subcommands
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
+        bioframe \
         "cooltools=$COOLTOOLS_VER" \
+        ucsc-bedgraphtobigwig \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"
