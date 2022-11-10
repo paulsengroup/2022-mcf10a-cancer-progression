@@ -9,13 +9,13 @@ ARG CONTAINER_VERSION
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-ARG DESEQ_VERSION="1.34.*"
+ARG DESEQ2_VERSION="1.38.*"
 
-RUN micromamba install -y                           \
-               -c conda-forge                       \
-               -c bioconda                          \
-               "bioconductor-deseq2=$DESEQ_VERSION" \
-               bioframe                             \
+RUN micromamba install -y                            \
+               -c conda-forge                        \
+               -c bioconda                           \
+               "bioconductor-deseq2=$DESEQ2_VERSION" \
+               bioframe                              \
 && micromamba clean --all -y
 
 WORKDIR /data
