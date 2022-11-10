@@ -62,10 +62,10 @@ jobs:
 
           echo "${{ matrix.image-name }} v$version -> Rebuild: $flag"
 
-          echo "::set-output name=run::$flag"
-          echo "::set-output name=name::$name"
-          echo "::set-output name=version::$version"
-          echo "::set-output name=dockerfile::$dockerfile"
+          echo "run=$flag" >> $GITHUB_OUTPUT
+          echo "name=$name" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "dockerfile=$dockerfile" >> $GITHUB_OUTPUT
 
       - name: Generate tags
         id: generate-tags
@@ -79,7 +79,7 @@ jobs:
           tags+=",$base_tag:$(git rev-parse --short HEAD)"
 
           echo "Tags: $tags"
-          echo "::set-output name=tags::$tags"
+          echo "tags=$tags" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         if: ${{ steps.process-changed-files.outputs.run == 'true' }}
