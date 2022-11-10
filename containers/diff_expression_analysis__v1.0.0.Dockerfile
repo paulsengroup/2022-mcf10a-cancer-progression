@@ -20,6 +20,10 @@ RUN micromamba install -y                           \
 
 WORKDIR /data
 
+ENV PATH="/opt/conda/bin:$PATH"
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
+CMD ["/bin/bash"]
+
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-david-hic'
 LABEL org.opencontainers.image.documentation='https://github.com/2022-david-hic'
