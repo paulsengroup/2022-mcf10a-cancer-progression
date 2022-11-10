@@ -18,11 +18,28 @@ RUN micromamba install -y                            \
                bioframe                              \
 && micromamba clean --all -y
 
+RUN touch /opt/conda/lib/R/etc/.Rprofile
+
 WORKDIR /data
 
 ENV PATH="/opt/conda/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
+
+# We have to explicitly set these R_* env variables in order for the
+# container to work correctly when running using Apptainer
+ENV R_HOME=/opt/conda/lib/R
+ENV R_LIBS=/opt/conda/lib/R/lib
+ENV R_ENVIRON=/opt/conda/lib/R/etc/Renviron
+ENV R_HISTFILE=/tmp/.Rhistory
+
+ENV R_HOME_USER='$R_HOME'
+ENV R_LIBS_USER='$R_LIBS'
+ENV R_ENVIRON_USER='$R_ENVIRON'
+ENV R_PROFILE_USER=/opt/conda/lib/R/etc/.Rprofile
+
+RUN Rscript --no-save -e 'quit(status=!library("DESeq2", character.only=T, logical.return=T), save="no")'
+RUN python3 -c 'import bioframe'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-david-hic'
