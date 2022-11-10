@@ -16,6 +16,9 @@ RUN micromamba install -y                            \
                -c bioconda                           \
                "bioconductor-deseq2=$DESEQ2_VERSION" \
                bioframe                              \
+               r-optparse                            \
+               r-pheatmap                            \
+               r-stringr                             \
 && micromamba clean --all -y
 
 RUN touch /opt/conda/lib/R/etc/.Rprofile
