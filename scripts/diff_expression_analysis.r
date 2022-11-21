@@ -126,6 +126,8 @@ write_results_to_disk <- function(dds, contrast, outdir) {
       )
     }
   }
+
+  return(invisible())
 }
 
 
@@ -158,6 +160,8 @@ plot_sample_to_sample_dist <- function(dds, contrast, outdir) {
   )
   plot(hmap$gtable)
   dev.off()
+
+  return(invisible())
 }
 
 plot_count_matrix <- function(dds, contrast, outdir) {
@@ -185,7 +189,8 @@ plot_count_matrix <- function(dds, contrast, outdir) {
   )
   plot(hmap$gtable)
   dev.off()
-  
+
+  return(invisible())
 }
 
 # Parse CLI options
@@ -195,13 +200,13 @@ opt        <- parse_args(opt_parser)
 missing_options <- list()
 
 if (is.null(opt$count_matrix)) {
-  append(missing_options, "--count_matrix")
+  missing_options <- append(missing_options, "--count_matrix")
 }
 if (is.null(opt$contrast)) {
-  append(missing_options, "--contrast")
+  missing_options <- append(missing_options, "--contrast")
 }
 if (is.null(opt$outdir)) {
-  append(missing_options, "--outdir")
+  missing_options <- append(missing_options, "--outdir")
 }
 
 opt$cpu_cores <- min(opt$cpu_cores, detectCores())
