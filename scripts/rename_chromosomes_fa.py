@@ -12,9 +12,11 @@ import sys
 def make_cli():
     cli = argparse.ArgumentParser()
 
-    cli.add_argument("chrom-bed",
-                     type=str,
-                     help="BED4+ file with the current and new chromosome names stored in columns 4 and 1 respectively")
+    cli.add_argument(
+        "chrom-bed",
+        type=str,
+        help="BED4+ file with the current and new chromosome names stored in columns 4 and 1 respectively",
+    )
 
     return cli
 
@@ -23,22 +25,24 @@ def import_chrom_name_mappings(path_to_bed):
     mappings = {}
     with open(path_to_bed, "r") as f:
         for i, line in enumerate(f):
-            toks = line.split('\t', 5)
+            toks = line.split("\t", 5)
             if len(toks) < 4:
-                raise RuntimeError(f"Line {i} from file \"{path_to_bed}\" does not seem to be in BED4+ format: "
-                                   f"expected 4 or more fields, found {len(toks)}")
+                raise RuntimeError(
+                    f'Line {i} from file "{path_to_bed}" does not seem to be in BED4+ format: '
+                    f"expected 4 or more fields, found {len(toks)}"
+                )
 
             id1 = toks[3].strip()
             id2 = toks[0].strip()
             if id1 in mappings:
                 raise RuntimeError(
-                    f"Found a duplicate entry for \"{id1}\" at line {i} of file \"{path_to_bed}\"")
+                    f'Found a duplicate entry for "{id1}" at line {i} of file "{path_to_bed}"'
+                )
 
             mappings[id1] = id2
 
     if len(mappings) == 0:
-        raise RuntimeError(
-            f"Unable to import any chromosome from file \"{path_to_bed}\"")
+        raise RuntimeError(f'Unable to import any chromosome from file "{path_to_bed}"')
 
     return mappings
 
