@@ -9,6 +9,19 @@ workflow {
     call_compartments(Channel.fromPath(params.mcools),
                       file(params.ref_genome),
                       params.resolution)
+
+    preproc_data_for_dchic(Channel.fromPath(params.mcools)
+                                  .filter{ !it.getSimpleName().contains("merged") },
+                           params.resolution)
+
+    run_dchic(preproc_data_for_dchic.out.matrix.collect(),
+              preproc_data_for_dchic.out.bins.collect(),
+              preproc_data_for_dchic.out.biases.collect(),
+              Channel.fromPath(params.dchic_sample_files),
+              params.ref_genome_name,
+              params.resolution)
+
+    make_alluvial_plots(run_dchic.out.subcompartments)
 }
 
 process call_compartments {
@@ -51,4 +64,132 @@ process call_compartments {
         '''
 }
 
-// TODO: generate saddleplots: https://cooltools.readthedocs.io/en/latest/cli.html#cooltools-saddle
+process preproc_data_for_dchic {
+    label 'process_low'
+
+    input:
+        path cooler
+        val resolution
+
+    output:
+        path "*.chrom.sizes", emit: chrom_sizes
+        path "*.matrix", emit: matrix
+        path "*_abs.bed", emit: bins
+        path "*.biases.gz", emit: biases
+
+    shell:
+        '''
+        if [ '!{resolution}' -ne 0 ]; then
+            cooler='!{cooler}::/resolutions/!{resolution}'
+        else
+            cooler='!{cooler}'
+        fi
+
+        outprefix="$(basename '!{cooler}' .cool)"
+        outprefix="$(basename "$outprefix" .mcool)"
+
+        cooler dump -t chroms "$cooler" | grep 'chr[0-9X]\\+' > "$outprefix.chrom.sizes"
+
+        preprocess.py -input cool                          \
+                      -file '!{cooler}'                    \
+                      -genomeFile "$outprefix.chrom.sizes" \
+                      -res '!{resolution}'                 \
+                      -prefix "$outprefix"                 \
+                      -removeChr chrY,chrM
+
+        cooler dump --na-rep nan -t bins "$cooler" |
+            grep -v 'chr[0-9X]\\+'                 |
+            awk -F '\\t' 'BEGIN{ OFS=FS } { printf "%s\\t%.0f\\t%s\\n", $1,$2+(!{resolution}/2),$4 }' |
+            gzip -9 > "$outprefix.biases.gz"
+        '''
+}
+
+process run_dchic {
+    publishDir "${params.output_dir}/diff_compartments", mode: 'copy'
+
+    label 'process_low'
+
+    input:
+        path matrices
+        path bins
+        path biases
+        path sample_file
+
+        val ref_genome_name
+        val resolution
+
+    output:
+        path "*.pcOri.bedGraph.gz", emit: pc_ori
+        path "*.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
+        path "*.pcQnm.bedGraph.gz", emit: pc_qnm
+        path "*.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
+        path "*.subcompartments.bedGraph.gz", emit: subcompartments
+        path "*.viz.tar.xz", emit: viz
+
+    shell:
+        output_prefix="${sample_file.simpleName}"
+        '''
+        mkdir biases/ tmp/
+
+        TMPDIR="$PWD/tmp"
+        export TMPDIR
+
+        sample_file='!{sample_file}'
+        sample_file="${sample_file%.tsv}_!{resolution}.tsv"
+
+        sed 's/{{resolution}}/!{resolution}/g' '!{sample_file}' | tee "$sample_file"
+
+        for f in *.biases.gz; do
+            ln -sf "$f" "biases/$f"
+        done
+
+        dchicf.r --file "$sample_file" --pcatype cis --dirovwt T
+        dchicf.r --file "$sample_file" --pcatype select --dirovwt T --genome '!{ref_genome_name}'
+        dchicf.r --file "$sample_file" --pcatype analyze --dirovwt T --diffdir '!{output_prefix}'
+
+        # This step fails with an error like: Error in ids_sample[[i]] : subscript out of bounds
+        # Skip it for now
+        echo \\
+        dchicf.r --file "$sample_file" --pcatype fithic --dirovwt T --diffdir '!{output_prefix}' --fithicpath="$(which fithic)" --pythonpath="$(which python3)"
+
+        dchicf.r --file "$sample_file" --pcatype dloop --dirovwt T --diffdir '!{output_prefix}'
+        dchicf.r --file "$sample_file" --pcatype subcomp --dirovwt T --diffdir '!{output_prefix}'
+        dchicf.r --file "$sample_file" --pcatype viz --diffdir '!{output_prefix}' --genome '!{ref_genome_name}'
+
+        # Compress output files
+        srcdir='DifferentialResult/!{output_prefix}/fdr_result'
+        for f in "$srcdir/"*sample_group*.bedGraph; do
+            outname="!{output_prefix}$(echo "$f" | sed 's/.*sample_group//')"
+            gzip -9c "$f" > "$outname.gz"
+        done
+
+        tar -cf - 'DifferentialResult/!{output_prefix}/viz' |
+            xz -T!{task.cpus} -9 > '!{output_prefix}.viz.tar.xz'
+        '''
+}
+
+process make_alluvial_plots {
+    publishDir "${params.output_dir}/diff_compartments/plots", mode: 'copy'
+
+    input:
+        path bedgraph
+
+    output:
+        path "*.svg", emit: svg
+
+    shell:
+        outprefix="${bedgraph.simpleName}"
+        '''
+        '!{params.script_dir}/make_ab_comp_alluvial.py' \
+            --output-prefix '!{outprefix}_subcompartments' \
+            --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
+            '!{bedgraph}'
+
+        '!{params.script_dir}/make_ab_comp_alluvial.py' \
+            --aggregate-subcompartments \
+            --output-prefix '!{outprefix}_compartments' \
+            --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
+            '!{bedgraph}'
+        '''
+
+}

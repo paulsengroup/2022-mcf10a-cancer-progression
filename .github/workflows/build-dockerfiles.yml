@@ -30,6 +30,7 @@ jobs:
                       "dchic",
                       "diff_expression_analysis",
                       "hicexplorer",
+                      "plotting",
                       "samtools",
                       "utils" ]
 
