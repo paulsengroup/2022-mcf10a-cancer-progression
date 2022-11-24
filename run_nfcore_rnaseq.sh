@@ -21,7 +21,7 @@ mkdir -p "$wd"
 
 if [[ $HOSTNAME == *.saga* ]]; then
     args=("${@:2}"
-        --max_memory=400.G
+        --max_memory=400.GB
         --max_cpus=52
         --max_time=336.h
         --project="${SLURM_PROJECT_ID-changeme}")
@@ -32,11 +32,7 @@ fi
 (cd "$wd" &&
 nextflow run nf-core/rnaseq -r 3.9 \
   "${args[@]}" \
-  --input data/input/nfcore_rnaseq_samplesheet.csv \
-  --outdir data/output/nfcore_rnaseq/ \
-  --aligner star_salmon \
-  --pseudo_aligner salmon \
-  --genome GRCh38 \
+  -c configs/nfcore_rnaseq.config \
   -profile singularity \
   -resume
 )
