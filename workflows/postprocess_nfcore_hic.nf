@@ -155,7 +155,7 @@ process compress_stats {
         '''
         set -o pipefail
 
-        tar -cf - '!{stats_dir}' |
+        tar -chf - '!{stats_dir}' |
             xz -T!{task.cpus} -9 --extreme > 'stats.tar.xz'
         '''
 }
