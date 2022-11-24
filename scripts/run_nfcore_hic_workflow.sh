@@ -57,7 +57,7 @@ bw2_idx_files=("$scratch_dir"*.b2)
 bw2_idx="${bw2_idx_files[0]}"
 
 rm -rf "$launch_dir/hic"
-git clone --depth=1 --branch 20220513 https://github.com/robomics/hic.git "$launch_dir/hic"
+(cd "$launch_dir" && tar -xf "$indir/workflows/nfcore-hic-20220513.tar.xz")
 ln -sf "$(readlink -f ./configs)/" "$launch_dir/configs"
 ln -sf "$(readlink -f ./containers)/" "$launch_dir/containers"
 ln -sf "$(readlink -f ./data)/" "$launch_dir/data"
