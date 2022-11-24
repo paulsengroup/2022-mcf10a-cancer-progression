@@ -32,7 +32,7 @@ fi
 (cd "$wd" &&
 nextflow run nf-core/rnaseq -r 3.9 \
   "${args[@]}" \
-  --input data/nfcore_rnaseq_samplesheet.csv \
+  --input data/input/nfcore_rnaseq_samplesheet.csv \
   --outdir data/output/nfcore_rnaseq/ \
   --aligner star_salmon \
   --pseudo_aligner salmon \
