@@ -12,7 +12,7 @@ argc="$#"
 
 if [ $argc -lt 4 ]; then
   echo "Usage: $0 input_dir output_dir sample_name input_pattern"
-  echo "Example: $0 2022-david-hic/ 2022-david-hic/data/scratch/nfcore-hic 10A HiC_001_10A{_R1,_R2}.fastq.gz --max_cpus=50 --max_memory=500.GB --max_time=300.h"
+  echo "Example: $0 2022-mcf10a-cancer-progression/ 2022-mcf10a-cancer-progression/data/output/nfcore-hic 10A HiC_001_10A{_R1,_R2}.fastq.gz --max_cpus=50 --max_memory=500.GB --max_time=300.h"
   exit 1
 fi
 
@@ -24,7 +24,7 @@ args=("${@:5}")
 data_dir="$indir/data"
 
 wd="$NXF_WORK/nfcore_hic_$sample_name"
-launch_dir="$indir/.launch-dir/$sample_name"
+launch_dir="$indir/.nfcore-hic-wd/$sample_name"
 sentinel="$launch_dir/done"
 
 mkdir -p "$wd" "$outdir/$sample_name" "$launch_dir"
@@ -34,11 +34,16 @@ if [ -f "$sentinel" ]; then
   exit 0
 fi
 
+# Sleep for up to 60s
+sleep $((RANDOM % 60))
+
 scratch_dir="$(mktemp -d "$launch_dir/scratch-XXXXXX")"
 
 function cleanup {
   exit_code=$?
-  if [ $exit_code -ne 0 ]; then
+  if [ $exit_code -eq 0 ]; then
+    nextflow clean -f
+  else
     rm -f "$sentinel"
   fi
 
@@ -83,5 +88,3 @@ nextflow run ./hic \
 
 echo 2>&1 "Touching \"$sentinel\"..."
 touch "$sentinel"
-
-nextflow clean -f $(nextflow log -q | tail -n 1)
