@@ -52,9 +52,9 @@ RUN samtools --version
 RUN samtools --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
-LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-david-hic'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-david-hic'
-LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-david-hic'
+LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-samtools}"
 LABEL org.opencontainers.image.version="${CONTAINER_VERSION:-latest}"

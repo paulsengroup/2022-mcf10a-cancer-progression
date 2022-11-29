@@ -45,9 +45,9 @@ RUN Rscript --no-save -e 'quit(status=!library("DESeq2", character.only=T, logic
 RUN python3 -c 'import bioframe'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
-LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-david-hic'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-david-hic'
-LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-david-hic'
+LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-diff-expression-analysis}"
 LABEL org.opencontainers.image.version="${CONTAINER_VERSION:-latest}"
