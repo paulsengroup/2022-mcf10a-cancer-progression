@@ -24,24 +24,26 @@ function uuidgen {
 
 export uuidgen
 
-for mcool in "$data_dir/output/nfcore_hic/"*/HiC_0??_*.mcool; do
+for mcool in "$data_dir/output/nfcore_hic/mcools/GRCh38_0"??_*.mcool; do
     mcool_name="$(basename "$mcool" .mcool)"
     sudo -E higlass-manage ingest \
         --project-name "hic_by_sample" \
         --name "$mcool_name" \
-        --uid "$(uuidgen "$mcool_name")" \
+        --uid "$(uuidgen "$(basename "$mcool")")" \
         --hg-name "$name" \
         --no-upload \
+        --assembly hg38 \
         "${mcool#"$data_dir/"}"
 done
 
-for mcool in "$data_dir/output/nfcore_hic/"*/*_merged.mcool; do
+for mcool in "$data_dir/output/nfcore_hic/mcools/"*_merged.mcool; do
     mcool_name="$(basename "$mcool" .mcool)"
     sudo -E higlass-manage ingest \
         --project-name "hic_by_condition" \
         --name "$mcool_name" \
-        --uid "$(uuidgen "$mcool_name")" \
+        --uid "$(uuidgen "$(basename "$mcool")")" \
         --hg-name "$name" \
         --no-upload \
+        --assembly hg38 \
         "${mcool#"$data_dir/"}"
 done
