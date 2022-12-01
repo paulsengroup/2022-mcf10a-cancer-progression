@@ -17,7 +17,7 @@ function run_workflow() {
 
   bname="${fq%_R1.fastq.gz}"
   sample_name="$(basename "$bname")"
-  outdir="$(readlink -f ./data/output/nfcore_hic)"
+  outdir="$(readlink -f ./data/scratch/nfcore_hic)"
   input_name="${bname}{_R1,_R2}.fastq.gz"
 
   printf 2>&1 "Processing %s...\n" "$sample_name"
