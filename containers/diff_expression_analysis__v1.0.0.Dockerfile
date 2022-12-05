@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.0.0 AS base
+FROM mambaorg/micromamba:1.1.0 AS base
 
 ARG CONTAINER_VERSION
 
@@ -10,12 +10,15 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG DESEQ2_VERSION="1.38.*"
+ARG GOATOOLS_VERSION="1.2.3"
 
 RUN micromamba install -y                            \
                -c conda-forge                        \
                -c bioconda                           \
                "bioconductor-deseq2=$DESEQ2_VERSION" \
                bioframe                              \
+               "goatools=$GOATOOLS_VERSION"          \
+               r-fs                                  \
                r-optparse                            \
                r-pheatmap                            \
                r-stringr                             \
