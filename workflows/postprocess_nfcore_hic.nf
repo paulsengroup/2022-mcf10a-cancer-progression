@@ -33,7 +33,8 @@ workflow {
                                       }
     input_stats = input_dirs.flatten().map {
                                     tuple(sample_names[it.toString()],
-                                          file("${it}/hicpro/stats/", type: "dir", checkIfExists: true))
+                                          file("${it}/hicpro/stats/", type: "dir", checkIfExists: true),
+                                          file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))
                                  }
     
     coolers_by_condition = input_coolers.map { tuple(it[0], it[2]) }
@@ -42,10 +43,15 @@ workflow {
                       
     coolers_by_sample = input_coolers.map { tuple(it[1], it[2].flatten()) }
 
+    multiqc(input_dirs)
+
+    generate_blacklist(file(params.assembly_gaps),
+                       file(params.cytoband))
 
     cooler_merge(coolers_by_condition)
     
-    cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool))
+    cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool),
+                   generate_blacklist.out.bed)
 
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
@@ -53,6 +59,49 @@ workflow {
     compress_validpairs(input_validpairs)
 
     compress_stats(input_stats)
+}
+
+process multiqc {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: {
+                                        label = file(folder).getName()
+                                        "${label}/${it}"
+                                        }
+    input:
+        path folder
+
+    output:
+        path "*.html", emit: html
+        path "*.tar.gz", emit: tar
+
+    shell:
+        '''
+        multiqc .
+
+        tar -cf - multiqc_data/ | gzip -9 > multiqc_data.tar.gz
+        '''
+}
+
+process generate_blacklist {
+    input:
+        path assembly_gaps
+        path cytoband
+
+    output:
+        path "*.bed", emit: bed
+
+    shell:
+        '''
+        set -o pipefail
+
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
+            <(zcat '!{cytoband}' | grep 'acen$') |
+            grep '^chr[XY0-9]\\+[[:space:]]' |
+            cut -f 1-3 |
+            sort -k1,1V -k2,2n |
+            bedtools merge -i stdin |
+            cut -f1-3 > blacklist.bed
+        '''
 }
 
 process cooler_merge {
@@ -78,16 +127,19 @@ process cooler_zoomify {
 
     input:
         tuple val(label), path(cool)
+        path blacklist
     
     output:
         tuple val(label), path("*.mcool"), emit: mcool
 
     shell:
         '''
+        balance_args='-p !{task.cpus} --blacklist '!{blacklist}' --max-iters 500'
+
         cooler zoomify -p !{task.cpus}                  \
                        -r N                             \
                        --balance                        \
-                       --balance-args='-p !{task.cpus}' \
+                       --balance-args="${balance_args}" \
                        '!{cool}'
         '''
 }
@@ -141,21 +193,26 @@ process compress_validpairs {
 
 process compress_stats {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }                                             
-    
+                                       saveAs: { "${label}/${it}" }
+
     label 'process_short'
 
     input:
-        tuple val(label), path(stats_dir)
+        tuple val(label), path(stats_dir), path(valid_pairs_stats)
 
     output:
         tuple val(label), path("*.xz"), emit: xz
 
     shell:
+        outprefix="${label}_stats"
         '''
         set -o pipefail
 
-        tar -chf - '!{stats_dir}' |
+        mkdir '!{outprefix}'
+
+        rsync -aPLv '!{stats_dir}/'* '!{valid_pairs_stats}' '!{outprefix}/'
+
+        tar -chf - '!{outprefix}' |
             xz -T!{task.cpus} -9 --extreme > 'stats.tar.xz'
         '''
 }
