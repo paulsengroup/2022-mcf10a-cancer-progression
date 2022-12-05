@@ -16,6 +16,7 @@ RUN dnf update -y \
                    perl-Digest-SHA \
                    pigz \
                    python3 \
+                   rsync \
                    sed \
                    unzip \
                    xz \
