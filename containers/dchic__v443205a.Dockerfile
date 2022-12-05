@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.0.0 AS base
+FROM mambaorg/micromamba:1.1.0 AS base
 
 ARG CONTAINER_VERSION
 
@@ -11,7 +11,7 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG DC_HIC_VERSION="${CONTAINER_VERSION}"
 
-ARG DC_HIC_GIT="https://github.com/robomics/dcHiC.git"
+ARG DC_HIC_GIT="https://github.com/ay-lab/dcHiC.git"
 ARG DC_HIC_GIT_SHA="${CONTAINER_VERSION}"
 
 RUN micromamba install -y             \
