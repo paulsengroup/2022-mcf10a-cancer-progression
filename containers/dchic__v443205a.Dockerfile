@@ -16,11 +16,14 @@ ARG DC_HIC_GIT_SHA="${CONTAINER_VERSION}"
 
 RUN micromamba install -y             \
                -c conda-forge         \
+               dos2unix               \
+               findutils              \
                git                    \
 && git clone "$DC_HIC_GIT" /tmp/dchic \
 && cd /tmp/dchic                      \
 && git checkout "$DC_HIC_GIT_SHA"     \
-&& micromamba remove -y git           \
+&& find . -type f -exec dos2unix -k -s -o {} \; \
+&& micromamba remove -y dos2unix findutils git  \
 && sed -i 's/name: dchic/name: base/' packages/dchic.yml                \
 && micromamba install -y -f packages/dchic.yml                          \
 && micromamba clean --all -y                                            \
