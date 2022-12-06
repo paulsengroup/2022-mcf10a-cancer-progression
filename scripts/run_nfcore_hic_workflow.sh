@@ -63,12 +63,12 @@ bw2_idx="${bw2_idx_files[0]}"
 
 rm -rf "$launch_dir/hic"
 (cd "$launch_dir" && tar -xf "$indir/workflows/nfcore-hic-20220513.tar.xz")
-ln -sf "$(readlink -f ./configs)/" "$launch_dir/configs"
-ln -sf "$(readlink -f ./containers)/" "$launch_dir/containers"
-ln -sf "$(readlink -f ./data)/" "$launch_dir/data"
+ln -sf "$(readlink -f "$indir/configs/")" "$launch_dir/configs"
+ln -sf "$(readlink -f "$indir/containers/")" "$launch_dir/containers"
+ln -sf "$(readlink -f "$indir/data/")" "$launch_dir/data"
 
 # I am not sure who's creating these symlinks
-sleep 5 && (unlink ./configs/configs || true) && (unlink ./data/data || true) && (unlink ./containers/containers || true) &
+sleep 1 && ./remove_symlink_loops.sh
 
 # Note: It is important that files are named like *_R[12].fastq.gz.
 # Furthermore, file names shall not contain single digit fields:
