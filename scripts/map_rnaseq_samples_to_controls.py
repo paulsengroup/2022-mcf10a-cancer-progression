@@ -53,6 +53,7 @@ def generate_sample_mappings(path_to_mappings: pathlib.Path) -> dict:
 def import_counts(path_to_counts: pathlib.Path, round_counts: bool) -> pd.DataFrame:
     count_df = pd.read_table(path_to_counts, index_col=0)
     count_df.drop(columns=count_df.columns[0])
+    count_df.index.name = "id"
     if round_counts:
         return count_df.round().apply(
             pd.to_numeric, errors="ignore", downcast="integer"
