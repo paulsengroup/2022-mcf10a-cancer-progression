@@ -6,22 +6,28 @@
 nextflow.enable.dsl=2
 
 workflow {
-    preprocess_count_matrix(file(params.gene_count_matrix),
+    preprocess_count_matrix(Channel.of(
+                                tuple("genes", file(params.gene_count_matrix)),
+                                tuple("transcripts", file(params.transcript_count_matrix))),
                             file(params.control_to_sample_mappings))
 
-    run_deseq2(preprocess_count_matrix.out.tsv.flatten(),
-               preprocess_count_matrix.out.contrast.flatten())
+    run_deseq2(preprocess_count_matrix.out)
+
+    run_elixir_gost(run_deseq2.out.map { it[1] }
+                              .flatten(),
+                    params.elixir_gost_lfc_lb,
+                    params.elixir_gost_lfc_ub,
+                    params.elixir_gost_pval)
 }
 
 
 process preprocess_count_matrix {
     input:
-        path gene_count_matrix
+        tuple val(label), path(gene_count_matrix)
         path sample_mappings
 
     output:
-        path "*.tsv", emit: tsv
-        path "*.contrast", emit: contrast
+        tuple val(label), path("*.tsv"), env(CONTRAST)
 
     shell:
         '''
@@ -30,6 +36,8 @@ process preprocess_count_matrix {
             '!{gene_count_matrix}'                               \
             '!{sample_mappings}'                                 \
             .
+
+        CONTRAST="$(head -n 1 *.contrast | tr -d '\\n')"
         '''
 }
 
@@ -37,23 +45,40 @@ process run_deseq2 {
     publishDir "${params.output_dir}/", mode: 'copy'
 
     input:
-        path gene_count_matrix
-        path contrast
+        tuple val(label), path(count_matrix), val(contrast)
 
     output:
-        path "*.tsv", emit: tsv
-        path "*.pdf", emit: pdf
-        env CONTRAST, emit: contrast
+        tuple val(label), path("*.tsv"), path("*.pdf")
 
     shell:
         '''
-        CONTRAST="$(head -n 1 '!{contrast}' | tr -d '\\n')"
-
         '!{params.script_dir}/diff_expression_analysis.r' \
-            --count_matrix='!{gene_count_matrix}'         \
-            --contrast="$CONTRAST"                        \
-            -o .
+            --count_matrix='!{count_matrix}'              \
+            --contrast=!{contrast}                        \
+            -o '!{label}_'
 
         rm -f Rplots.pdf
+        '''
+}
+
+process run_elixir_gost {
+    publishDir "${params.output_dir}/", mode: 'copy'
+
+    input:
+        path de_genes
+        val lfc_lb
+        val lfc_ub
+        val pval
+
+    output:
+        path "*.tsv"
+
+    shell:
+        outname="${de_genes.baseName}_gost.tsv"
+        '''
+        '!{params.script_dir}/run_elixir_gost.py' \
+            --pval-cutoff '!{pval}'               \
+            --lfc-cutoffs '!{lfc_lb}' '!{lfc_ub}' \
+            < '!{de_genes}' > '!{outname}'
         '''
 }

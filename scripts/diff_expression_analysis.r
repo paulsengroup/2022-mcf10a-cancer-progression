@@ -32,11 +32,11 @@ option_list <- list(
     help = "Cutoff used to remove low count genes."
   ),
   make_option(
-    c("-o", "--outdir"),
+    c("-o", "--outprefix"),
     type = "character",
     default = NULL,
     metavar = "path",
-    help = "Output directory."
+    help = "Output prefix."
   ),
   make_option(
     c("-r", "--sample_suffix"),
@@ -58,27 +58,27 @@ construct_dds_from_count_matrix <-
   function(path_to_count_matrix,
            contrast,
            sample_suffix,
-           sep = "\t",
-           row_names = "gene_id",
+           row_names = "id",
            round = TRUE,
            seq_types = "paired-end",
            min_counts = 10) {
     num_conditions <-
-      length(read.csv(path_to_count_matrix,
-                      sep = "\t",
-                      nrows = 1)) - 1
+      length(read.table(path_to_count_matrix,
+                        nrows = 1)) - 1
     
     colClasses <-
       c("character", replicate(num_conditions, "numeric"))
     counts <-
       as.matrix(
-        read.csv(
+        read.table(
           path_to_count_matrix,
-          sep = sep,
+          header = TRUE,
           row.names = row_names,
           colClasses = colClasses
         )
       )
+
+    print(head(counts))
     
     if (round) {
       counts <- round(counts)
@@ -111,7 +111,7 @@ construct_dds_from_count_matrix <-
 
 
 
-write_results_to_disk <- function(dds, contrast, outdir) {
+write_results_to_disk <- function(dds, contrast, outprefix) {
   for (cond in colData(dds)$condition) {
     if (cond != contrast) {
       res <-
@@ -120,7 +120,7 @@ write_results_to_disk <- function(dds, contrast, outdir) {
                 parallel = TRUE)
       write.table(
         as.data.frame(res),
-        file = stringr::str_interp("${outdir}/${contrast}_vs_${cond}.tsv")
+        file = stringr::str_interp("${outprefix}${contrast}_vs_${cond}.tsv")
         ,
         sep = "\t"
       )
@@ -131,9 +131,9 @@ write_results_to_disk <- function(dds, contrast, outdir) {
 }
 
 
-plot_sample_to_sample_dist <- function(dds, contrast, outdir) {
+plot_sample_to_sample_dist <- function(dds, contrast, outprefix) {
   plot_file <-
-    stringr::str_interp("${outdir}/${contrast}_sample_to_sample_dist_heatmap.pdf")
+    stringr::str_interp("${outprefix}${contrast}_sample_to_sample_dist_heatmap.pdf")
   
   vsd <- vst(dds, blind = FALSE)
   sampleDists <- dist(t(assay(vsd)))
@@ -164,9 +164,9 @@ plot_sample_to_sample_dist <- function(dds, contrast, outdir) {
   return(invisible())
 }
 
-plot_count_matrix <- function(dds, contrast, outdir) {
+plot_count_matrix <- function(dds, contrast, outprefix) {
   plot_file <-
-    stringr::str_interp("${outdir}/${contrast}_count_matrix_heatmap.pdf")
+    stringr::str_interp("${outprefix}${contrast}_count_matrix_heatmap.pdf")
   vsd <- vst(dds, blind = FALSE)
   select <- order(rowMeans(counts(dds, normalized = TRUE)),
                   decreasing = TRUE)[1:20]
@@ -205,8 +205,8 @@ if (is.null(opt$count_matrix)) {
 if (is.null(opt$contrast)) {
   missing_options <- append(missing_options, "--contrast")
 }
-if (is.null(opt$outdir)) {
-  missing_options <- append(missing_options, "--outdir")
+if (is.null(opt$outprefix)) {
+  missing_options <- append(missing_options, "--outprefix")
 }
 
 opt$cpu_cores <- min(opt$cpu_cores, detectCores())
@@ -214,8 +214,8 @@ register(MulticoreParam(opt$cpu_cores))
 options(Ncpus = opt$cpu_cores)
 options(mc.cores = opt$cpu_cores)
 
-if (!dir.exists(opt$outdir)) {
-  dir.create(opt$outdir)
+if (!dir.exists(path_dir(opt$outprefix))) {
+  dir.create(path_dir(opt$outprefix))
 }
 
 if (length(missing_options) != 0) {
@@ -240,9 +240,9 @@ dds <- dds[mask,]
 dds <- DESeq(dds, parallel = TRUE)
 
 # Write results to disk
-write_results_to_disk(dds, opt$contrast, opt$outdir)
+write_results_to_disk(dds, opt$contrast, opt$outprefix)
 
 
 # Make plots
-plot_sample_to_sample_dist(dds, opt$contrast, opt$outdir)
-plot_count_matrix(dds, opt$contrast, opt$outdir)
+plot_sample_to_sample_dist(dds, opt$contrast, opt$outprefix)
+plot_count_matrix(dds, opt$contrast, opt$outprefix)
