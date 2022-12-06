@@ -18,7 +18,7 @@ read -r -d '' -a uris < <(find configs -type f -exec grep 'container[[:space:]]*
 echo "uris: ${uris[*]}"
 
 for uri in "${uris[@]}"; do
-    name="$(echo "$uri" | tr  -c '[:alnum:].\n' '-').img"
+    name="$(echo "$uri" | tr  -c '[:alnum:]_.\n' '-').img"
     singularity pull --disable-cache -F --name "containers/cache/$name" "docker://$uri" &> /dev/null \
     && echo "Done processing $uri..." &
 done
