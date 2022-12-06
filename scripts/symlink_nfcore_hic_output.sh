@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 
+# Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+#
+# SPDX-License-Identifier: MIT
+
 set -e
+set -x
 set -u
-# set -x
 
-argc="$#"
+git_root="$(git rev-parse --show-toplevel)"
 
-if [ $argc -ne 2 ]; then
-  echo "Usage: $0 input_dir output_dir"
-  echo "Example: $0 data/output/nfcore-hic data/output/samples"
-  exit 1
-fi
+wd="$PWD"
 
-input_dir="$1"
-output_dir="$2"
+trap 'cd "$wd"' EXIT
 
-for dir in  "$input_dir/HiC_"*; do
-  sample_name="$(basename "$dir")"
+destdir="$git_root/data/output/nfcore_hic/mcools"
+mkdir -p "$destdir"
 
-  mkdir -p "$output_dir/$sample_name"
-
-  ln -sf "$dir/contact_maps/raw/cool/${sample_name}_R_1000.cool" \
-         "$output_dir/$sample_name/${sample_name}_raw.cool"
+cd "$destdir" || exit
+for src in ../HiC*/*.mcool; do
+  dest="$(basename "$src")"
+  dest="GRCh38_${dest#HiC_}"
+  ln -s "$src" "$dest"
 done

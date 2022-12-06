@@ -36,6 +36,8 @@ function run_workflow() {
         "workflows/$name.nf" \
         -ansi-log \
         -resume
+
+    scripts/symlink_nfcore_hic_output.sh
 }
 
 step='postprocess_nfcore_hic'
