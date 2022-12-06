@@ -7,7 +7,7 @@ import pandas as pd
 import sys
 import subprocess as sp
 import tempfile
-from typing import Tuple
+from typing import Union
 
 
 def make_cli() -> argparse.ArgumentParser:
@@ -45,6 +45,20 @@ def make_cli() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Aggregate subcompartments into A/B compartments.",
+    )
+
+    cli.add_argument(
+        "--base-color",
+        type=str,
+        default="grey",
+        help="Default color.",
+    )
+
+    cli.add_argument(
+        "--highlight-color",
+        type=str,
+        default="orange",
+        help="Color used for highlighting.",
     )
 
     cli.add_argument(
@@ -111,7 +125,7 @@ def get_compartment_labels_from_df(df: pd.DataFrame) -> list:
 
 
 def rename_compartments(
-    df: pd.DataFrame, mappings: Tuple[dict, None] = None
+    df: pd.DataFrame, mappings: Union[dict, None] = None
 ) -> pd.DataFrame:
     """
     We have to rename compartments such that similar compartments will be next to each other in the alluvial plot
@@ -132,12 +146,18 @@ def plot_alluvial_with_r(
     path_to_input: pathlib.Path,
     output_name: pathlib.Path,
     path_to_rscript: pathlib.Path,
-    compartment_to_highlight: Tuple[str, None] = None,
+    base_color: str,
+    highlight_color: str,
+    compartment_to_highlight: Union[str, None] = None,
 ) -> None:
     cmd = [
         str(path_to_rscript),
         "--compartments",
         str(path_to_input),
+        "--base_color",
+        base_color,
+        "--highlight_color",
+        highlight_color,
         "--outprefix",
         str(output_name.with_suffix("")),
     ]
@@ -177,6 +197,8 @@ def make_alluvial_plot(
     outname: pathlib.Path,
     path_to_plotting_script: pathlib.Path,
     overwrite_existing: bool,
+    base_color: str,
+    highlight_color: str,
 ) -> None:
     if outname.exists() and not overwrite_existing:
         raise RuntimeError(
@@ -184,7 +206,14 @@ def make_alluvial_plot(
         )
 
     comp_label = get_comp_to_label_mappings().get(compartment_to_highlight)
-    plot_alluvial_with_r(path_to_tsv, outname, path_to_plotting_script, comp_label)
+    plot_alluvial_with_r(
+        path_to_input=path_to_tsv,
+        output_name=outname,
+        path_to_rscript=path_to_plotting_script,
+        base_color=base_color,
+        highlight_color=highlight_color,
+        compartment_to_highlight=comp_label,
+    )
 
     replace_compartment_labels_svg(outname)
 
@@ -210,11 +239,13 @@ def main():
         for comp in compartment_labels:
             outname = output_prefix.parent / f"{output_prefix.name}_{comp}.svg"
             make_alluvial_plot(
-                pathlib.Path(tmpdata.name),
-                comp,
-                outname,
-                args["path_to_plotting_script"],
-                args["force"],
+                path_to_tsv=pathlib.Path(tmpdata.name),
+                compartment_to_highlight=comp,
+                outname=outname,
+                path_to_plotting_script=args["path_to_plotting_script"],
+                overwrite_existing=args["force"],
+                base_color=args["base_color"],
+                highlight_color=args["highlight_color"],
             )
 
 

@@ -181,13 +181,13 @@ process make_alluvial_plots {
         outprefix="${bedgraph.simpleName}"
         '''
         '!{params.script_dir}/make_ab_comp_alluvial.py' \
-            --output-prefix '!{outprefix}_subcompartments' \
+            --output-prefix='!{outprefix}_subcompartments' \
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
 
         '!{params.script_dir}/make_ab_comp_alluvial.py' \
             --aggregate-subcompartments \
-            --output-prefix '!{outprefix}_compartments' \
+            --output-prefix='!{outprefix}_compartments' \
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
         '''
