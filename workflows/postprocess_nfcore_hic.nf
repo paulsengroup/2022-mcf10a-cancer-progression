@@ -59,6 +59,11 @@ workflow {
     compress_validpairs(input_validpairs)
 
     compress_stats(input_stats)
+
+    plot_stats(compress_stats.out.tar
+                             .map { it[1] }
+                             .collect(),
+               params.plot_pretty_labels)
 }
 
 process multiqc {
@@ -193,7 +198,7 @@ process compress_validpairs {
 
 process compress_stats {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }
+                                       saveAs: { "${label}/stats.tar.xz" }
 
     label 'process_short'
 
@@ -201,7 +206,7 @@ process compress_stats {
         tuple val(label), path(stats_dir), path(valid_pairs_stats)
 
     output:
-        tuple val(label), path("*.xz"), emit: xz
+        tuple val(label), path("*.xz"), emit: tar
 
     shell:
         outprefix="${label}_stats"
@@ -213,6 +218,29 @@ process compress_stats {
         rsync -aPLv '!{stats_dir}/'* '!{valid_pairs_stats}' '!{outprefix}/'
 
         tar -chf - '!{outprefix}' |
-            xz -T!{task.cpus} -9 --extreme > 'stats.tar.xz'
+            xz -T!{task.cpus} -9 --extreme > '!{outprefix}.tar.xz'
+        '''
+}
+
+process plot_stats {
+    publishDir "${params.output_dir}", mode: 'copy'
+
+    label 'process_short'
+
+    input:
+        path archives
+        val pretty_labels
+
+    output:
+        path "*.png", emit: png
+        path "*.svg", emit: svg
+        path "*.tsv", emit: tsv
+
+    shell:
+        '''
+        '!{params.script_dir}/generate_hic_mapping_report.py' \
+            *.tar.xz \
+            hic_mapping_report \
+            --sample-labels '!{pretty_labels}'
         '''
 }
