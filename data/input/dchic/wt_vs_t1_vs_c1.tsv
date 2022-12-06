@@ -1,5 +1,5 @@
-GRCh38_001_MCF10A_wt_{{resolution}}.matrix	GRCh38_001_MCF10A_wt_{{resolution}}_abs.bed	GRCh38_001_MCF10A_wt	MCF10A_wt
-GRCh38_002_MCF10A_wt_{{resolution}}.matrix	GRCh38_002_MCF10A_wt_{{resolution}}_abs.bed	GRCh38_002_MCF10A_wt	MCF10A_wt
+GRCh38_001_MCF10A_WT_{{resolution}}.matrix	GRCh38_001_MCF10A_WT_{{resolution}}_abs.bed	GRCh38_001_MCF10A_WT	MCF10A_WT
+GRCh38_002_MCF10A_WT_{{resolution}}.matrix	GRCh38_002_MCF10A_WT_{{resolution}}_abs.bed	GRCh38_002_MCF10A_WT	MCF10A_WT
 GRCh38_005_MCF10A_T1_{{resolution}}.matrix	GRCh38_005_MCF10A_T1_{{resolution}}_abs.bed	GRCh38_005_MCF10A_T1	MCF10A_T1
 GRCh38_006_MCF10A_T1_{{resolution}}.matrix	GRCh38_006_MCF10A_T1_{{resolution}}_abs.bed	GRCh38_006_MCF10A_T1	MCF10A_T1
 GRCh38_007_MCF10A_C1_{{resolution}}.matrix	GRCh38_007_MCF10A_C1_{{resolution}}_abs.bed	GRCh38_007_MCF10A_C1	MCF10A_C1
