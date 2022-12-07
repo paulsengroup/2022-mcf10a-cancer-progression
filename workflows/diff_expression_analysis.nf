@@ -19,7 +19,7 @@ workflow {
                     params.elixir_gost_lfc_ub,
                     params.elixir_gost_pval)
 
-    run_go_figure(run_elixir_gost.out.tsv)
+    run_go_figure(run_elixir_gost.out.tsv.flatten())
 }
 
 
@@ -79,12 +79,22 @@ process run_elixir_gost {
         path "*.tsv", emit: tsv
 
     shell:
-        outname="${de_genes.baseName}_gost.tsv"
+        outprefix="${de_genes.baseName}_gost"
         '''
-        '!{params.script_dir}/run_elixir_gost.py' \
-            --pval-cutoff '!{pval}'               \
-            --lfc-cutoffs '!{lfc_lb}' '!{lfc_ub}' \
-            < '!{de_genes}' > '!{outname}'
+        lfc_lb=($(echo '!{lfc_lb}' | tr ',' ' '))
+        lfc_ub=($(echo '!{lfc_ub}' | tr ',' ' '))
+        pval=($(echo '!{pval}' | tr ',' ' '))
+
+        for i in "${!lfc_lb[@]}"; do
+            pv="${pval[$i]}"
+            lb="${lfc_lb[$i]}"
+            ub="${lfc_ub[$i]}"
+
+            '!{params.script_dir}/run_elixir_gost.py' \
+                --pval-cutoff "$pv"                   \
+                --lfc-cutoffs "$lb" "$ub"             \
+                < '!{de_genes}' > "!{outprefix}_${lb}_${ub}_${pv}.tsv"
+        done
         '''
 }
 
@@ -100,6 +110,8 @@ process run_go_figure {
     shell:
         outprefix="${functional_annotation.baseName}"
         '''
+        set -o pipefail
+
         trap 'rm -f annotation.tsv' EXIT
         grep '^GO:' '!{functional_annotation}' | cut -f 2,4 > annotation.tsv
 
