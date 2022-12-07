@@ -21,7 +21,9 @@ workflow {
               params.ref_genome_name,
               params.resolution)
 
-    make_alluvial_plots(run_dchic.out.subcompartments)
+    plot_subcompartment_transitions(run_dchic.out.subcompartments)
+    plot_subcompartment_coverage(run_dchic.out.subcompartments)
+    plot_subcompartment_size_distribution(run_dchic.out.subcompartments)
 }
 
 process call_compartments {
@@ -168,28 +170,92 @@ process run_dchic {
         '''
 }
 
-process make_alluvial_plots {
-    publishDir "${params.output_dir}/diff_compartments/plots", mode: 'copy'
+process plot_subcompartment_transitions {
+    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+
+    label 'process_low'
+    label 'very_short'
 
     input:
         path bedgraph
 
     output:
-        path "*.svg", emit: svg
+        path "plots/*.svg", emit: svg
+        path "*.tsv", emit: tsv
 
     shell:
         outprefix="${bedgraph.simpleName}"
         '''
-        '!{params.script_dir}/make_ab_comp_alluvial.py' \
+        '!{params.script_dir}/plot_compartment_transitions.py' \
             --output-prefix='!{outprefix}_subcompartments' \
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
 
-        '!{params.script_dir}/make_ab_comp_alluvial.py' \
+        '!{params.script_dir}/plot_compartment_transitions.py' \
             --aggregate-subcompartments \
             --output-prefix='!{outprefix}_compartments' \
+            --highlight-color="#b40426ff" \
+            --base-color="#3b4cc0ff" \
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
-        '''
 
+        mkdir plots/
+        mv *.svg plots/
+        '''
+}
+
+process plot_subcompartment_coverage {
+    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+
+    label 'process_low'
+    label 'very_short'
+
+    input:
+        path bedgraph
+
+    output:
+        path "plots/*.svg", emit: svg
+        path "plots/*.png", emit: png
+        path "*.tsv", emit: tsv
+
+    shell:
+        outprefix="${bedgraph.simpleName}"
+        '''
+        '!{params.script_dir}/compare_subcompartment_coverage.py' \
+            '!{bedgraph}' \
+            '!{outprefix}_subcompartment_coverage_gw' \
+            --genome-wide
+
+        '!{params.script_dir}/compare_subcompartment_coverage.py' \
+            '!{bedgraph}' \
+            '!{outprefix}_subcompartment_coverage'
+
+        mkdir plots/
+        mv *.svg  *.png plots/
+        '''
+}
+
+process plot_subcompartment_size_distribution {
+    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+
+    label 'process_low'
+    label 'very_short'
+
+    input:
+        path bedgraph
+
+    output:
+        path "plots/*.svg", emit: svg
+        path "plots/*.png", emit: png
+
+    shell:
+        outprefix="${bedgraph.simpleName}_size_distribution"
+        '''
+        '!{params.script_dir}/compare_subcompartment_size_distribution.py' \
+            '!{bedgraph}' \
+            '!{outprefix}'
+
+        mkdir plots/
+        mv *.svg  *.png plots/
+        '''
 }

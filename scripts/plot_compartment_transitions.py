@@ -3,11 +3,14 @@
 import argparse
 import functools
 import pathlib
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import sys
 import subprocess as sp
 import tempfile
-from typing import Union
+from typing import Tuple, Union
 
 
 def make_cli() -> argparse.ArgumentParser:
@@ -93,11 +96,14 @@ def get_label_to_comp_mappings() -> dict:
     return {v: k for k, v in get_comp_to_label_mappings().items()}
 
 
-def import_data(path_to_df: pathlib.Path) -> pd.DataFrame:
+def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
     if str(path_to_df) == "-":
         path_to_df = sys.stdin
 
-    return pd.read_table(path_to_df).filter(regex=".state$")
+    df = pd.read_table(path_to_df)
+    bin_size = (df["end"] - df["start"]).max()
+
+    return bin_size, df.filter(regex=".state$")
 
 
 def group_and_sort_subcompartments(
@@ -131,7 +137,7 @@ def rename_compartments(
     We have to rename compartments such that similar compartments will be next to each other in the alluvial plot
     The plotting library in R allows to customize stream ordering, but this feature seems very brittle.
     """
-
+    df = df.copy()
     if mappings is None:
         mappings = get_comp_to_label_mappings()
 
@@ -218,11 +224,52 @@ def make_alluvial_plot(
     replace_compartment_labels_svg(outname)
 
 
+def make_heatmap(
+    df: pd.DataFrame,
+    condition1: str,
+    condition2: str,
+    bin_size: int,
+    ax: plt.Axes,
+    cmap: str = "Reds",
+) -> None:
+    assert condition1 in df.columns
+    assert condition2 in df.columns
+
+    if len(df[condition1].unique()) > 2:
+        ranks = {}
+        for comp in get_compartment_ranks().keys():
+            if comp != "A" and comp != "B":
+                ranks[comp] = len(ranks)
+    else:
+        ranks = {"B": 0, "A": 1}
+
+    grid = np.zeros([len(ranks), len(ranks)], dtype=int)
+
+    for ((comp1, comp2), size) in (
+        df.groupby([condition1, condition2])["size"].sum().items()
+    ):
+        i1, i2 = ranks[comp1], ranks[comp2]
+        grid[i1, i2] = size * bin_size
+
+    ax.imshow(grid, cmap=cmap)
+
+    for (j, i), label in np.ndenumerate(grid):
+        ax.text(i, j, f"{(label / 1.0e6):.1f}", ha="center", va="center")
+
+    for axi in ax.get_images():
+        axi.set_clim(0.0, np.max(grid) * 1.5)
+
+    ax.set(title=f"Compartment transitions (Mbp) - {condition1} vs {condition2}")
+
+    ax.set_xticks(range(len(ranks)), labels=list(ranks.keys()))
+    ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
+
+
 def main():
     args = vars(make_cli().parse_args())
-    df = group_and_sort_subcompartments(
-        import_data(args["bedgraph"]), args["aggregate_subcompartments"]
-    )
+
+    bin_size, df = import_data(args["bedgraph"])
+    df = group_and_sort_subcompartments(df, args["aggregate_subcompartments"])
 
     output_prefix = pathlib.Path(args["output_prefix"])
     output_prefix.parent.mkdir(exist_ok=True)
@@ -233,8 +280,8 @@ def main():
 
     compartment_labels = get_compartment_labels_from_df(df)
     with tempfile.NamedTemporaryFile() as tmpdata:
-        df = rename_compartments(df)
-        df.to_csv(tmpdata.name, sep="\t", index=False)
+        df1 = rename_compartments(df)
+        df1.to_csv(tmpdata.name, sep="\t", index=False)
 
         for comp in compartment_labels:
             outname = output_prefix.parent / f"{output_prefix.name}_{comp}.svg"
@@ -247,6 +294,25 @@ def main():
                 base_color=args["base_color"],
                 highlight_color=args["highlight_color"],
             )
+
+    conditions = [col for col in df.columns if col != "size"]
+    cond_pairs = []
+    for i, cond1 in enumerate(conditions):
+        for j, cond2 in enumerate(conditions):
+            if i < j:
+                cond_pairs.append(tuple([cond1, cond2]))
+
+    num_plots = len(cond_pairs)
+    fig, axs = plt.subplots(num_plots, 1, figsize=(6.4, 6.4 * num_plots))
+
+    for (ax, (cond1, cond2)) in zip(axs, cond_pairs):
+        make_heatmap(df, cond1, cond2, bin_size, ax)
+
+    outname = (
+        output_prefix.parent
+        / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
+    )
+    fig.savefig(outname)
 
 
 if __name__ == "__main__":

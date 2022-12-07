@@ -74,7 +74,7 @@ generate_colors <-
   }
 
 plot_alluvial <-
-  function(counts, outprefix, highlight_label, highlight_color, base_color, alpha = 0.8, blocks = FALSE) {
+  function(counts, outprefix, highlight_label, highlight_color, base_color, alpha = 0.8, blocks = TRUE) {
     links <- generate_links(counts)
     freq <- generate_frequencies(counts)
     layer_mask <- generate_layer_mask(counts, highlight_label)
