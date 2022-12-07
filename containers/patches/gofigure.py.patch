@@ -1,0 +1,17 @@
+--- a/gofigure.py	2021-12-19 07:27:53.000000000 +0100
++++ b/gofigure.py	2022-12-06 15:12:38.233113795 +0100
+@@ -1,3 +1,5 @@
++#!/usr/bin/env python3
++
+ ##
+ ## Summary Visualizations of Gene Ontology Enrichment with GO-Figure!
+ ##
+@@ -32,7 +34,7 @@
+ import warnings
+ warnings.warn = warn
+ 
+-scriptPath = os.path.dirname(os.path.abspath(__file__)) ## Get the absolute path of this script. Used to refer to data files used by this script.
++scriptPath = "/opt/conda/share/gofigure"
+ 
+ ## Long list of various arguments used by this script. Only an input file and output directory are required.
+ def read_arguments():

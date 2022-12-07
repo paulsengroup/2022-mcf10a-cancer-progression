@@ -30,6 +30,7 @@ jobs:
                       "cooltools",
                       "dchic",
                       "diff_expression_analysis",
+                      "functional_analysis",
                       "hicexplorer",
                       "plotting",
                       "samtools",
