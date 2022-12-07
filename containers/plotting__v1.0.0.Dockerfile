@@ -22,6 +22,7 @@ RUN micromamba install -y \
         bioframe \
         cooler \
         matplotlib \
+        natsort \
         numpy \
         pandas \
         pyBigWig \
