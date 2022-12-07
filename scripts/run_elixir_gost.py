@@ -67,10 +67,8 @@ def make_cli():
 def import_data(
     column_id: str, lfc_cutoffs: Tuple[float, float], pval_cutoff: float
 ) -> pd.DataFrame:
-    df = pd.read_table(sys.stdin).reset_index().rename(columns={"index": "id"})
-    df["significant"] = (
-        df["log2FoldChange"].between(*lfc_cutoffs) & df["padj"] <= pval_cutoff
-    )
+    df = pd.read_table(sys.stdin).reset_index().rename(columns={"index": "id"}).dropna()
+    df["significant"] = (~df["log2FoldChange"].between(*lfc_cutoffs)) & (df["padj"] <= pval_cutoff)
 
     return df[[column_id, "significant"]]
 
