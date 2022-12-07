@@ -18,6 +18,8 @@ workflow {
                     params.elixir_gost_lfc_lb,
                     params.elixir_gost_lfc_ub,
                     params.elixir_gost_pval)
+
+    run_go_figure(run_elixir_gost.out.tsv)
 }
 
 
@@ -48,7 +50,7 @@ process run_deseq2 {
         tuple val(label), path(count_matrix), val(contrast)
 
     output:
-        tuple val(label), path("*.tsv"), path("*.pdf")
+        tuple val(label), path("*.tsv"), path("plots/*.pdf")
 
     shell:
         '''
@@ -58,6 +60,9 @@ process run_deseq2 {
             -o '!{label}_'
 
         rm -f Rplots.pdf
+
+        mkdir plots
+        mv *.pdf plots/
         '''
 }
 
@@ -71,7 +76,7 @@ process run_elixir_gost {
         val pval
 
     output:
-        path "*.tsv"
+        path "*.tsv", emit: tsv
 
     shell:
         outname="${de_genes.baseName}_gost.tsv"
@@ -80,5 +85,26 @@ process run_elixir_gost {
             --pval-cutoff '!{pval}'               \
             --lfc-cutoffs '!{lfc_lb}' '!{lfc_ub}' \
             < '!{de_genes}' > '!{outname}'
+        '''
+}
+
+process run_go_figure {
+    publishDir "${params.output_dir}/plots", mode: 'copy'
+
+    input:
+        path functional_annotation
+
+    output:
+        path "*.png", emit: png
+
+    shell:
+        outprefix="${functional_annotation.baseName}"
+        '''
+        trap 'rm -f annotation.tsv' EXIT
+        grep '^GO:' '!{functional_annotation}' | cut -f 2,4 > annotation.tsv
+
+        gofigure.py --input annotation.tsv --font_size=xx-small --description_limit=50 --max_label=20 --output '!{outprefix}'
+
+        mv '!{outprefix}/'* .
         '''
 }
