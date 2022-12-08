@@ -33,6 +33,7 @@ jobs:
                       "functional_analysis",
                       "hicexplorer",
                       "hicrep",
+                      "maxhic",
                       "plotting",
                       "samtools",
                       "utils" ]
