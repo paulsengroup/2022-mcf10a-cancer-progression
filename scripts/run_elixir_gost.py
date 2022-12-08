@@ -6,12 +6,11 @@
 
 import argparse
 import sys
-
-from gprofiler import GProfiler
-import pandas as pd
-
 import typing
 from typing import List, Tuple, Union
+
+import pandas as pd
+from gprofiler import GProfiler
 
 
 def make_cli():

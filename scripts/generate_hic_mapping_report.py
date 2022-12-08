@@ -5,15 +5,15 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import csv
 import pathlib
 import tarfile
+import tempfile
 import warnings
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import tempfile
-import csv
 
 
 def make_cli():

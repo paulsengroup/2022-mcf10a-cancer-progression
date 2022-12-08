@@ -5,8 +5,9 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import bioframe as bf
 import sys
+
+import bioframe as bf
 
 
 def make_cli():

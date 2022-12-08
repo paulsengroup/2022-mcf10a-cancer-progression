@@ -5,10 +5,9 @@
 # SPDX-License-Identifier: MIT
 
 import hashlib
-import uuid
-
-import sys
 import os
+import sys
+import uuid
 
 # Generate reproducible UUIDs using hashed file name(s) as seed(s)
 if __name__ == "__main__":
