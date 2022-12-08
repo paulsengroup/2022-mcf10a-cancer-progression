@@ -22,7 +22,7 @@ workflow {
                                         tuple(conditions[it.toString()],
                                               sample_names[it.toString()],
                                               file("${it}/contact_maps/raw/cool/*.cool", type: "file", checkIfExists: true))
-                                   }
+                                     }
     input_bwt2pairs = input_dirs.flatten().map {
                                         tuple(sample_names[it.toString()],
                                               file("${it}/hicpro/mapping/*bwt2pairs.bam", type: "file", checkIfExists: true))
@@ -35,7 +35,7 @@ workflow {
                                     tuple(sample_names[it.toString()],
                                           file("${it}/hicpro/stats/", type: "dir", checkIfExists: true),
                                           file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))
-                                 }
+                                      }
     
     coolers_by_condition = input_coolers.map { tuple(it[0], it[2]) }
                                         .groupTuple(by: 0, size: 2)
@@ -60,9 +60,11 @@ workflow {
 
     compress_stats(input_stats)
 
-    plot_stats(compress_stats.out.tar
-                             .map { it[1] }
-                             .collect(),
+    // NOTE label and sample mappings is guaranteed to be correct
+    // regardless of the order in which items are emitted by compress_stats()
+    // because plot_stats is globbing file names, thus sorting files by their
+    // sample number
+    plot_stats(compress_stats.out.tar.map { it[1] }.collect(),
                params.plot_pretty_labels)
 }
 
@@ -232,8 +234,8 @@ process plot_stats {
         val pretty_labels
 
     output:
-        path "*.png", emit: png
-        path "*.svg", emit: svg
+        path "plots/*.png", emit: png
+        path "plots/*.svg", emit: svg
         path "*.tsv", emit: tsv
 
     shell:
@@ -242,5 +244,8 @@ process plot_stats {
             *.tar.xz \
             hic_mapping_report \
             --sample-labels '!{pretty_labels}'
+
+        mkdir plots
+        mv *.png *.svg plots/
         '''
 }
