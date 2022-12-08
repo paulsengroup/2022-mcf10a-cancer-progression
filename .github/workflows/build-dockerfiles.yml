@@ -32,6 +32,7 @@ jobs:
                       "diff_expression_analysis",
                       "functional_analysis",
                       "hicexplorer",
+                      "hicrep",
                       "plotting",
                       "samtools",
                       "utils" ]
