@@ -21,5 +21,11 @@ cd "$destdir" || exit
 for src in ../HiC*/*.mcool; do
   dest="$(basename "$src")"
   dest="GRCh38_${dest#HiC_}"
-  ln -s "$src" "$dest"
+  ln -sf "$src" "$dest"
+done
+
+for src in ../*merged/*.mcool; do
+  dest="$(basename "$src")"
+  dest="GRCh38_${dest#HiC_}"
+  ln -sf "$src" "$dest"
 done
