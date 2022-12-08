@@ -3,14 +3,14 @@
 import argparse
 import functools
 import pathlib
+import subprocess as sp
+import sys
+import tempfile
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import sys
-import subprocess as sp
-import tempfile
-from typing import Tuple, Union
 
 
 def make_cli() -> argparse.ArgumentParser:
@@ -253,11 +253,15 @@ def make_heatmap(
 
     ax.imshow(grid, cmap=cmap)
 
-    for (j, i), label in np.ndenumerate(grid):
-        ax.text(i, j, f"{(label / 1.0e6):.1f}", ha="center", va="center")
+    min_val = grid.min()
+    delta = grid.max() - min_val
 
-    for axi in ax.get_images():
-        axi.set_clim(0.0, np.max(grid) * 1.5)
+    for (j, i), label in np.ndenumerate(grid):
+        if label - min_val >= (delta * 0.85):
+            color = "white"
+        else:
+            color = "black"
+        ax.text(i, j, f"{(label / 1.0e6):.1f}", ha="center", va="center", color=color)
 
     ax.set(title=f"Compartment transitions (Mbp) - {condition1} vs {condition2}")
 

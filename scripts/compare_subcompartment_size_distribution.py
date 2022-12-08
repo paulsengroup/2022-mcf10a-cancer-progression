@@ -5,18 +5,15 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import itertools
-import bioframe as bf
-
-import matplotlib.pyplot as plt
-import pandas as pd
-
-import seaborn as sns
-
 import functools
-
+import itertools
 import pathlib
 from typing import List, Union
+
+import bioframe as bf
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 
 def make_cli():

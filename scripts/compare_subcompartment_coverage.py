@@ -5,20 +5,17 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import functools
 import itertools
 import math
-import natsort
-import bioframe as bf
-
-import matplotlib.pyplot as plt
-import pandas as pd
-
-import seaborn as sns
-
-import functools
-
 import pathlib
 from typing import List, Union
+
+import bioframe as bf
+import matplotlib.pyplot as plt
+import natsort
+import pandas as pd
+import seaborn as sns
 
 
 def make_cli():
@@ -190,7 +187,9 @@ def plot_compartment_size_distribution_by_subcomp(
         ax.set(title=subcmp, ylim=[0, int(5.0e6)])
 
 
-def compute_coverage_genomewide(df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300) -> None:
+def compute_coverage_genomewide(
+    df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300
+) -> None:
     coverage = compute_coverage(df)
 
     outname = outprefix.parent / (outprefix.name + "_genomewide")
@@ -205,7 +204,9 @@ def compute_coverage_genomewide(df: pd.DataFrame, outprefix: pathlib.Path, dpi: 
     plt.close()
 
 
-def compute_coverage_by_chrom(df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300) -> None:
+def compute_coverage_by_chrom(
+    df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300
+) -> None:
     chroms = natsort.natsorted(df["chrom"].unique())
     plot_grid_size = int(math.ceil(math.sqrt(len(chroms))))
     fig, axs = plt.subplots(
