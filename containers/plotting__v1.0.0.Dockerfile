@@ -8,12 +8,10 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 ARG CONTAINER_VERSION
 ARG CONTAINER_TITLE
-ARG COOLTOOLS_VER=${CONTAINER_VERSION}
 ARG PIP_NO_CACHE_DIR=0
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-# ucsc-bedgraphtobigwig is required by certain cooltools subcommands
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
@@ -35,8 +33,8 @@ RUN micromamba install -y \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"
-
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
+CMD ["/bin/bash"]
 WORKDIR /data
 
 

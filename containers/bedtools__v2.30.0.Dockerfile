@@ -45,7 +45,7 @@ RUN apt-get update \
 
 RUN chown -R root:root /usr/local/share/licenses/
 
-ENTRYPOINT ["/usr/local/bin/bedtools"]
+CMD ["/usr/local/bin/bedtools"]
 WORKDIR /data
 
 RUN bedtools --help

@@ -45,7 +45,7 @@ ARG CONTAINER_TITLE
 COPY --from=builder "/tmp/staging/bin" "/usr/local/bin"
 COPY --from=builder "/tmp/staging/share" "/usr/local/share"
 
-ENTRYPOINT ["/usr/local/bin/samtools"]
+CMD ["/usr/local/bin/samtools"]
 WORKDIR /data
 
 RUN samtools --version

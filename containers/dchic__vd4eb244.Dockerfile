@@ -41,6 +41,7 @@ WORKDIR /data
 ENV PATH="/opt/conda/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/usr/local/bin/dchicf.r"]
+WORKDIR /data
 
 # We have to explicitly set these R_* env variables in order for the
 # container to work correctly when running using Apptainer

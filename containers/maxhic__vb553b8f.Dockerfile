@@ -50,6 +50,8 @@ RUN mkdir /opt/maxhic/bin/ \
 USER mambauser
 
 ENV PATH="/opt/conda/bin:/opt/maxhic/bin:$PATH"
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
+CMD ["/opt/maxhic/bin/maxhic"]
 
 WORKDIR /data
 

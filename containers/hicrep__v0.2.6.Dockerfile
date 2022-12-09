@@ -26,6 +26,7 @@ RUN apt-get update \
 && apt-get autoremove -y \
 && rm -rf /var/lib/apt/lists/*
 
+CMD ["/usr/local/bin/hicrep"]
 WORKDIR /data
 
 RUN hicrep --help

@@ -23,8 +23,7 @@ RUN dnf update -y \
                    zstd \
 &&  dnf clean all
 
-ENV SHELL=/usr/bin/bash
-
+CMD ["/bin/bash"]
 WORKDIR /data
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'

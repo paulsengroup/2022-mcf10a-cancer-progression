@@ -61,11 +61,11 @@ RUN micromamba install -y                            \
 COPY --from=downloader --chown=nobody:nogroup /tmp/gofigure/*.py /opt/conda/bin/
 COPY --from=downloader --chown=nobody:nogroup /tmp/gofigure/LICENSE /opt/conda/share/licenses/GO-Figure/
 
-WORKDIR /data
 
 ENV PATH="/opt/conda/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
+WORKDIR /data
 
 # Generate GO-Figure data
 FROM base AS dataprep

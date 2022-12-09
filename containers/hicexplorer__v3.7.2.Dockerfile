@@ -20,7 +20,8 @@ RUN micromamba install -y \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"
-
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
+CMD ["/bin/bash"]
 WORKDIR /data
 
 

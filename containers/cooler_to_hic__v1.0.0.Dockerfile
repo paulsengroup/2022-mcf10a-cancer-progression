@@ -45,7 +45,7 @@ RUN printf '%s\nexec /usr/bin/java -Xms512m -Xmx2048m -jar %s "$@"\n' \
       "$(printf '%s' /usr/local/share/java/juicer_tools/juicer_tools*.jar)" > /usr/local/bin/juicer_tools \
 && chmod 755 /usr/local/bin/juicer_tools
 
-ENTRYPOINT ["/usr/local/bin/juicer_tools"]
+CMD ["/usr/local/bin/juicer_tools"]
 WORKDIR /data
 
 RUN cooler --help
