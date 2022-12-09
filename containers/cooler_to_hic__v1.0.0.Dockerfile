@@ -32,6 +32,7 @@ RUN apt-get update \
                        pigz \
                        python3 \
                        python3-pip \
+                       zstd \
 && pip install numpy cooler \
 && apt-get remove -y cython3 python3-pip \
 && rm -rf /var/lib/apt/lists/*
