@@ -49,7 +49,9 @@ workflow {
                        file(params.cytoband))
 
     cooler_merge(coolers_by_condition)
-    
+
+    cooler_to_hic(coolers_by_sample.mix(cooler_merge.out.cool))
+
     cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool),
                    generate_blacklist.out.bed)
 
@@ -124,6 +126,52 @@ process cooler_merge {
         '''
 }
 
+process cooler_to_hic {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "${label}/${label}.hic" }
+
+    label 'process_medium'
+
+    input:
+        tuple val(label), path(cool)
+
+    output:
+        path "*.hic", emit: hic
+
+    shell:
+        memory_mb=task.memory.toMega() - 750
+        '''
+        set -o pipefail
+        trap 'rm -rf tmp/' EXIT
+
+        mkdir tmp/
+
+        zstd_wrapper='tmp/zstd_wrapper.sh'
+
+        printf '%s\\n%s\\n' \
+            '#!/usr/bin/env bash' \
+            'if [[ $# == 0 ]]; then zstd --adapt -T!{task.cpus}; else zstd -d; fi' > "$zstd_wrapper"
+        chmod 755 "$zstd_wrapper"
+
+        cat "$zstd_wrapper"
+
+        cooler dump -t chroms '!{cool}' > tmp/chrom.sizes
+
+        # See here for the format produced by AWK command
+        # https://github.com/aidenlab/juicer/wiki/Pre#short-with-score-format
+        # IMPORTANT: juicer_tools expect chromosome names to be sorted, so that's why we need the sort command
+        # Unfortunately pipes are not supported, so we have to write pixels to a temporary file
+
+        cooler dump -t pixels --join '!{cool}' |
+            awk -F '\\t' 'BEGIN{ OFS=FS } {print "1",$1,($2+$3)/2,"0","0",$4,($5+$6)/2,"1",$7}' |
+            sort -k2,2 -k6,6 -T tmp/ -S !{memory_mb}M --compress-program="$zstd_wrapper" --parallel=!{task.cpus} |
+            pigz -9 -p !{task.cpus} > tmp/pixels.txt.gz
+
+        java -Xms512m -Xmx!{memory_mb}m -jar \
+            /usr/local/share/java/juicer_tools/*.jar \
+            pre -j !{task.cpus} tmp/pixels.txt.gz matrix.hic tmp/chrom.sizes
+        '''
+}
 
 process cooler_zoomify {
     publishDir "${params.output_dir}", mode: 'copy',
