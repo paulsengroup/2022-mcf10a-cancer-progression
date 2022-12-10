@@ -82,7 +82,7 @@ process plot_scc {
     label 'very_short'
 
     input:
-        path cool
+        path chrom_sizes
         path hicrep_output
 
     output:
@@ -91,11 +91,9 @@ process plot_scc {
 
     shell:
         '''
-        cooler dump -t chroms '!{cool}' > chrom.sizes
-
         '!{params.script_dir}/plot_scc.py' \
             '!{hicrep_output}' \
-            --chrom-sizes chrom.sizes \
+            --chrom-sizes '!{chrom_sizes}' \
             -o hicrep
         '''
 }
@@ -123,17 +121,17 @@ process run_maxhic {
         mkdir input output/
 
         cooler dump -t bins '!{mcool}::/resolutions/!{resolution}' |
-            awk -F '\t' 'BEGIN{ OFS = FS } {print $1,$2,$3,NR}' > input/bins.bed
+            awk -F '\\t' 'BEGIN{ OFS = FS } {print $1,$2,$3,NR}' > input/bins.bed
 
         cooler dump -t pixels --one-based-ids '!{mcool}::/resolutions/!{resolution}' > input/pixels.matrix
 
-        maxhic -t '!{task.cpus} input/ output/
+        maxhic -t !{task.cpus} input/ output/
 
-        zstd -T'!{task.cpus}' -13 output/cis_interactions.txt -o '!{outprefix}_cis_interactions.tsv.zst'
-        zstd -T'!{task.cpus}' -13 output/trans_interactions.txt -o '!{outprefix}_cis_interactions.tsv.zst'
+        zstd -T!{task.cpus} -13 output/cis_interactions.txt -o '!{outprefix}_cis_interactions.tsv.zst'
+        zstd -T!{task.cpus} -13 output/trans_interactions.txt -o '!{outprefix}_trans_interactions.tsv.zst'
 
         mv output '!{outprefix}'
 
-        tar -cf - '!{outprefix}/ModelParameters/' | zstd -T'!{task.cpus}' -13 -o '!{outprefix}_model_params.tar.zst'
+        tar -cf - '!{outprefix}/ModelParameters/' | zstd -T!{task.cpus} -13 -o '!{outprefix}_model_params.tar.zst'
         '''
 }
