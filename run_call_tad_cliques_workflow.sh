@@ -13,11 +13,9 @@ echo 1>&2 'Running robomics/call_tad_cliques...'
 wd=".nextflow-robomics-call-tad-cliques-wd"
 mkdir -p "$wd"
 
-(cd "$wd" && ln -sf ../configs/ configs)
-(cd "$wd" && ln -sf ../containers/ containers)
-(cd "$wd" && ln -sf ../data/ data)
-(cd "$wd" && ln -sf ../scripts/ scripts)
-(cd "$wd" && ln -sf ../workflows/ workflows)
+for dir in configs containers data scripts workflows; do
+  (cd "$wd" && ln -sf "../$dir/" "$dir")
+done
 
 if [[ $HOSTNAME == *.saga* ]]; then
     args=("${@:2}"
@@ -29,17 +27,19 @@ else
     args=()
 fi
 
+./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
-  -r v0.0.4 \
+  -r main \
   "${args[@]}" \
   -c configs/call_tad_cliques.config \
   -resume
 )
 
+./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
-  -r v0.0.4 \
+  -r main \
   "${args[@]}" \
   -c configs/call_tad_cliques_vs_control.config \
   -resume
