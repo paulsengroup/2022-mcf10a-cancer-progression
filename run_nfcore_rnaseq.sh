@@ -13,11 +13,9 @@ echo 1>&2 'Running nfcore/rnaseq...'
 wd=".nextflow-nfcore-rnaseq-wd"
 mkdir -p "$wd"
 
-(cd "$wd" && ln -sf ../configs/ configs)
-(cd "$wd" && ln -sf ../containers/ containers)
-(cd "$wd" && ln -sf ../data/ data)
-(cd "$wd" && ln -sf ../scripts/ scripts)
-(cd "$wd" && ln -sf ../workflows/ workflows)
+for dir in configs containers data scripts workflows; do
+    (cd "$wd" && ln -sf "../$dir/" "$dir")
+done
 
 if [[ $HOSTNAME == *.saga* ]]; then
     args=("${@:2}"
@@ -29,6 +27,7 @@ else
     args=()
 fi
 
+./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run nf-core/rnaseq -r 3.9 \
   "${args[@]}" \
