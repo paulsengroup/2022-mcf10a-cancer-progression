@@ -7,15 +7,12 @@
 import argparse
 import pathlib
 import warnings
-from typing import Dict, List, Tuple
+from math import inf
+from typing import List
 
 import bioframe as bf
 import matplotlib.pyplot as plt
-import natsort
 import pandas as pd
-import seaborn as sns
-from math import inf
-from matplotlib.patches import Rectangle
 
 
 def make_cli():
@@ -55,7 +52,9 @@ def make_cli():
 def import_bedgraph(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        return bf.read_table(path_to_bedgraph, schema="bedGraph").set_index(["chrom", "start", "end"])
+        return bf.read_table(path_to_bedgraph, schema="bedGraph").set_index(
+            ["chrom", "start", "end"]
+        )
 
 
 def import_insulation_scores(
@@ -82,7 +81,9 @@ def main():
 
     output_prefix = args["output_prefix"]
     if not args["force"]:
-        detect_path_collisions(output_prefix.with_suffix(".png"), output_prefix.with_suffix(".svg"))
+        detect_path_collisions(
+            output_prefix.with_suffix(".png"), output_prefix.with_suffix(".svg")
+        )
 
     labels = args.get("labels")
     paths_to_scores = args["bedgraph"]
@@ -99,12 +100,14 @@ def main():
 
     grid_size = len(scores.columns)
 
-    fig, axs = plt.subplots(grid_size, grid_size, figsize=(grid_size * 6.4, grid_size * 6.4))
+    fig, axs = plt.subplots(
+        grid_size, grid_size, figsize=(grid_size * 6.4, grid_size * 6.4)
+    )
 
     lb = inf
     ub = -inf
     for i in range(grid_size):
-        for j in range(i+1, grid_size):
+        for j in range(i + 1, grid_size):
             cond1, cond2 = scores.columns[i], scores.columns[j]
             df = scores[[cond1, cond2]].dropna()
             axs[i][j].scatter(df[cond1], df[cond2])
