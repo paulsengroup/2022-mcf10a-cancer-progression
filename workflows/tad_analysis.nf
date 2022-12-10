@@ -6,46 +6,17 @@
 nextflow.enable.dsl=2
 
 workflow {
-    cooltools_insulation(Channel.fromPath(params.mcools),
-                         params.insulation_windows,
-                         params.resolution)
-
     hicexplorer_find_tads(Channel.fromPath(params.mcools),
                           params.resolution)
-}
 
-process cooltools_insulation {
-    publishDir "${params.output_dir}/insulation", mode: 'copy'
-
-    input:
-        path cooler
-        val windows
-        val resolution
-
-    output:
-        path "*.tsv.gz", emit: tsv
-        path "*.bw", emit: bw
-
-    shell:
-        outprefix="${cooler.baseName}"
-        '''
-        if [ '!{resolution}' -ne 0 ]; then
-            cooler='!{cooler}::/resolutions/!{resolution}'
-        else
-            cooler='!{cooler}'
-        fi
-
-        cooltools insulation --bigwig               \
-                             "$cooler"              \
-                             !{windows}             \
-                             -o '!{outprefix}.tsv'
-
-        gzip -9 '!{outprefix}.tsv'
-        '''
+    generate_tad_report(hicexplorer_find_tads.out.domains.collect(),
+                        hicexplorer_find_tads.out.scores.collect(),
+                        params.repl_pretty_labels,
+                        params.cond_pretty_labels)
 }
 
 process hicexplorer_find_tads {
-    publishDir "${params.output_dir}/tads", mode: 'copy'
+    publishDir "${params.output_dir}", mode: 'copy'
 
     label 'process_medium'
 
@@ -76,5 +47,48 @@ process hicexplorer_find_tads {
         # Compress text files
         printf '%s\n' *.bed *.bedgraph *.bm |
             xargs -L 1 -P '!{task.cpus}' sh -c 'gzip -9 "$1"' sh
+        '''
+}
+
+process generate_tad_report {
+    publishDir "${params.output_dir}", mode: 'copy'
+
+    label 'process_short'
+
+    input:
+        path domains
+        path scores
+        val labels_replicates
+        val labels_conditions
+
+    output:
+        path "plots/*.png", emit: png
+        path "plots/*.svg", emit: svg
+        path "*.tsv", emit: tsv
+
+    shell:
+        '''
+        '!{params.script_dir}/generate_tad_report.py' \
+            GRCh38_???_*_domains.bed.gz \
+            --output-prefix=report_replicates \
+            --labels='!{labels_replicates}'
+
+        '!{params.script_dir}/generate_tad_report.py' \
+            *{WT,T1,C1}_merged_domains.bed.gz \
+            --output-prefix=report_conditions \
+            --labels='!{labels_conditions}'
+
+        '!{params.script_dir}/generate_insulation_report.py' \
+            GRCh38_???_*_score.bedgraph.gz \
+            --output-prefix=report_replicates_insulation \
+            --labels='!{labels_replicates}'
+
+        '!{params.script_dir}/generate_insulation_report.py' \
+            *{WT,T1,C1}_merged_score.bedgraph.gz \
+            --output-prefix=report_conditions_insulation \
+            --labels='!{labels_conditions}'
+
+        mkdir plots
+        mv *.svg *.png plots/
         '''
 }

@@ -23,12 +23,11 @@ function run_workflow() {
         args=("${@:2}")
     fi
 
-    ln -sf ../configs/ configs
-    ln -sf ../containers/ containers
-    ln -sf ../data/ data
-    ln -sf ../scripts/ scripts
-    ln -sf ../workflows/ workflows
+    for dir in configs containers data scripts workflows; do
+        ln -sf "../$dir/" "$dir"
+    done
 
+    ../remove_symlink_loops.sh
     nextflow run \
         "${args[@]}" \
         -c "configs/$name.config" \
