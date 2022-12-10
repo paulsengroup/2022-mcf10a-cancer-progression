@@ -131,6 +131,7 @@ process cooler_to_hic {
                                        saveAs: { "${label}/${label}.hic" }
 
     label 'process_medium'
+    label 'process_high_memory'
 
     input:
         tuple val(label), path(cool)
