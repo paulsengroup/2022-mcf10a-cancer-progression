@@ -17,14 +17,18 @@ trap 'cd "$wd"' EXIT
 destdir="$git_root/data/output/nfcore_hic/mcools"
 mkdir -p "$destdir"
 
-cd "$destdir" || exit
-for src in ../HiC*/*.mcool; do
+cd "$destdir" || exit 1
+for src in ../HiC*/*.mcool ../*merged/*.mcool; do
   dest="$(basename "$src")"
   dest="GRCh38_${dest#HiC_}"
   ln -sf "$src" "$dest"
 done
 
-for src in ../*merged/*.mcool; do
+destdir="$git_root/data/output/nfcore_hic/hic"
+mkdir -p "$destdir"
+
+cd "$destdir" || exit 1
+for src in ../HiC*/*.hic ../*merged/*.hic; do
   dest="$(basename "$src")"
   dest="GRCh38_${dest#HiC_}"
   ln -sf "$src" "$dest"
