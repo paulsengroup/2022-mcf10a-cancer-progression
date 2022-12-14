@@ -15,76 +15,69 @@ def normalize_path_name(old_path) {
 
 workflow {
     dls = file(params.download_list)
-    chksums = file(params.checksums)
+    checksums = file(params.checksums)
 
     // Read download_list file line by line and store the file content in the urls list
     Channel.fromPath(dls)
             .splitText()
             .map {
-                 // Lines are formatted like "url\tshort_name"
+                 // Lines are formatted like "url\tdest_name\tdest_dir"
                  toks = it.trim().split('\t')
-                 file(toks[0])
+                 assert toks.size() == 3
+
+                 url = file(toks[0])
+
+                 base_name = normalize_path_name(url.getName().toString())
+                 dest_name = toks[1]
+                 dest_dir = toks[2]
+
+                 tuple(url, base_name, dest_dir, dest_name)
                  }
-            .set { files }
+            .set { urls }
 
-    validate_files(files, chksums)
+    validate_files(urls, checksums)
 
-    def fn_mappings = [:]
-    file(dls)
-        .eachLine { line ->
-            // Lines are formatted like "url\tshort_name"
-            toks = line.trim().split('\t')
-            old_name = normalize_path_name(file(toks[0]).getName().toString())
-            new_name = file(toks[1]).getName()
-            // println "${old_name} -> ${new_name}"
-            fn_mappings[old_name] = new_name
-    }
-
-    rename_and_compress_files(validate_files.out.files, fn_mappings)
+    rename_and_compress_files(validate_files.out.file, validate_files.out.metadata)
 }
 
 process validate_files {
-    publishDir "${params.download_dir}", mode: 'copy'
-
     label 'process_short'
 
     input:
-        path download
+        tuple path(url), val(base_name), val(dest_dir), val(dest_name)
         path checksums
 
     output:
-        path "*.ok", emit: files
+        tuple val(base_name), val(dest_dir), val(dest_name), emit: metadata
+        path "*.ok", emit: file
 
     shell:
-        input_name = "${download.fileName}"
-        out_name = normalize_path_name(input_name)
+        src="${url.fileName}"
+        dest=normalize_path_name(src)
         '''
         sha256sum -c '!{checksums}' --ignore-missing
-        mv '!{input_name}' '!{out_name}.ok'
+        mv '!{src}' '!{dest}.ok'
         '''
 }
 
 process rename_and_compress_files {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { fname ->
-                                                 old_name = file(fname).getBaseName() // Trim .new
-                                                 assert name_mappings.get(old_name) != null
-                                                 name_mappings[old_name]
-                                               }
+    publishDir "${params.data_dir}", mode: 'copy',
+                                       saveAs: { "${dest_dir}/${dest_name}" }
     label 'process_short'
 
     input:
-        path old_name
-        val name_mappings
+        path src
+        tuple val(base_name), val(dest_dir), val(dest_name)
 
     output:
-        path "*.new"
-        val 1, emit: flag
+        path "${dest_dir}/${dest_name}.new", emit: file
 
     shell:
         '''
-        if="!{old_name}"
-        of="${if%.ok}.new"
+        if='!{src}'
+        of='!{dest_dir}/!{dest_name}.new'
+
+        mkdir -p '!{dest_dir}'
 
         # Rename files and compress them
         if [[ $if == *.gz.ok    ||
