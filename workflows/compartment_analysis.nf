@@ -6,10 +6,6 @@
 nextflow.enable.dsl=2
 
 workflow {
-    call_compartments(Channel.fromPath(params.mcools),
-                      file(params.ref_genome),
-                      params.resolution)
-
     preproc_data_for_dchic(Channel.fromPath(params.mcools)
                                   .filter{ !it.getSimpleName().contains("merged") },
                            params.resolution)
@@ -17,53 +13,21 @@ workflow {
     run_dchic(preproc_data_for_dchic.out.matrix.collect(),
               preproc_data_for_dchic.out.bins.collect(),
               preproc_data_for_dchic.out.biases.collect(),
-              Channel.fromPath(params.dchic_sample_files),
+              file(params.dchic_sample_file),
               params.ref_genome_name,
               params.resolution)
 
-    plot_subcompartment_transitions(run_dchic.out.subcompartments)
-    plot_subcompartment_coverage(run_dchic.out.subcompartments)
-    plot_subcompartment_size_distribution(run_dchic.out.subcompartments)
-}
+    postprocess_dchic_output(run_dchic.out.pc_ori,
+                             run_dchic.out.pc_ori_filtered,
+                             run_dchic.out.pc_qnm,
+                             run_dchic.out.pc_qnm_filtered,
+                             run_dchic.out.subcompartments,
+                             run_dchic.out.viz,
+                             file(params.dchic_sample_file))
 
-process call_compartments {
-    publishDir "${params.output_dir}/compartments", mode: 'copy'
-
-    input:
-        path cooler
-        path ref_genome
-        val resolution
-
-    output:
-        path "*.vecs.tsv", emit: eigvect_txt
-        path "*.lam.txt", emit: eigval_txt
-        path "*.bw", emit: bw
-
-    shell:
-        outprefix="${cooler.baseName}"
-        '''
-        if [[ '!{ref_genome}' == *.gz ]]; then
-            zcat '!{ref_genome}' > ref.fna
-        else
-            ln -s '!{ref_genome}' ref.fna
-        fi
-
-        if [ '!{resolution}' -ne 0 ]; then
-            cooler='!{cooler}::/resolutions/!{resolution}'
-        else
-            cooler='!{cooler}'
-        fi
-
-        # Compute GC content. Used to orient eigvects
-        '!{params.script_dir}/compute_binned_gc_content.py' \
-            <(cooler dump -t bins "$cooler")                \
-            '!{ref_genome}' > gc.bed
-
-        cooltools eigs-cis --phasing-track gc.bed \
-                           --bigwig               \
-                           -o '!{outprefix}'      \
-                           "$cooler"
-        '''
+    generate_subcompartment_transition_report(postprocess_dchic_output.out.subcompartments)
+    plot_subcompartment_coverage(postprocess_dchic_output.out.subcompartments)
+    plot_subcompartment_size_distribution(postprocess_dchic_output.out.subcompartments)
 }
 
 process preproc_data_for_dchic {
@@ -107,8 +71,6 @@ process preproc_data_for_dchic {
 }
 
 process run_dchic {
-    publishDir "${params.output_dir}/diff_compartments", mode: 'copy'
-
     label 'process_low'
 
     input:
@@ -121,12 +83,12 @@ process run_dchic {
         val resolution
 
     output:
-        path "*.pcOri.bedGraph.gz", emit: pc_ori
-        path "*.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
-        path "*.pcQnm.bedGraph.gz", emit: pc_qnm
-        path "*.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
-        path "*.subcompartments.bedGraph.gz", emit: subcompartments
-        path "*.viz.tar.xz", emit: viz
+        path "${sample_file.simpleName}.pcOri.bedGraph.gz", emit: pc_ori
+        path "${sample_file.simpleName}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
+        path "${sample_file.simpleName}.pcQnm.bedGraph.gz", emit: pc_qnm
+        path "${sample_file.simpleName}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
+        path "${sample_file.simpleName}.subcompartments.bedGraph.gz", emit: subcompartments
+        path "${sample_file.simpleName}.viz.tar.xz", emit: viz
 
     shell:
         output_prefix="${sample_file.simpleName}"
@@ -170,8 +132,43 @@ process run_dchic {
         '''
 }
 
-process plot_subcompartment_transitions {
-    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+process postprocess_dchic_output {
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { file(it).getName() }
+
+    input:
+        path pc_ori
+        path pc_ori_filtered
+        path pc_qnm
+        path pc_qnm_filtered
+        path subcompartments
+        path viz
+        path sample_file
+
+    output:
+        path "out/${sample_file.simpleName}.pcOri.bedGraph.gz", emit: pc_ori
+        path "out/${sample_file.simpleName}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
+        path "out/${sample_file.simpleName}.pcQnm.bedGraph.gz", emit: pc_qnm
+        path "out/${sample_file.simpleName}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
+        path "out/${sample_file.simpleName}.subcompartments.bedGraph.gz", emit: subcompartments
+        path "out/${sample_file.simpleName}.viz.tar.xz", emit: viz
+
+    shell:
+        '''
+        mkdir out/
+
+        for f in '!{pc_ori}' '!{pc_ori_filtered}' '!{pc_qnm}' '!{pc_qnm_filtered}' '!{viz}'; do
+            cp "$f" "out/$(basename "$f")"
+        done
+
+        outname="out/$(basename '!{subcompartments}')"
+        '!{params.script_dir}/postprocess_dchic_subcompartments.py' \
+            '!{subcompartments}' | gzip -9 > "$outname"
+        '''
+}
+
+process generate_subcompartment_transition_report {
+    publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
     label 'very_short'
@@ -186,12 +183,15 @@ process plot_subcompartment_transitions {
     shell:
         outprefix="${bedgraph.simpleName}"
         '''
-        '!{params.script_dir}/plot_compartment_transitions.py' \
+        '!{params.script_dir}/generate_compartment_transition_report.py' \
             --output-prefix='!{outprefix}_subcompartments' \
+            --base-color="white" \
+            --width=5 \
+            --height=3.5 \
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
 
-        '!{params.script_dir}/plot_compartment_transitions.py' \
+        '!{params.script_dir}/generate_compartment_transition_report.py' \
             --aggregate-subcompartments \
             --output-prefix='!{outprefix}_compartments' \
             --highlight-color="#b40426ff" \
@@ -205,7 +205,7 @@ process plot_subcompartment_transitions {
 }
 
 process plot_subcompartment_coverage {
-    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+    publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
     label 'very_short'
@@ -236,7 +236,7 @@ process plot_subcompartment_coverage {
 }
 
 process plot_subcompartment_size_distribution {
-    publishDir "${params.output_dir}/diff_compartments/", mode: 'copy'
+    publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
     label 'very_short'
