@@ -8,28 +8,35 @@ suppressMessages(library("stringr"))
 
 option_list <- list(
   make_option(
-    c("--compartments"),
+    "--compartments",
     type = "character",
     default = NULL,
     metavar = "path",
     help = "Path to a subcompartment file bedGraph produced by dcHiC."
   ),
   make_option(
-    c("--highlight_label"),
+    "--highlight_label",
     type = "character",
     default = NULL,
     metavar = "string",
     help = "Condition to highlight."
   ),
   make_option(
-    c("--highlight_color"),
+    "--only_show_highlighted",
+    type = "logical",
+    action = "store_true",
+    default = FALSE,
+    help = "Hide non-higlighted ribbons."
+  ),
+  make_option(
+    "--highlight_color",
     type = "character",
     default = "orange",
     metavar = "character",
     help = "Color used for highlighting."
   ),
   make_option(
-    c("--base_color"),
+    "--base_color",
     type = "character",
     default = "grey",
     metavar = "character",
@@ -41,6 +48,20 @@ option_list <- list(
     default = NULL,
     metavar = "path",
     help = "Output prefix."
+  ),
+  make_option(
+    "--width",
+    type = "double",
+    default = 10,
+    metavar = "double",
+    help = "Plot width."
+  ),
+  make_option(
+    "--height",
+    type = "double",
+    default = 7,
+    metavar = "double",
+    help = "Plot height."
   )
 )
 
@@ -74,22 +95,34 @@ generate_colors <-
   }
 
 plot_alluvial <-
-  function(counts, outprefix, highlight_label, highlight_color, base_color, alpha = 0.8, blocks = TRUE) {
+  function(counts, outprefix, highlight_label, highlight_color, base_color, only_show_higlighted, width, height, blocks = TRUE, alpha = 0.8) {
+    if (base_color == "white") {
+      only_show_higlighted <- TRUE
+      alpha <- 1.0
+    }
+
     links <- generate_links(counts)
     freq <- generate_frequencies(counts)
     layer_mask <- generate_layer_mask(counts, highlight_label)
     colors <- generate_colors(layer_mask, highlight_color, base_color)
 
+    if (only_show_higlighted) {
+      mask <- layer_mask
+    } else {
+      mask <- replicate(length(layer_mask), FALSE)
+    }
+
     svglite(
       file = paste(outprefix, "svg", sep = "."),
-      width = 10,
-      height = 7
+      width = width,
+      height = height
     )
     alluvial(
       links,
       freq = freq,
       layer = layer_mask,
       col = colors,
+      hide = mask,
       border = colors,
       alpha = alpha,
       blocks = blocks
@@ -124,4 +157,12 @@ if (length(missing_options) != 0) {
 }
 
 counts <- as.data.frame(fread(opt$compartments))
-plot_alluvial(counts, opt$outprefix, opt$highlight_label, opt$highlight_color, opt$base_color)
+
+plot_alluvial(counts,
+              opt$outprefix,
+              opt$highlight_label,
+              opt$highlight_color,
+              opt$base_color,
+              opt$only_show_highlighted,
+              opt$width,
+              opt$height)

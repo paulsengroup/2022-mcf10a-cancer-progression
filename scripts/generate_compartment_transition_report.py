@@ -16,6 +16,12 @@ import pandas as pd
 def make_cli() -> argparse.ArgumentParser:
     cli = argparse.ArgumentParser()
 
+    def positive_float(s) -> float:
+        if (x := float(s)) > 0:
+            return x
+
+        raise RuntimeError("Not a positive float")
+
     cli.add_argument(
         "bedgraph",
         type=pathlib.Path,
@@ -60,8 +66,21 @@ def make_cli() -> argparse.ArgumentParser:
     cli.add_argument(
         "--highlight-color",
         type=str,
-        default="orange",
         help="Color used for highlighting.",
+    )
+
+    cli.add_argument(
+        "--width",
+        type=positive_float,
+        default=10.0,
+        help="Plot width.",
+    )
+
+    cli.add_argument(
+        "--height",
+        type=positive_float,
+        default=10.0,
+        help="Plot height.",
     )
 
     cli.add_argument(
@@ -80,6 +99,28 @@ def get_compartment_ranks() -> dict:
         ["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"]
     )
     return {k: v for v, k in enumerate(compartment_labels)}
+
+
+@functools.cache
+def get_compartment_color_mappings() -> dict:
+    compartment_labels = tuple(
+        ["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"]
+    )
+    colors = tuple(
+        [
+            "#3b4cc0ff",
+            "#3b4cc0ff",
+            "#6788eeff",
+            "#9abbffff",
+            "#c9d7f0ff",
+            "#edd1c2ff",
+            "#f7a889ff",
+            "#e26952ff",
+            "#b40426ff",
+            "#b40426ff",
+        ]
+    )
+    return {k: v for k, v in zip(compartment_labels, colors)}
 
 
 @functools.cache
@@ -103,7 +144,8 @@ def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
     df = pd.read_table(path_to_df)
     bin_size = (df["end"] - df["start"]).max()
 
-    return bin_size, df.filter(regex=".state$")
+    df1 = df.filter(regex=".state$").copy()
+    return bin_size, df1
 
 
 def group_and_sort_subcompartments(
@@ -154,21 +196,25 @@ def plot_alluvial_with_r(
     path_to_rscript: pathlib.Path,
     base_color: str,
     highlight_color: str,
-    compartment_to_highlight: Union[str, None] = None,
+    width: float,
+    height: float,
+    compartment_to_highlight: Union[str, None],
 ) -> None:
     cmd = [
         str(path_to_rscript),
-        "--compartments",
-        str(path_to_input),
-        "--base_color",
-        base_color,
-        "--highlight_color",
-        highlight_color,
+        f"--compartments={path_to_input}",
+        f"--base_color={base_color}",
+        f"--highlight_color={highlight_color}",
+        f"--width={width}",
+        f"--height={height}",
         "--outprefix",
         str(output_name.with_suffix("")),
     ]
     if compartment_to_highlight is not None:
         cmd.append(f"--highlight_label={compartment_to_highlight}")
+
+    if base_color == "white":
+        cmd.append("--only_show_highlighted")
 
     try:
         sp.run(cmd, capture_output=True, text=True).check_returncode()
@@ -203,8 +249,10 @@ def make_alluvial_plot(
     outname: pathlib.Path,
     path_to_plotting_script: pathlib.Path,
     overwrite_existing: bool,
-    base_color: str,
-    highlight_color: str,
+    base_color: Union[str, None],
+    highlight_color: Union[str, None],
+    width: float,
+    height: float,
 ) -> None:
     if outname.exists() and not overwrite_existing:
         raise RuntimeError(
@@ -212,12 +260,25 @@ def make_alluvial_plot(
         )
 
     comp_label = get_comp_to_label_mappings().get(compartment_to_highlight)
+
+    if base_color is None:
+        base_color = "white"
+    if highlight_color is None:
+        if comp_label is not None:
+            highlight_color = get_compartment_color_mappings()[
+                get_label_to_comp_mappings().get(comp_label)
+            ]
+        else:
+            highlight_color = "orange"
+
     plot_alluvial_with_r(
         path_to_input=path_to_tsv,
         output_name=outname,
         path_to_rscript=path_to_plotting_script,
         base_color=base_color,
         highlight_color=highlight_color,
+        width=width,
+        height=height,
         compartment_to_highlight=comp_label,
     )
 
@@ -269,6 +330,23 @@ def make_heatmap(
     ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
 
 
+def compute_transition_coefficients(df: pd.DataFrame) -> pd.DataFrame:
+    labels = get_compartment_labels_from_df(df)
+
+    data = {"label": [], "same": [], "switch": []}
+    for label in labels:
+        df1 = df[(df == label).any(axis="columns")]
+        mask = (df1.drop(columns=["size"]) == label).all(axis="columns")
+        data["label"].append(label)
+        data["same"].append(df1.loc[mask, "size"].sum())
+        data["switch"].append(df1.loc[~mask, "size"].sum())
+
+    df1 = pd.DataFrame(data)
+    df1["ratio"] = df1["same"] / (df1["same"] + df1["switch"])
+
+    return df1
+
+
 def main():
     args = vars(make_cli().parse_args())
 
@@ -295,8 +373,10 @@ def main():
                 outname=outname,
                 path_to_plotting_script=args["path_to_plotting_script"],
                 overwrite_existing=args["force"],
-                base_color=args["base_color"],
-                highlight_color=args["highlight_color"],
+                base_color=args.get("base_color"),
+                highlight_color=args.get("highlight_color"),
+                width=args["width"],
+                height=args["height"],
             )
 
     conditions = [col for col in df.columns if col != "size"]
@@ -317,6 +397,8 @@ def main():
         / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
     )
     fig.savefig(outname)
+
+    # print(compute_transition_coefficients(df))
 
 
 if __name__ == "__main__":
