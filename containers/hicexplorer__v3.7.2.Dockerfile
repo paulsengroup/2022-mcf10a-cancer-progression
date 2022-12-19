@@ -17,6 +17,8 @@ RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
         "hicexplorer=$HICEXPLORER_VER" \
+        "numpy<1.24" \
+        "matplotlib<3.6" \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

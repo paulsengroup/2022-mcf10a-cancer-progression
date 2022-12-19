@@ -19,6 +19,8 @@ RUN micromamba install -y \
         -c bioconda \
         bioframe \
         "cooltools=$COOLTOOLS_VER" \
+        "matplotlib<3.6" \
+        "numpy<1.24" \
         ucsc-bedgraphtobigwig \
 && micromamba clean --all -y
 

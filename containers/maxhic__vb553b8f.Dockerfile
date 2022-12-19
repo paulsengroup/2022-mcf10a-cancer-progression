@@ -31,7 +31,8 @@ RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
         cooler \
-        "numpy>=1.4,<2" \
+        "matplotlib>=3,<3.6" \
+        "numpy<1.24" \
         "pandas>=0.24,<1" \
         "scipy>=1.1,<2" \
         "tensorflow>=1.3,<2" \

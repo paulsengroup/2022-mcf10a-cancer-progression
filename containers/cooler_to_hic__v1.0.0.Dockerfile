@@ -33,7 +33,9 @@ RUN apt-get update \
                        python3 \
                        python3-pip \
                        zstd \
-&& pip install numpy cooler \
+&& pip install "matplotlib<3.6" \
+               "numpy<1.24" \
+                cooler \
 && apt-get remove -y cython3 python3-pip \
 && rm -rf /var/lib/apt/lists/*
 

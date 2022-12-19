@@ -19,9 +19,9 @@ RUN micromamba install -y \
         r=4.2 \
         bioframe \
         cooler \
-        matplotlib \
+        "matplotlib<3.6" \
         natsort \
-        numpy \
+        "numpy<1.24" \
         pandas \
         pyBigWig \
         r-alluvial \
