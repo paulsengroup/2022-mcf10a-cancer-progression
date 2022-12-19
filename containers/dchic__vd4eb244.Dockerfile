@@ -31,6 +31,11 @@ RUN micromamba install -y             \
 && install -Dm0644 LICENSE /opt/conda/share/licenses/dchic/LICENSE      \
 && cd / && rm -rf /tmp/dchic
 
+# Workaround for ImportError raised by from pysam.libchtslib import * from igv_reports/datauri.py
+# ImportError: libcrypto.so.1.0.0: cannot open shared object file: No such file or directory
+# I am pretty sure we're not actually accessing any symbol from libcrypto, so this workaround should be ok.
+RUN cd /opt/conda/lib && ln -s libcrypto.so libcrypto.so.1.0.0
+
 RUN touch /opt/conda/lib/R/etc/.Rprofile
 
 USER root
