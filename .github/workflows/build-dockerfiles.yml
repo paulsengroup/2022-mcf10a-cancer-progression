@@ -106,8 +106,8 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
+          cache-from: type=gha,scope=${{ steps.process-changed-files.outputs.dockerfile }}
+          cache-to: type=gha,mode=min,scope=${{ steps.process-changed-files.outputs.dockerfile }}
           tags: ${{ steps.generate-tags.outputs.tags }}
           file: ${{ steps.process-changed-files.outputs.dockerfile }}
           build-args: |
