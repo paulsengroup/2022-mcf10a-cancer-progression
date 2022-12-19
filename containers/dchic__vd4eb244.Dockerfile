@@ -28,13 +28,15 @@ RUN micromamba install -y             \
 && install -Dm0755 dchicf.r /opt/conda/bin/dchicf.r                     \
 && install -Dm0755 utility/*.{r,py,sh} /opt/conda/bin/                  \
 && install -Dm0755 utility/Chromosome_ArmWise_PCA/*.pl /opt/conda/bin/  \
+&& install -Dm0644 LICENSE /opt/conda/share/licenses/dchic/LICENSE      \
 && cd / && rm -rf /tmp/dchic
 
+RUN touch /opt/conda/lib/R/etc/.Rprofile
+
 USER root
-RUN chown nobody:nogroup /opt/conda/bin/*
+RUN chown -R nobody:nogroup /opt/conda/bin  /opt/conda/share/licenses/dchic/
 USER mambauser
 
-RUN touch /opt/conda/lib/R/etc/.Rprofile
 
 WORKDIR /data
 
