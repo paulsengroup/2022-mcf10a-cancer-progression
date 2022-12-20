@@ -6,18 +6,46 @@
 nextflow.enable.dsl=2
 
 workflow {
-    preproc_data_for_dchic(Channel.fromPath(params.mcools)
-                                  .filter{ !it.getSimpleName().contains("merged") },
-                           params.resolution)
+    Channel.of("${params.resolutions}".split(','))
+           .combine(Channel.fromPath(params.mcools)
+                           .filter{ !it.getSimpleName().contains("merged") })
+           .set { mcools }
 
-    run_dchic(preproc_data_for_dchic.out.matrix.collect(),
-              preproc_data_for_dchic.out.bins.collect(),
-              preproc_data_for_dchic.out.biases.collect(),
+    preproc_data_for_dchic(mcools)
+
+    preproc_data_for_dchic.out.resolution
+                          .merge(preproc_data_for_dchic.out.matrix)
+                          .groupTuple(sort: true)
+                          .map { it[1] }
+                          .set { matrices }
+
+    preproc_data_for_dchic.out.resolution
+                          .merge(preproc_data_for_dchic.out.bins)
+                          .groupTuple(sort: true)
+                          .map { it[1] }
+                          .set { bins }
+
+    preproc_data_for_dchic.out.resolution
+                          .merge(preproc_data_for_dchic.out.biases)
+                          .groupTuple(sort: true)
+                          .map { it[1] }
+                          .set { biases }
+
+    preproc_data_for_dchic.out.resolution
+                          .merge(preproc_data_for_dchic.out.matrix)
+                          .groupTuple(sort: true)
+                          .map { it[0] }
+                          .set { resolutions }
+
+    run_dchic(matrices,
+              bins,
+              biases,
               file(params.dchic_sample_file),
               params.ref_genome_name,
-              params.resolution)
+              resolutions)
 
-    postprocess_dchic_output(run_dchic.out.pc_ori,
+    postprocess_dchic_output(run_dchic.out.resolution,
+                             run_dchic.out.pc_ori,
                              run_dchic.out.pc_ori_filtered,
                              run_dchic.out.pc_qnm,
                              run_dchic.out.pc_qnm_filtered,
@@ -25,23 +53,26 @@ workflow {
                              run_dchic.out.viz,
                              file(params.dchic_sample_file))
 
-    generate_subcompartment_transition_report(postprocess_dchic_output.out.subcompartments)
-    plot_subcompartment_coverage(postprocess_dchic_output.out.subcompartments)
-    plot_subcompartment_size_distribution(postprocess_dchic_output.out.subcompartments)
+    generate_subcompartment_transition_report(postprocess_dchic_output.out.resolution,
+                                              postprocess_dchic_output.out.subcompartments)
+    plot_subcompartment_coverage(postprocess_dchic_output.out.resolution,
+                                 postprocess_dchic_output.out.subcompartments)
+    plot_subcompartment_size_distribution(postprocess_dchic_output.out.resolution,
+                                          postprocess_dchic_output.out.subcompartments)
 }
 
 process preproc_data_for_dchic {
     label 'process_low'
 
     input:
-        path cooler
-        val resolution
+        tuple val(resolution), path(cooler)
 
     output:
         path "*.chrom.sizes", emit: chrom_sizes
         path "*.matrix", emit: matrix
         path "*_abs.bed", emit: bins
         path "*.biases.gz", emit: biases
+        val resolution, emit: resolution
 
     shell:
         '''
@@ -71,7 +102,10 @@ process preproc_data_for_dchic {
 }
 
 process run_dchic {
+    label 'error_retry'
     label 'process_low'
+
+    memory { task.attempt * 15e9 as Long }  // 15GB
 
     input:
         path matrices
@@ -83,15 +117,16 @@ process run_dchic {
         val resolution
 
     output:
-        path "${sample_file.simpleName}.pcOri.bedGraph.gz", emit: pc_ori
-        path "${sample_file.simpleName}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
-        path "${sample_file.simpleName}.pcQnm.bedGraph.gz", emit: pc_qnm
-        path "${sample_file.simpleName}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
-        path "${sample_file.simpleName}.subcompartments.bedGraph.gz", emit: subcompartments
-        path "${sample_file.simpleName}.viz.tar.xz", emit: viz
+        val resolution, emit: resolution
+        path "${sample_file.simpleName}_${resolution}.pcOri.bedGraph.gz", emit: pc_ori
+        path "${sample_file.simpleName}_${resolution}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
+        path "${sample_file.simpleName}_${resolution}.pcQnm.bedGraph.gz", emit: pc_qnm
+        path "${sample_file.simpleName}_${resolution}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
+        path "${sample_file.simpleName}_${resolution}.subcompartments.bedGraph.gz", emit: subcompartments
+        path "${sample_file.simpleName}_${resolution}.viz.tar.xz", emit: viz
 
     shell:
-        output_prefix="${sample_file.simpleName}"
+        output_prefix="${sample_file.simpleName}_${resolution}"
         '''
         mkdir biases/ tmp/
 
@@ -116,7 +151,10 @@ process run_dchic {
         echo \\
         dchicf.r --file "$sample_file" --pcatype fithic --dirovwt T --diffdir '!{output_prefix}' --fithicpath="$(which fithic)" --pythonpath="$(which python3)"
 
+        # Dloop segfaults for resolutions higher than 100kb
+        echo \\
         dchicf.r --file "$sample_file" --pcatype dloop --dirovwt T --diffdir '!{output_prefix}'
+
         dchicf.r --file "$sample_file" --pcatype subcomp --dirovwt T --diffdir '!{output_prefix}'
         dchicf.r --file "$sample_file" --pcatype viz --diffdir '!{output_prefix}' --genome '!{ref_genome_name}'
 
@@ -133,10 +171,10 @@ process run_dchic {
 }
 
 process postprocess_dchic_output {
-    publishDir params.output_dir, mode: 'copy',
-                                  saveAs: { file(it).getName() }
+    publishDir params.output_dir, mode: 'copy'
 
     input:
+        val resolution
         path pc_ori
         path pc_ori_filtered
         path pc_qnm
@@ -146,22 +184,23 @@ process postprocess_dchic_output {
         path sample_file
 
     output:
-        path "out/${sample_file.simpleName}.pcOri.bedGraph.gz", emit: pc_ori
-        path "out/${sample_file.simpleName}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
-        path "out/${sample_file.simpleName}.pcQnm.bedGraph.gz", emit: pc_qnm
-        path "out/${sample_file.simpleName}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
-        path "out/${sample_file.simpleName}.subcompartments.bedGraph.gz", emit: subcompartments
-        path "out/${sample_file.simpleName}.viz.tar.xz", emit: viz
+        val resolution, emit: resolution
+        path "${resolution}/${sample_file.simpleName}_${resolution}.pcOri.bedGraph.gz", emit: pc_ori
+        path "${resolution}/${sample_file.simpleName}_${resolution}.Filtered.pcOri.bedGraph.gz", emit: pc_ori_filtered
+        path "${resolution}/${sample_file.simpleName}_${resolution}.pcQnm.bedGraph.gz", emit: pc_qnm
+        path "${resolution}/${sample_file.simpleName}_${resolution}.Filtered.pcQnm.bedGraph.gz", emit: pc_qnm_filtered
+        path "${resolution}/${sample_file.simpleName}_${resolution}.subcompartments.bedGraph.gz", emit: subcompartments
+        path "${resolution}/${sample_file.simpleName}_${resolution}.viz.tar.xz", emit: viz
 
     shell:
         '''
-        mkdir out/
+        mkdir '!{resolution}/'
 
         for f in '!{pc_ori}' '!{pc_ori_filtered}' '!{pc_qnm}' '!{pc_qnm_filtered}' '!{viz}'; do
-            cp "$f" "out/$(basename "$f")"
+            cp "$f" "!{resolution}/$(basename "$f")"
         done
 
-        outname="out/$(basename '!{subcompartments}')"
+        outname="!{resolution}/$(basename '!{subcompartments}')"
         '!{params.script_dir}/postprocess_dchic_subcompartments.py' \
             '!{subcompartments}' | gzip -9 > "$outname"
         '''
@@ -174,14 +213,16 @@ process generate_subcompartment_transition_report {
     label 'very_short'
 
     input:
+        val resolution
         path bedgraph
 
     output:
-        path "plots/*.svg", emit: svg
-        path "*.tsv", emit: tsv
+        val resolution, emit: resolution
+        path "${resolution}/plots/*.svg", emit: svg
+        path "${resolution}/*.tsv", emit: tsv
 
     shell:
-        outprefix="${bedgraph.simpleName}"
+        outprefix="${resolution}/${bedgraph.simpleName}"
         '''
         '!{params.script_dir}/generate_compartment_transition_report.py' \
             --output-prefix='!{outprefix}_subcompartments' \
@@ -199,8 +240,8 @@ process generate_subcompartment_transition_report {
             --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
             '!{bedgraph}'
 
-        mkdir plots/
-        mv *.svg plots/
+        mkdir -p '!{resolution}/plots/'
+        mv '!{resolution}/'*.svg '!{resolution}/plots/'
         '''
 }
 
@@ -211,15 +252,17 @@ process plot_subcompartment_coverage {
     label 'very_short'
 
     input:
+        val resolution
         path bedgraph
 
     output:
-        path "plots/*.svg", emit: svg
-        path "plots/*.png", emit: png
-        path "*.tsv", emit: tsv
+        val resolution, emit: resolution
+        path "${resolution}/plots/*.svg", emit: svg
+        path "${resolution}/plots/*.png", emit: png
+        path "${resolution}/*.tsv", emit: tsv
 
     shell:
-        outprefix="${bedgraph.simpleName}"
+        outprefix="${resolution}/${bedgraph.simpleName}"
         '''
         '!{params.script_dir}/compare_subcompartment_coverage.py' \
             '!{bedgraph}' \
@@ -230,8 +273,8 @@ process plot_subcompartment_coverage {
             '!{bedgraph}' \
             '!{outprefix}_subcompartment_coverage'
 
-        mkdir plots/
-        mv *.svg  *.png plots/
+        mkdir -p '!{resolution}/plots/'
+        mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
         '''
 }
 
@@ -242,20 +285,22 @@ process plot_subcompartment_size_distribution {
     label 'very_short'
 
     input:
+        val resolution
         path bedgraph
 
     output:
-        path "plots/*.svg", emit: svg
-        path "plots/*.png", emit: png
+        val resolution, emit: resolution
+        path "${resolution}/plots/*.svg", emit: svg
+        path "${resolution}/plots/*.png", emit: png
 
     shell:
-        outprefix="${bedgraph.simpleName}_size_distribution"
+        outprefix="${resolution}/${bedgraph.simpleName}_size_distribution"
         '''
         '!{params.script_dir}/compare_subcompartment_size_distribution.py' \
             '!{bedgraph}' \
             '!{outprefix}'
 
-        mkdir plots/
-        mv *.svg  *.png plots/
+        mkdir -p '!{resolution}/plots/'
+        mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
         '''
 }

@@ -9,7 +9,7 @@ import functools
 import itertools
 import math
 import pathlib
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import bioframe as bf
 import matplotlib.pyplot as plt
@@ -187,26 +187,16 @@ def plot_compartment_size_distribution_by_subcomp(
         ax.set(title=subcmp, ylim=[0, int(5.0e6)])
 
 
-def compute_coverage_genomewide(
-    df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300
-) -> None:
+def compute_coverage_genomewide(df: pd.DataFrame) -> Tuple[pd.DataFrame, plt.Figure]:
     coverage = compute_coverage(df)
 
-    outname = outprefix.parent / (outprefix.name + "_genomewide")
-    coverage.to_csv(outname.with_suffix(".tsv"), sep="\t")
-
     fig, ax = plt.subplots(1, 1)
-
     plot_coverage(coverage, "genome-wide", ax, plot_legend=True)
-    plt.tight_layout()
-    fig.savefig(outname.with_suffix(".svg"))
-    fig.savefig(outname.with_suffix(".png"), dpi=dpi)
-    plt.close()
+
+    return coverage, fig
 
 
-def compute_coverage_by_chrom(
-    df: pd.DataFrame, outprefix: pathlib.Path, dpi: int = 300
-) -> None:
+def compute_coverage_by_chrom(df: pd.DataFrame) -> Tuple[pd.DataFrame, plt.Figure]:
     chroms = natsort.natsorted(df["chrom"].unique())
     plot_grid_size = int(math.ceil(math.sqrt(len(chroms))))
     fig, axs = plt.subplots(
@@ -224,25 +214,52 @@ def compute_coverage_by_chrom(
         coverage.insert(loc=0, column="chrom", value=pd.Series([chrom] * len(coverage)))
         dfs.append(coverage)
 
-    outname = outprefix.parent / (outprefix.name + "_by_chrom")
+    return pd.concat(dfs), fig
 
-    plt.tight_layout()
-    fig.savefig(outname.with_suffix(".svg"))
-    fig.savefig(outname.with_suffix(".png"), dpi=dpi)
-    plt.close()
 
-    pd.concat(dfs).to_csv(outname.with_suffix(".tsv"))
+def handle_path_collisions(*paths: pathlib.Path) -> None:
+    collisions = [p for p in paths if p.exists()]
+
+    if len(collisions) != 0:
+        collisions = "\n - ".join((str(p) for p in collisions))
+        raise RuntimeError(
+            "Refusing to overwrite file(s):\n"
+            f" - {collisions}\n"
+            "Pass --force to overwrite existing file(s)."
+        )
 
 
 def main():
     args = vars(make_cli().parse_args())
 
     df = import_data(args["bedgraph"])
+    outprefix = args["output-prefix"]
 
     if args["genome_wide"]:
-        compute_coverage_genomewide(df, args["output-prefix"])
+        outprefix = pathlib.Path(outprefix).parent / (outprefix.name + "_genomewide")
+        if not args["force"]:
+            handle_path_collisions(
+                outprefix.with_suffix(".tsv"),
+                outprefix.with_suffix(".png"),
+                outprefix.with_suffix(".svg"),
+            )
+        df, fig = compute_coverage_genomewide(df)
     else:
-        compute_coverage_by_chrom(df, args["output-prefix"])
+        outprefix = pathlib.Path(outprefix).parent / (outprefix.name + "_by_chrom")
+        if not args["force"]:
+            handle_path_collisions(
+                outprefix.with_suffix(".tsv"),
+                outprefix.with_suffix(".png"),
+                outprefix.with_suffix(".svg"),
+            )
+        df, fig = compute_coverage_by_chrom(df)
+
+    pathlib.Path(outprefix.parent).mkdir(exist_ok=True)
+    df.to_csv(outprefix.with_suffix(".tsv"), sep="\t")
+
+    plt.tight_layout()
+    fig.savefig(outprefix.with_suffix(".png"), dpi=300)
+    fig.savefig(outprefix.with_suffix(".svg"))
 
 
 if __name__ == "__main__":

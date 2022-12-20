@@ -22,6 +22,12 @@ def make_cli() -> argparse.ArgumentParser:
 
         raise RuntimeError("Not a positive float")
 
+    def probability(s) -> float:
+        if 0.0 <= (x := float(s)) <= 1.0:
+            return x
+
+        raise RuntimeError("Not a valid probability")
+
     cli.add_argument(
         "bedgraph",
         type=pathlib.Path,
@@ -84,6 +90,21 @@ def make_cli() -> argparse.ArgumentParser:
     )
 
     cli.add_argument(
+        "--fix-spurious-transitions",
+        action="store_true",
+        default=False,
+        help="Update sub-compartment labels for bins involved in non-significant transitions with the most "
+        "frequent sub-compartment label. Bins without a single most frequent labels are left unchanged.",
+    )
+
+    cli.add_argument(
+        "--pval-thresh",
+        type=probability,
+        default=0.05,
+        help="P-value threshold used to flag significant sub-compartment transitions.",
+    )
+
+    cli.add_argument(
         "--force",
         action="store_true",
         default=False,
@@ -137,12 +158,34 @@ def get_label_to_comp_mappings() -> dict:
     return {v: k for k, v in get_comp_to_label_mappings().items()}
 
 
-def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
+def fix_spurious_transitions(df: pd.DataFrame, pval_cutoff: float) -> pd.DataFrame:
+    assert 0.0 <= pval_cutoff <= 1.0
+    df1 = df.filter(regex=".state$").copy()
+
+    ambiguous_bins = df["state.mode"].isna()
+    significant_transitions = df["padj"] < pval_cutoff
+
+    mask = (~significant_transitions) & ambiguous_bins
+    df1.loc[mask, df1.columns] = df.loc[mask, "state.mode"]
+
+    df2 = df.copy()
+    df2[df1.columns] = df1
+    return df2
+
+
+def import_data(
+    path_to_df: pathlib.Path, pval_cutoff: float
+) -> Tuple[int, pd.DataFrame]:
     if str(path_to_df) == "-":
         path_to_df = sys.stdin
 
     df = pd.read_table(path_to_df)
     bin_size = (df["end"] - df["start"]).max()
+
+    df[df["state.mode"] == "None"] = None
+
+    if pval_cutoff != 1.0:
+        df = fix_spurious_transitions(df, pval_cutoff)
 
     df1 = df.filter(regex=".state$").copy()
     return bin_size, df1
@@ -347,16 +390,39 @@ def compute_transition_coefficients(df: pd.DataFrame) -> pd.DataFrame:
     return df1
 
 
+def handle_file_name_collision(outname: pathlib.Path, force: bool) -> None:
+    if outname.exists() and not force:
+        raise RuntimeError(
+            f"Refusing to overwrite file {outname}. Pass --force to overwrite existing file(s)."
+        )
+
+
+def add_path_suffix(path: pathlib.Path, suffix: str, extension: str) -> pathlib.Path:
+    return pathlib.Path(path.parent) / f"{path.name}{suffix}{extension}"
+
+
 def main():
     args = vars(make_cli().parse_args())
 
-    bin_size, df = import_data(args["bedgraph"])
+    if args["fix_spurious_transitions"]:
+        pval_cutoff = args["pval_thresh"]
+    else:
+        pval_cutoff = 1.0
+
+    bin_size, df = import_data(args["bedgraph"], pval_cutoff)
     df = group_and_sort_subcompartments(df, args["aggregate_subcompartments"])
 
-    output_prefix = pathlib.Path(args["output_prefix"])
+    output_prefix = args["output_prefix"]
     output_prefix.parent.mkdir(exist_ok=True)
 
-    df.to_csv(output_prefix.with_suffix(".tsv"), sep="\t", index=False)
+    outname = add_path_suffix(output_prefix, "_transition_table", ".tsv")
+    handle_file_name_collision(outname, args["force"])
+    df.to_csv(outname, sep="\t", index=False)
+
+    outname = add_path_suffix(output_prefix, "_transition_cfx", ".tsv")
+    handle_file_name_collision(outname, args["force"])
+    compute_transition_coefficients(df).to_csv(outname, sep="\t", index=False)
+
     if args["no_plotting"]:
         return
 
@@ -397,8 +463,6 @@ def main():
         / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
     )
     fig.savefig(outname)
-
-    # print(compute_transition_coefficients(df))
 
 
 if __name__ == "__main__":

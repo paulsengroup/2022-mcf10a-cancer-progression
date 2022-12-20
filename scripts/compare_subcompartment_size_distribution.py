@@ -126,24 +126,45 @@ def plot_compartment_size_distribution_by_subcomp(
         ax.set(title=subcmp, ylim=[0, int(5.0e6)])
 
 
+def handle_path_collisions(*paths: pathlib.Path) -> None:
+    collisions = [p for p in paths if p.exists()]
+
+    if len(collisions) != 0:
+        collisions = "\n - ".join((str(p) for p in collisions))
+        raise RuntimeError(
+            "Refusing to overwrite file(s):\n"
+            f" - {collisions}\n"
+            "Pass --force to overwrite existing file(s)."
+        )
+
+
 def main():
     args = vars(make_cli().parse_args())
 
     df = import_data(args["bedgraph"])
     outprefix = args["output-prefix"]
 
+    pathlib.Path(outprefix.parent).mkdir(exist_ok=True)
+
+    outname = outprefix.parent / (outprefix.name + "_size_distr_by_subcomp")
+    if not args["force"]:
+        handle_path_collisions(outname.with_suffix(".png"), outname.with_suffix(".svg"))
+
     fig, axs = plt.subplots(2, 4, figsize=(4 * 6.4, 2 * 6.4))
     plot_compartment_size_distribution_by_subcomp(df, list(itertools.chain(*axs)))
     plt.tight_layout()
 
-    outname = outprefix.parent / (outprefix.name + "_size_distr_by_subcomp")
     fig.savefig(outname.with_suffix(".svg"))
     fig.savefig(outname.with_suffix(".png"), dpi=300)
     plt.close()
 
+    outname = outprefix.parent / (outprefix.name + "_size_distr_by_condition")
+    if not args["force"]:
+        handle_path_collisions(outname.with_suffix(".png"), outname.with_suffix(".svg"))
+
     fig, axs = plt.subplots(1, 3, figsize=(4 * 6.4, 6.4))
     plot_compartment_size_distribution_by_condition(df, axs)
-    outname = outprefix.parent / (outprefix.name + "_size_distr_by_condition")
+
     fig.savefig(outname.with_suffix(".svg"))
     fig.savefig(outname.with_suffix(".png"), dpi=300)
     plt.close()
