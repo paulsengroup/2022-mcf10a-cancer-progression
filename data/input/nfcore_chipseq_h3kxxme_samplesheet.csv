@@ -1,0 +1,5 @@
+sample,fastq_1,fastq_2,antibody,control
+MCF10A_WT_REP1,raw_data/chipseq/H3KXXme/ChIP_001_MCF10A_WT_R1.fastq.gz,,,
+MCF10A_WT_H3K4me3_REP1,raw_data/chipseq/H3KXXme/ChIP_002_MCF10A_WT_H3K4me3_R1.fastq.gz,,H3K4me3,MCF10A_WT_REP1
+MCF10A_WT_H3K27me3_REP1,raw_data/chipseq/H3KXXme/ChIP_003_MCF10A_WT_H3K27me3_R1.fastq.gz,,H3K27me3,MCF10A_WT_REP1
+MCF10A_WT_H3K79me2_REP1,raw_data/chipseq/H3KXXme/ChIP_004_MCF10A_WT_H3K79me2_R1.fastq.gz,,H3K79me2,MCF10A_WT_REP1
