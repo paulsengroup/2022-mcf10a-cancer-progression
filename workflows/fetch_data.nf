@@ -5,88 +5,73 @@
 
 nextflow.enable.dsl=2
 
-// For some reason importing this function from utils.nfm causes an error like:
-//   Missing process or function with name 'normalize_path_name' -- Did you mean 'normalize_path_name' instead?
-
-// Remove problematic characters from file names.
-def normalize_path_name(old_path) {
-   old_path.replaceAll(/[^A-Za-z0-9._-]/, '_')
-}
 
 workflow {
-    dls = file(params.download_list)
-    checksums = file(params.checksums)
+    // Read download_list file line by line and store the file content in downloads
+    Channel.fromPath(file(params.download_list))
+           .splitCsv(sep: "\t", header: true)
+           .map { row -> out_name = file(row.dest).getName()
+                         // Keep the path relative
+                         out_dir = row.dest.replaceFirst(/${out_name}$/, "")
+                         tuple(row.url,
+                               row.sha256,
+                               out_dir,
+                               out_name,
+                               row.compress)
+                }
+           .set { downloads }
 
-    // Read download_list file line by line and store the file content in the urls list
-    Channel.fromPath(dls)
-            .splitText()
-            .map {
-                 // Lines are formatted like "url\tdest_name\tdest_dir"
-                 toks = it.trim().split('\t')
-                 assert toks.size() == 3
+    process_files(downloads)
 
-                 url = file(toks[0])
+    // Collect checksums and sort them by file path
+    process_files.out.checksum
+                 .collectFile(name: "checksums.sha256",
+                              storeDir: params.data_dir,
+                              newLine: true,
+                              sort: { it.split("  ")[1] })
 
-                 base_name = normalize_path_name(url.getName().toString())
-                 dest_name = toks[1]
-                 dest_dir = toks[2]
-
-                 tuple(url, base_name, dest_dir, dest_name)
-                 }
-            .set { urls }
-
-    validate_files(urls, checksums)
-
-    rename_and_compress_files(validate_files.out.file, validate_files.out.metadata)
 }
 
-process validate_files {
-    label 'process_short'
-
-    input:
-        tuple path(url), val(base_name), val(dest_dir), val(dest_name)
-        path checksums
-
-    output:
-        tuple val(base_name), val(dest_dir), val(dest_name), emit: metadata
-        path "*.ok", emit: file
-
-    shell:
-        src="${url.fileName}"
-        dest=normalize_path_name(src)
-        '''
-        sha256sum -c '!{checksums}' --ignore-missing
-        mv '!{src}' '!{dest}.ok'
-        '''
-}
-
-process rename_and_compress_files {
+process process_files {
     publishDir "${params.data_dir}", mode: 'copy',
-                                       saveAs: { "${dest_dir}/${dest_name}" }
+                                     saveAs: { "${out_dir}/${out_name}" }
     label 'process_short'
 
     input:
-        path src
-        tuple val(base_name), val(dest_dir), val(dest_name)
+        tuple val(url), val(checksum), val(out_dir), val(out_name), val(compress)
 
     output:
-        path "${dest_dir}/${dest_name}.new", emit: file
+        path "*.tmp", emit: file
+        stdout emit: checksum
 
     shell:
+        dest="${out_name}.tmp"
+        final_dest="${out_dir}/${out_name}".replaceAll(/\/\//, "/")  // relpace //
         '''
-        if='!{src}'
-        of='!{dest_dir}/!{dest_name}.new'
+        set -o pipefail
 
-        mkdir -p '!{dest_dir}'
+        hash='!{checksum}'
+        tmp_file="$(mktemp -t '!{dest}.XXXXXXXXXX')"
+        printf '%s  %s' "$hash" "$tmp_file" > checksum.sha256
 
-        # Rename files and compress them
-        if [[ $if == *.gz.ok    ||
-              $if == *.hic.ok   ||
-              $if == *.mcool.ok ||
-              $if == *.bigWig.ok ]]; then
-            cp "$if" "$of"
-        else
-            pigz -9c "$if" > "$of"
+        trap 'rm -f "$tmp_file"' EXIT
+
+        # I am using curl instead of letting Nextflow handle remote files
+        # because the latter sometime truncates files
+        curl -L '!{url}' -o "$tmp_file"
+        if ! sha256sum --quiet -c checksum.sha256 1>&2 ; then
+            2>& echo "Checksum failed for file \\"!{dest}\\" (\\"!{url}\\")"
+            exit 1
         fi
+
+        # Rename and compress files when appropriate
+        if [[ '!{compress}' == TRUE ]]; then
+            pigz -p !{task.cpus} -9c "$tmp_file" > '!{dest}'
+            hash="$(sha256sum '!{dest}' | cut -d' ' -f 1)"
+        else
+            mv "$tmp_file" '!{dest}'
+        fi
+
+        printf '%s  %s' "$hash" '!{final_dest}'
         '''
 }
