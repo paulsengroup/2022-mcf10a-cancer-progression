@@ -16,6 +16,7 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
+        "python=3.9" \
         "hicexplorer=$HICEXPLORER_VER" \
         "numpy<1.24" \
         "matplotlib<3.6" \
