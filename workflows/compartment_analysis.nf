@@ -201,7 +201,7 @@ process postprocess_dchic_output {
         done
 
         outname="!{resolution}/$(basename '!{subcompartments}')"
-        '!{params.script_dir}/postprocess_dchic_subcompartments.py' \
+        postprocess_dchic_subcompartments.py \
             '!{subcompartments}' | gzip -9 > "$outname"
         '''
 }
@@ -224,20 +224,20 @@ process generate_subcompartment_transition_report {
     shell:
         outprefix="${resolution}/${bedgraph.simpleName}"
         '''
-        '!{params.script_dir}/generate_compartment_transition_report.py' \
+        generate_compartment_transition_report.py \
             --output-prefix='!{outprefix}_subcompartments' \
             --base-color="white" \
             --width=5 \
             --height=3.5 \
-            --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
+            --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \
             '!{bedgraph}'
 
-        '!{params.script_dir}/generate_compartment_transition_report.py' \
+        generate_compartment_transition_report.py \
             --aggregate-subcompartments \
             --output-prefix='!{outprefix}_compartments' \
             --highlight-color="#b40426ff" \
             --base-color="#3b4cc0ff" \
-            --path-to-plotting-script='!{params.script_dir}/make_ab_comp_alluvial.r' \
+            --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \
             '!{bedgraph}'
 
         mkdir -p '!{resolution}/plots/'
@@ -264,12 +264,12 @@ process plot_subcompartment_coverage {
     shell:
         outprefix="${resolution}/${bedgraph.simpleName}"
         '''
-        '!{params.script_dir}/compare_subcompartment_coverage.py' \
+        compare_subcompartment_coverage.py \
             '!{bedgraph}' \
             '!{outprefix}_subcompartment_coverage_gw' \
             --genome-wide
 
-        '!{params.script_dir}/compare_subcompartment_coverage.py' \
+        compare_subcompartment_coverage.py \
             '!{bedgraph}' \
             '!{outprefix}_subcompartment_coverage'
 
@@ -296,7 +296,7 @@ process plot_subcompartment_size_distribution {
     shell:
         outprefix="${resolution}/${bedgraph.simpleName}_size_distribution"
         '''
-        '!{params.script_dir}/compare_subcompartment_size_distribution.py' \
+        compare_subcompartment_size_distribution.py \
             '!{bedgraph}' \
             '!{outprefix}'
 

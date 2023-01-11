@@ -67,7 +67,7 @@ process run_hicrep {
             coolers=(!{coolers})
         fi
 
-        '!{params.script_dir}/run_hicrep.py' \
+        run_hicrep.py \
             "${coolers[@]}" \
             -p '!{task.cpus}' \
             --h '!{h}' \
@@ -91,7 +91,7 @@ process plot_scc {
 
     shell:
         '''
-        '!{params.script_dir}/plot_scc.py' \
+        plot_scc.py \
             '!{hicrep_output}' \
             --chrom-sizes '!{chrom_sizes}' \
             -o hicrep

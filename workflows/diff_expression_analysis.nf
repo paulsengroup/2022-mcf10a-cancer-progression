@@ -33,7 +33,7 @@ process preprocess_count_matrix {
 
     shell:
         '''
-        '!{params.script_dir}/map_rnaseq_samples_to_controls.py' \
+        map_rnaseq_samples_to_controls.py \
             --round                                              \
             '!{gene_count_matrix}'                               \
             '!{sample_mappings}'                                 \
@@ -54,7 +54,7 @@ process run_deseq2 {
 
     shell:
         '''
-        '!{params.script_dir}/diff_expression_analysis.r' \
+        diff_expression_analysis.r \
             --count_matrix='!{count_matrix}'              \
             --contrast=!{contrast}                        \
             -o '!{label}_'
@@ -90,7 +90,7 @@ process run_elixir_gost {
             lb="${lfc_lb[$i]}"
             ub="${lfc_ub[$i]}"
 
-            '!{params.script_dir}/run_elixir_gost.py' \
+            run_elixir_gost.py \
                 --pval-cutoff "$pv"                   \
                 --lfc-cutoffs "$lb" "$ub"             \
                 < '!{de_genes}' > "!{outprefix}_${lb}_${ub}_${pv}.tsv"

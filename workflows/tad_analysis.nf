@@ -68,22 +68,22 @@ process generate_tad_report {
 
     shell:
         '''
-        '!{params.script_dir}/generate_tad_report.py' \
+        generate_tad_report.py \
             GRCh38_???_*_domains.bed.gz \
             --output-prefix=report_replicates \
             --labels='!{labels_replicates}'
 
-        '!{params.script_dir}/generate_tad_report.py' \
+        generate_tad_report.py \
             *{WT,T1,C1}_merged_domains.bed.gz \
             --output-prefix=report_conditions \
             --labels='!{labels_conditions}'
 
-        '!{params.script_dir}/generate_insulation_report.py' \
+        generate_insulation_report.py \
             GRCh38_???_*_score.bedgraph.gz \
             --output-prefix=report_replicates_insulation \
             --labels='!{labels_replicates}'
 
-        '!{params.script_dir}/generate_insulation_report.py' \
+        generate_insulation_report.py \
             *{WT,T1,C1}_merged_score.bedgraph.gz \
             --output-prefix=report_conditions_insulation \
             --labels='!{labels_conditions}'

@@ -113,7 +113,7 @@ process rename_chromosomes {
     shell:
         out="${fa.baseName}"
         '''
-        gzip -dc '!{fa}' | '!{params.script_dir}/rename_chromosomes_fa.py' '!{chrom_sizes_bed}' > '!{out}'
+        gzip -dc '!{fa}' | rename_chromosomes_fa.py '!{chrom_sizes_bed}' > '!{out}'
         '''
 }
 
@@ -134,7 +134,7 @@ process process_microarray_data {
         outname="${bed.simpleName}.bed.gz"
         '''
         set -o pipefail
-        '!{params.script_dir}/convert_microarray_cnvs_to_bed.py' \
+        convert_microarray_cnvs_to_bed.py \
             '!{bed}' \
             --chrom-sizes '!{chrom_sizes}' \
             --probe-ids !{probe_dbs} \

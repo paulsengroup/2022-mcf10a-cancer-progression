@@ -289,7 +289,7 @@ process plot_stats {
 
     shell:
         '''
-        '!{params.script_dir}/generate_hic_mapping_report.py' \
+        generate_hic_mapping_report.py \
             *.tar.xz \
             hic_mapping_report \
             --sample-labels '!{pretty_labels}'
