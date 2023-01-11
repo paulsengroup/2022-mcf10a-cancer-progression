@@ -37,7 +37,7 @@ function run_workflow() {
       --max_memory '400.GB' \
       --max_time 336.h &>/dev/null
   else
-    scripts/run_nfcore_hic_workflow.sh \
+    bin/run_nfcore_hic_workflow.sh \
       "$(readlink -f .)" \
       "$outdir" \
       "$sample_name" \

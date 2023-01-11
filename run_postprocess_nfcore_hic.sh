@@ -23,17 +23,19 @@ function run_workflow() {
         args=("${@:2}")
     fi
 
-    for dir in configs containers data scripts workflows; do
+    for dir in bin configs containers data workflows; do
         ln -sf "../$dir/" "$dir"
     done
 
     ../remove_symlink_loops.sh
+
+    cp "workflows/$name.nf" "$name.nf"
     nextflow run \
         "${args[@]}" \
         -c "configs/$name.config" \
         -c "$base_config" \
         -process.cache=deep \
-        "workflows/$name.nf" \
+        "$name.nf" \
         -ansi-log \
         -resume
 

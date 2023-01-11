@@ -13,7 +13,7 @@ echo 1>&2 'Running robomics/call_tad_cliques...'
 wd=".nextflow-chrom3d-wd"
 mkdir -p "$wd"
 
-for dir in configs containers data scripts workflows; do
+for dir in bin configs containers data workflows; do
   (cd "$wd" && ln -sf "../$dir/" "$dir")
 done
 
@@ -52,7 +52,7 @@ function run_workflow() {
         args=("${@:2}")
     fi
 
-    for dir in configs containers data scripts workflows; do
+    for dir in bin configs containers data workflows; do
         ln -sf "../$dir/" "$dir"
     done
 

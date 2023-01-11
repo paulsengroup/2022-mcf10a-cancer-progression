@@ -13,7 +13,7 @@ echo 1>&2 'Running nfcore/chipseq...'
 wd=".nextflow-nfcore-chipseq-wd"
 mkdir -p "$wd"
 
-for dir in configs containers data scripts workflows; do
+for dir in bin configs containers data workflows; do
     (cd "$wd" && ln -sf "../$dir/" "$dir")
 done
 

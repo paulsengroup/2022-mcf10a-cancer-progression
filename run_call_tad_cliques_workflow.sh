@@ -13,7 +13,7 @@ echo 1>&2 'Running robomics/call_tad_cliques...'
 wd=".nextflow-robomics-call-tad-cliques-wd"
 mkdir -p "$wd"
 
-for dir in configs containers data scripts workflows; do
+for dir in bin configs containers data workflows; do
   (cd "$wd" && ln -sf "../$dir/" "$dir")
 done
 
