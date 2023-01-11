@@ -14,7 +14,7 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN apt-get update \
 && apt-get install -y -q --no-install-recommends \
                       cython3 \
-                      c-compiler \
+                      gcc \
                       python3 \
                       python3-dev \
                       python3-pip \
@@ -22,9 +22,9 @@ RUN apt-get update \
                "matplotlib<3.6" \
                "numpy<1.24" \
 && apt-get remove -y -q cython3 \
-                        c-compiler \
-                        python3-dev \
-                        python3-pip \
+                         gcc \
+                         python3-dev \
+                         python3-pip \
 && apt-get autoremove -y \
 && rm -rf /var/lib/apt/lists/*
 
