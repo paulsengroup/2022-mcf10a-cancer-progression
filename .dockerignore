@@ -7,8 +7,8 @@
 
 # Allowed files and directories
 !containers/patches/**
-!scripts/**
+!bin/**
 
 # Excluded files and directories
-scripts/scratch/**
+bin/scratch/**
 

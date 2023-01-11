@@ -12,3 +12,4 @@ sync.sh
 work/
 scratch/
 venv/
+bin/scratch/
