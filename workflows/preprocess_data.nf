@@ -21,6 +21,11 @@ workflow {
 
     run_bowtie2_index(rename_chromosomes.out.fa)
     archive_bowtie2_index(run_bowtie2_index.out.idx)
+
+    process_microarray_data(generate_chrom_sizes.out.chrom_sizes,
+                            file(params.microarray_cnvs),
+                            file(params.microarray_probe_dbs),
+                            file(params.hg17_to_hg38_liftover_chain))
 }
 
 process generate_chrom_sizes {
@@ -109,5 +114,32 @@ process rename_chromosomes {
         out="${fa.baseName}"
         '''
         gzip -dc '!{fa}' | '!{params.script_dir}/rename_chromosomes_fa.py' '!{chrom_sizes_bed}' > '!{out}'
+        '''
+}
+
+process process_microarray_data {
+    publishDir "${params.output_dir}/microarray", mode: 'copy'
+    label 'process_short'
+
+    input:
+        path chrom_sizes
+        path bed
+        path probe_dbs
+        path liftover_chain
+
+    output:
+        path "*.bed.gz", emit: bed
+
+    shell:
+        outname="${bed.simpleName}.bed.gz"
+        '''
+        set -o pipefail
+        '!{params.script_dir}/convert_microarray_cnvs_to_bed.py' \
+            '!{bed}' \
+            --chrom-sizes '!{chrom_sizes}' \
+            --probe-ids !{probe_dbs} \
+            --liftover-chain '!{liftover_chain}' \
+            --fill-gaps |
+            gzip -9c > '!{outname}'
         '''
 }
