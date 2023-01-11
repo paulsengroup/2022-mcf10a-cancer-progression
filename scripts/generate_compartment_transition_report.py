@@ -120,17 +120,13 @@ def make_cli() -> argparse.ArgumentParser:
 
 @functools.cache
 def get_compartment_ranks() -> dict:
-    compartment_labels = tuple(
-        ["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"]
-    )
+    compartment_labels = tuple(["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"])
     return {k: v for v, k in enumerate(compartment_labels)}
 
 
 @functools.cache
 def get_compartment_color_mappings() -> dict:
-    compartment_labels = tuple(
-        ["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"]
-    )
+    compartment_labels = tuple(["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"])
     colors = tuple(
         [
             "#3b4cc0ff",
@@ -177,9 +173,7 @@ def fix_spurious_transitions(df: pd.DataFrame, pval_cutoff: float) -> pd.DataFra
     return df2
 
 
-def import_data(
-    path_to_df: pathlib.Path, pval_cutoff: float
-) -> Tuple[int, pd.DataFrame]:
+def import_data(path_to_df: pathlib.Path, pval_cutoff: float) -> Tuple[int, pd.DataFrame]:
     if str(path_to_df) == "-":
         path_to_df = sys.stdin
 
@@ -195,9 +189,7 @@ def import_data(
     return bin_size, df1
 
 
-def group_and_sort_subcompartments(
-    df: pd.DataFrame, aggregate_subcompartments: bool
-) -> pd.DataFrame:
+def group_and_sort_subcompartments(df: pd.DataFrame, aggregate_subcompartments: bool) -> pd.DataFrame:
     if aggregate_subcompartments:
         df = df.apply(lambda x: x.str[0])
 
@@ -219,9 +211,7 @@ def get_compartment_labels_from_df(df: pd.DataFrame) -> list:
     return pd.concat([df[col] for col in df.columns if col != "size"]).unique().tolist()
 
 
-def rename_compartments(
-    df: pd.DataFrame, mappings: Union[dict, None] = None
-) -> pd.DataFrame:
+def rename_compartments(df: pd.DataFrame, mappings: Union[dict, None] = None) -> pd.DataFrame:
     """
     We have to rename compartments such that similar compartments will be next to each other in the alluvial plot
     The plotting library in R allows to customize stream ordering, but this feature seems very brittle.
@@ -302,9 +292,7 @@ def make_alluvial_plot(
     height: float,
 ) -> None:
     if outname.exists() and not overwrite_existing:
-        raise RuntimeError(
-            f"Refusing to overwrite file {outname}. Pass --force to overwrite existing file(s)."
-        )
+        raise RuntimeError(f"Refusing to overwrite file {outname}. Pass --force to overwrite existing file(s).")
 
     comp_label = get_comp_to_label_mappings().get(compartment_to_highlight)
 
@@ -312,9 +300,7 @@ def make_alluvial_plot(
         base_color = "white"
     if highlight_color is None:
         if comp_label is not None:
-            highlight_color = get_compartment_color_mappings()[
-                get_label_to_comp_mappings().get(comp_label)
-            ]
+            highlight_color = get_compartment_color_mappings()[get_label_to_comp_mappings().get(comp_label)]
         else:
             highlight_color = "orange"
 
@@ -353,9 +339,7 @@ def make_heatmap(
 
     grid = np.zeros([len(ranks), len(ranks)], dtype=int)
 
-    for ((comp1, comp2), size) in (
-        df.groupby([condition1, condition2])["size"].sum().items()
-    ):
+    for ((comp1, comp2), size) in df.groupby([condition1, condition2])["size"].sum().items():
         i1, i2 = ranks[comp1], ranks[comp2]
         grid[i1, i2] = size * bin_size
 
@@ -396,9 +380,7 @@ def compute_transition_coefficients(df: pd.DataFrame) -> pd.DataFrame:
 
 def handle_file_name_collision(outname: pathlib.Path, force: bool) -> None:
     if outname.exists() and not force:
-        raise RuntimeError(
-            f"Refusing to overwrite file {outname}. Pass --force to overwrite existing file(s)."
-        )
+        raise RuntimeError(f"Refusing to overwrite file {outname}. Pass --force to overwrite existing file(s).")
 
 
 def add_path_suffix(path: pathlib.Path, suffix: str, extension: str) -> pathlib.Path:
@@ -462,10 +444,7 @@ def main():
     for (ax, (cond1, cond2)) in zip(axs, cond_pairs):
         make_heatmap(df, cond1, cond2, bin_size, ax)
 
-    outname = (
-        output_prefix.parent
-        / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
-    )
+    outname = output_prefix.parent / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
     fig.savefig(outname)
 
 

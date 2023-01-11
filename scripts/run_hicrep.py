@@ -122,9 +122,7 @@ def run_hicrep(
         chroms = cooler1.chromnames
         scc = [1.0] * num_chroms
 
-        return pd.DataFrame(
-            {"cond1": labels1, "cond2": labels2, "chrom": chroms, "scc": scc}
-        )
+        return pd.DataFrame({"cond1": labels1, "cond2": labels2, "chrom": chroms, "scc": scc})
 
     assert (cooler1.chromsizes == cooler2.chromsizes).all()
 
@@ -172,9 +170,7 @@ def main():
         labels = labels.split(",")
     validate_coolers(coolers, labels)
 
-    hicrep_args = generate_hicrep_args(
-        coolers, labels, args["h"], args["dBPMax"], args["bDownSample"]
-    )
+    hicrep_args = generate_hicrep_args(coolers, labels, args["h"], args["dBPMax"], args["bDownSample"])
 
     with mp.Pool(args["nproc"]) as pool:
         dfs = pool.starmap(

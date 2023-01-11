@@ -55,9 +55,7 @@ def import_counts(path_to_counts: pathlib.Path, round_counts: bool) -> pd.DataFr
     count_df.drop(columns=count_df.columns[0])
     count_df.index.name = "id"
     if round_counts:
-        return count_df.round().apply(
-            pd.to_numeric, errors="ignore", downcast="integer"
-        )
+        return count_df.round().apply(pd.to_numeric, errors="ignore", downcast="integer")
 
     return count_df
 
@@ -74,14 +72,10 @@ def main():
 
     for (i, (control, samples)) in enumerate(mappings.items()):
         pattern = "(" + ")|(".join((str(x) for x in samples)) + ")"
-        outpath = outdir / pathlib.Path(
-            f"{i:03d}_{path_to_gene_count_table.stem}_{control}.tsv"
-        )
+        outpath = outdir / pathlib.Path(f"{i:03d}_{path_to_gene_count_table.stem}_{control}.tsv")
 
         if outpath.exists() and not args["force"]:
-            raise RuntimeError(
-                f"Refusing to overwrite file {outpath}. Pass --force to overwrite existing file(s)."
-            )
+            raise RuntimeError(f"Refusing to overwrite file {outpath}. Pass --force to overwrite existing file(s).")
 
         counts.filter(regex=pattern).to_csv(outpath, sep="\t")
         with open(f"{outpath}.contrast", "w") as f:

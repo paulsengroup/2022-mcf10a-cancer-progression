@@ -5,16 +5,16 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import logging
 import pathlib
+import shutil
+import subprocess as sp
 import sys
+import tempfile
 
 import bioframe as bf
 import numpy as np
 import pandas as pd
-import subprocess as sp
-import tempfile
-import shutil
-import logging
 
 
 def make_cli():

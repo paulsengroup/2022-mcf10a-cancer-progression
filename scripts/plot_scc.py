@@ -50,18 +50,14 @@ def import_tsv(path_to_tsv: pathlib.Path) -> pd.DataFrame:
     return pd.read_table(path_to_tsv)
 
 
-def import_chrom_sizes(
-    path_to_chrom_sizes: Union[pathlib.Path, None]
-) -> Union[pd.DataFrame, None]:
+def import_chrom_sizes(path_to_chrom_sizes: Union[pathlib.Path, None]) -> Union[pd.DataFrame, None]:
     if path_to_chrom_sizes is None:
         return None
 
     return pd.read_table(path_to_chrom_sizes, names=["chrom", "length"])
 
 
-def compute_weighted_avg_and_std(
-    data: pd.Series, weights: Union[pd.Series, None]
-) -> Tuple[float, float]:
+def compute_weighted_avg_and_std(data: pd.Series, weights: Union[pd.Series, None]) -> Tuple[float, float]:
     if weights is not None:
         assert len(data) == len(weights)
 
@@ -71,9 +67,7 @@ def compute_weighted_avg_and_std(
     return avg, np.sqrt(variance)
 
 
-def aggregate_scc(
-    df: pd.DataFrame, weights: Union[pd.DataFrame, None]
-) -> Tuple[np.ndarray, np.ndarray]:
+def aggregate_scc(df: pd.DataFrame, weights: Union[pd.DataFrame, None]) -> Tuple[np.ndarray, np.ndarray]:
     conditions = df["cond1"].unique().tolist()
 
     scc = np.zeros([len(conditions), len(conditions)])
@@ -96,9 +90,7 @@ def aggregate_scc(
     return scc, std
 
 
-def plot_heatmap(
-    scc: np.ndarray, std: np.ndarray, conditions: List[str], title: str
-) -> plt.Figure:
+def plot_heatmap(scc: np.ndarray, std: np.ndarray, conditions: List[str], title: str) -> plt.Figure:
     fig, ax = plt.subplots(1, 1)
 
     min_val = scc.min()

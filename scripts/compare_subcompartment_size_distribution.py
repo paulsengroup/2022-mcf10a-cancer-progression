@@ -52,22 +52,14 @@ def import_data(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
 
 @functools.cache
 def get_compartment_ranks() -> dict:
-    compartment_labels = tuple(
-        ["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"]
-    )
+    compartment_labels = tuple(["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"])
     return {k: v for v, k in enumerate(compartment_labels)}
 
 
 def get_compartment_labels_from_df(df: pd.DataFrame) -> List[str]:
-    labels = (
-        pd.concat([df[col] for col in df.columns if col.endswith(".state")])
-        .unique()
-        .tolist()
-    )
+    labels = pd.concat([df[col] for col in df.columns if col.endswith(".state")]).unique().tolist()
 
-    return list(
-        sorted(labels, key=lambda x: [get_compartment_ranks().get(y) for y in x])
-    )
+    return list(sorted(labels, key=lambda x: [get_compartment_ranks().get(y) for y in x]))
 
 
 def plot_compartment_size_distribution_by_condition(
@@ -80,9 +72,7 @@ def plot_compartment_size_distribution_by_condition(
     assert len(cols) == len(axs)
 
     for ax, col in zip(axs, cols):
-        df1 = bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col]).drop(
-            columns=["n_intervals"]
-        )
+        df1 = bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col]).drop(columns=["n_intervals"])
 
         df1["Subcompartment length"] = df1["end"] - df1["start"]
 
@@ -132,9 +122,7 @@ def handle_path_collisions(*paths: pathlib.Path) -> None:
     if len(collisions) != 0:
         collisions = "\n - ".join((str(p) for p in collisions))
         raise RuntimeError(
-            "Refusing to overwrite file(s):\n"
-            f" - {collisions}\n"
-            "Pass --force to overwrite existing file(s)."
+            "Refusing to overwrite file(s):\n" f" - {collisions}\n" "Pass --force to overwrite existing file(s)."
         )
 
 

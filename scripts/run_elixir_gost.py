@@ -63,20 +63,14 @@ def make_cli():
     return cli
 
 
-def import_data(
-    column_id: str, lfc_cutoffs: Tuple[float, float], pval_cutoff: float
-) -> pd.DataFrame:
+def import_data(column_id: str, lfc_cutoffs: Tuple[float, float], pval_cutoff: float) -> pd.DataFrame:
     df = pd.read_table(sys.stdin).reset_index().rename(columns={"index": "id"}).dropna()
-    df["significant"] = (~df["log2FoldChange"].between(*lfc_cutoffs)) & (
-        df["padj"] <= pval_cutoff
-    )
+    df["significant"] = (~df["log2FoldChange"].between(*lfc_cutoffs)) & (df["padj"] <= pval_cutoff)
 
     return df[[column_id, "significant"]]
 
 
-def run_gost(
-    queries: List[str], background: Union[List[str], None], api_base_url: str, **kwargs
-) -> pd.DataFrame:
+def run_gost(queries: List[str], background: Union[List[str], None], api_base_url: str, **kwargs) -> pd.DataFrame:
     if background is not None:
         kwargs["background"] = background
 

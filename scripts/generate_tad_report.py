@@ -57,9 +57,7 @@ def import_bed(path_to_bed: pathlib.Path) -> pd.DataFrame:
         return bf.read_table(path_to_bed, schema="bed")
 
 
-def import_tads(
-    paths: List[pathlib.Path], labels: List[str]
-) -> Dict[str, pd.DataFrame]:
+def import_tads(paths: List[pathlib.Path], labels: List[str]) -> Dict[str, pd.DataFrame]:
     assert len(paths) == len(labels)
     return {label: import_bed(path) for label, path in zip(labels, paths)}
 
@@ -73,25 +71,17 @@ def summarize(df: pd.DataFrame, label: str) -> pd.DataFrame:
     avg_tad_size["all"] = df["size"].mean()
     num_tads["all"] = len(df)
 
-    return pd.DataFrame(
-        {f"{label}_avg_tad_size": avg_tad_size, f"{label}_num_tads": num_tads}
-    )
+    return pd.DataFrame({f"{label}_avg_tad_size": avg_tad_size, f"{label}_num_tads": num_tads})
 
 
 def generate_summary(tads: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     df = pd.concat([summarize(df, label) for label, df in tads.items()], axis="columns")
     return (
-        df.reset_index()
-        .sort_values(by="chrom", key=natsort.natsort_key)
-        .fillna(0)
-        .round()
-        .astype(int, errors="ignore")
+        df.reset_index().sort_values(by="chrom", key=natsort.natsort_key).fillna(0).round().astype(int, errors="ignore")
     )
 
 
-def plot_size_distribution(
-    tads: Dict[str, pd.DataFrame], ylim: Tuple[int, int] = (0.0, 3_000_000)
-) -> plt.Figure:
+def plot_size_distribution(tads: Dict[str, pd.DataFrame], ylim: Tuple[int, int] = (0.0, 3_000_000)) -> plt.Figure:
     labels = []
     sizes = []
 
@@ -111,10 +101,7 @@ def plot_size_distribution(
     ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
 
     color_palette = sns.color_palette().as_hex()
-    artists = [
-        Rectangle((0, 0), 3, 1, facecolor=color_palette[i], edgecolor="black")
-        for i in range(len(counts))
-    ]
+    artists = [Rectangle((0, 0), 3, 1, facecolor=color_palette[i], edgecolor="black") for i in range(len(counts))]
 
     ax.legend(
         handles=artists,
@@ -138,9 +125,7 @@ def plot_size_distribution(
 def detect_path_collisions(*args: pathlib.Path) -> None:
     for path in args:
         if path.exists():
-            raise RuntimeError(
-                f"Refusing to overwrite file {path}. Pass --force to overwrite existing file(s)."
-            )
+            raise RuntimeError(f"Refusing to overwrite file {path}. Pass --force to overwrite existing file(s).")
 
 
 def main():

@@ -25,9 +25,7 @@ def make_cli():
         type=pathlib.Path,
         help="Path to one or more TAR files containing HiC mapping stats.",
     )
-    cli.add_argument(
-        "output-prefix", type=pathlib.Path, help="Path to the output prefix."
-    )
+    cli.add_argument("output-prefix", type=pathlib.Path, help="Path to the output prefix.")
     cli.add_argument(
         "--sample-labels",
         type=str,
@@ -43,9 +41,7 @@ def make_cli():
     return cli
 
 
-def generate_tar_member_list(
-    tar: tarfile.TarFile, suffixes: Union[None, list] = None
-) -> Tuple[str, dict]:
+def generate_tar_member_list(tar: tarfile.TarFile, suffixes: Union[None, list] = None) -> Tuple[str, dict]:
     if suffixes is None:
         suffixes = ["allValidPairs.mergestat", "mpairstat", "mRSstat"]
 
@@ -58,9 +54,7 @@ def generate_tar_member_list(
 
     if len(members) != len(suffixes):
         missing_files = ", ".join((s for s in suffixes if s not in members.keys()))
-        raise RuntimeError(
-            f"Unable to extract files with suffixes {missing_files} from TAR file {tar.name}"
-        )
+        raise RuntimeError(f"Unable to extract files with suffixes {missing_files} from TAR file {tar.name}")
 
     return tar.getmembers()[0].path, members
 
@@ -194,9 +188,7 @@ def main():
     fig = make_plot_contact_type(df, relative=True)
     plt.tight_layout()
     fig.savefig(plot_out_prefix.parent / (plot_out_prefix.name + "_relative.svg"))
-    fig.savefig(
-        plot_out_prefix.parent / (plot_out_prefix.name + "_relative.png"), dpi=600
-    )
+    fig.savefig(plot_out_prefix.parent / (plot_out_prefix.name + "_relative.png"), dpi=600)
     fig.clf()
 
 
