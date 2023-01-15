@@ -30,7 +30,7 @@ fi
 ./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
-  -r v0.0.8 \
+  -r v0.0.10 \
   "${args[@]}" \
   -c configs/call_tad_cliques.config \
   -resume
@@ -39,7 +39,7 @@ nextflow run https://github.com/robomics/call_tad_cliques \
 ./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
-  -r v0.0.8 \
+  -r v0.0.10 \
   "${args[@]}" \
   -c configs/call_tad_cliques_vs_control.config \
   -resume
