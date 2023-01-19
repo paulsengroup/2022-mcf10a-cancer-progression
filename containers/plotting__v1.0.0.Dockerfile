@@ -18,7 +18,7 @@ RUN micromamba install -y \
         python=3.10 \
         r=4.2 \
         bioframe \
-        cooler \
+        'cooler>=0.9' \
         matplotlib \
         natsort \
         numpy \

@@ -19,12 +19,11 @@ RUN micromamba install -y \
         'python>3' \
         bioframe \
         c-compiler \
-        cooler \
+        'cooler>=0.9' \
         cython \
         git \
         make \
-        'matplotlib<3.6' \
-        'numpy>1.16,<1.24' \
+        'numpy>1.16' \
         pandas \
         scikit-learn \
         'scipy>0.19' \

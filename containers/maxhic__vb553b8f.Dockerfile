@@ -30,11 +30,11 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
-        cooler \
-        "numpy>=1.4,<2" \
-        "pandas>=0.24,<1" \
-        "scipy>=1.1,<2" \
-        "tensorflow>=1.3,<2" \
+        'cooler>=0.9' \
+        'numpy>=1.4' \
+        'pandas>=0.24' \
+        'scipy>=1.1' \
+        'tensorflow>=1.3,<2' \
 && micromamba clean --all -y
 
 

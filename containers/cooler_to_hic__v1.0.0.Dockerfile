@@ -27,14 +27,13 @@ ARG CONTAINER_VERSION
 ARG PIP_NO_CACHE_DIR=0
 
 RUN apt-get update \
-&&  apt-get install -y cython3 \
-                       openjdk-18-jre \
+&&  apt-get install -y openjdk-18-jre \
                        pigz \
                        python3 \
                        python3-pip \
                        zstd \
-&& pip install numpy cooler \
-&& apt-get remove -y cython3 python3-pip \
+&& pip install 'cooler>=0.9' \
+&& apt-get remove -y python3-pip \
 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=downloader --chown=root:root /tmp/juicer_tools*.jar /usr/local/share/java/juicer_tools/
