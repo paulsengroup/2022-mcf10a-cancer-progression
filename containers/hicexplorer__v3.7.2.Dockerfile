@@ -18,8 +18,6 @@ RUN micromamba install -y \
         -c bioconda \
         "python=3.9" \
         "hicexplorer=$HICEXPLORER_VER" \
-        "numpy<1.24" \
-        "matplotlib<3.6" \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

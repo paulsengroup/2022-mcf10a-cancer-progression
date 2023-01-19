@@ -19,8 +19,6 @@ RUN apt-get update \
                       python3-dev \
                       python3-pip \
 && pip install "hicrep==$HICREP_VER" \
-               "matplotlib<3.6" \
-               "numpy<1.24" \
 && apt-get remove -y -q cython3 \
                          gcc \
                          python3-dev \
