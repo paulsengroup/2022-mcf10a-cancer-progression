@@ -20,7 +20,7 @@ RUN cd /tmp \
 && chmod 644 juicer_tools*.jar LICENSE
 
 
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.10 AS base
 
 ARG CONTAINER_TITLE
 ARG CONTAINER_VERSION

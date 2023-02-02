@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS downloader
+FROM ubuntu:22.10 AS downloader
 
 ARG GO_FIGURE_VERSION='1.0.1'
 ARG GO_FIGURE_URL="https://gitlab.com/evogenlab/GO-Figure/-/archive/v${GO_FIGURE_VERSION}/GO-Figure-v${GO_FIGURE_VERSION}.tar.gz"

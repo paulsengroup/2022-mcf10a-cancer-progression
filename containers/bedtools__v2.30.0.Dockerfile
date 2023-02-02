@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:22.10 AS builder
 
 ARG CONTAINER_VERSION
 ARG BEDTOOLS_VER=${CONTAINER_VERSION}
@@ -30,7 +30,7 @@ RUN cd "/tmp/bedtools2" \
 &&  PATH="/tmp/bin:$PATH" make -j $(nproc)  \
 &&  PATH="/tmp/bin:$PATH" make test 2>&1 | grep -q 'Tools failing:  negativecontrol'
 
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.10 AS base
 ARG CONTAINER_VERSION
 ARG CONTAINER_TITLE
 
