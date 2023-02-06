@@ -6,6 +6,7 @@
 **
 
 # Allowed files and directories
+!containers/assets/**
 !containers/patches/**
 !bin/**
 

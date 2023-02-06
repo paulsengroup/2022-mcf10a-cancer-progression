@@ -28,10 +28,10 @@ jobs:
       matrix:
         image-name: [ "bedtools",
                       "cooltools",
-                      "cooler_to_hic",
                       "dchic",
                       "diff_expression_analysis",
                       "functional_analysis",
+                      "hic_balancing",
                       "hicexplorer",
                       "hicrep",
                       "iced",
