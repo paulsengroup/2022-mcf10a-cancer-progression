@@ -33,6 +33,12 @@ def printable_chrom(chrom):
 def make_cli():
     cli = argparse.ArgumentParser()
 
+    def positive_float(s) -> float:
+        if (x := float(s)) > 0:
+            return x
+
+        raise RuntimeError("Not a positive float")
+
     cli.add_argument(
         "cooler",
         type=pathlib.Path,
@@ -44,6 +50,12 @@ def make_cli():
         type=pathlib.Path,
         nargs="+",
         help="Path to one or more a BED3+ files with the list of regions to mask out during blancing.",
+    )
+    cli.add_argument(
+        "--mad-max-threshold",
+        type=positive_float,
+        default=10.0,
+        help="Threshold for the MAD-max filter (see cooler's docs for more details).",
     )
     cli.add_argument(
         "--strategy",
@@ -64,8 +76,8 @@ def make_cli():
     return cli
 
 
-def read_blacklisted_regions(path_to_bed3: List[pathlib.Path]) -> Union[None, pd.DataFrame]:
-    if len(path_to_bed3) == 0:
+def read_blacklisted_regions(path_to_bed3: Union[None, List[pathlib.Path]]) -> Union[None, pd.DataFrame]:
+    if path_to_bed3 is None or len(path_to_bed3) == 0:
         return None
 
     with warnings.catch_warnings():
@@ -198,7 +210,9 @@ def main():
 
     with mp.Pool(args["nproc"]) as pool:
         for uri, strategy in generate_tasks(input_cooler, args["strategy"]):
-            bias, stats = run_cooler_balance(uri, strategy, blacklist, args["nproc"], pool)
+            bias, stats = run_cooler_balance(
+                uri, strategy, blacklist, args["nproc"], pool, mad_max=args["mad_max_threshold"]
+            )
             write_weights(uri, strategy, bias, stats)
 
 
