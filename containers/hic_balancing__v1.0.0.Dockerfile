@@ -30,7 +30,7 @@ RUN cd /tmp \
 
 FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230204 AS builder
 
-COPY containers/assets/hic2cool-ng-c5fd161.tar.xz /tmp/
+COPY containers/assets/hic2cool-ng-de0fad0.tar.xz /tmp/
 
 RUN apt-get update \
 && apt-get install -y libtbb2-dev
@@ -48,7 +48,8 @@ ARG CONTAINER_VERSION
 ARG PIP_NO_CACHE_DIR=0
 
 RUN apt-get update \
-&& apt-get install -y libcurl4 \
+&& apt-get install -y git \
+                      libcurl4 \
                       libcurl4-openssl-dev \
                       libtbb2 \
                       openjdk-18-jre \
@@ -56,10 +57,12 @@ RUN apt-get update \
                       python3 \
                       python3-pip \
                       zstd \
-&& pip install 'cooler>=0.9' \
+&& pip install 'bioframe>=0.3.3' \
+                git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
-&& apt-get remove -y libcurl4-openssl-dev \
+&& apt-get remove -y git \
+                     libcurl4-openssl-dev \
                      python3-pip \
 && rm -rf /var/lib/apt/lists/*
 
