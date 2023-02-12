@@ -30,7 +30,7 @@ RUN cd /tmp \
 
 FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230204 AS builder
 
-COPY containers/assets/hic2cool-ng-de0fad0.tar.xz /tmp/
+COPY containers/assets/hic2cool-ng-5a81b9e.tar.xz /tmp/
 
 RUN apt-get update \
 && apt-get install -y libtbb2-dev
