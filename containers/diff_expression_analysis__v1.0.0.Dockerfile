@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.0 AS base
+FROM mambaorg/micromamba:1.3.1 AS base
 
 ARG CONTAINER_VERSION
 
