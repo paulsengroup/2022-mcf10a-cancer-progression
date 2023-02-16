@@ -170,7 +170,7 @@ def get_compressor(compression_level: int, nproc: int) -> Union[list, None]:
 
 def read_blacklisted_regions(path_to_bed3: Union[None, List[pathlib.Path]]) -> Union[None, pd.DataFrame]:
     if path_to_bed3 is None or len(path_to_bed3) == 0:
-        return None
+        return pd.DataFrame({"chrom": [], "start": [], "end": []})
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -182,6 +182,8 @@ def read_blacklisted_regions(path_to_bed3: Union[None, List[pathlib.Path]]) -> U
 
 
 def map_1d_regions_to_bin_ids(regions: pd.DataFrame, bins: pd.DataFrame) -> np.ndarray:
+    if len(regions) == 0:
+        return np.empty(0, dtype=int)
     df = bf.overlap(regions, bins[bf.SCHEMAS["bed3"]], return_index=True, suffixes=("_1", "_2")).dropna()
     return df["index_2"].to_numpy().astype(int)
 
@@ -451,6 +453,7 @@ def write_weights(uri: str, strategy: str, bias: np.ndarray, stats: Dict):
 def _juicer_tools_balance_helper(
     input_uri: str,
     output_uri: str,
+    blacklist: pd.DataFrame,
     normalization_methods: List[str],
     hictools_jar: pathlib.Path,
     juicertools_jar: pathlib.Path,
@@ -479,9 +482,22 @@ def _juicer_tools_balance_helper(
         for norm in normalization_methods:
             run_juicer_tools_add_norm(hic, resolution, norm, juicertools_jar, nproc, xms, xmx)
 
+            blacklist1d = map_1d_regions_to_bin_ids(blacklist, cooler.Cooler(input_uri).bins()[:])
+
             try:
                 lock.acquire()
                 run_hic2coolng_extract_norms(hic, output_uri, norm, hic2cool_ng)
+
+                if len(blacklist1d) != 0:
+                    path = cooler.Cooler(output_uri).filename
+                    suffix = cooler.Cooler(output_uri).root
+                    with h5py.File(path, "r+") as f:
+                        weights = f[f"{suffix}/bins"][norm][:]
+                        weights[blacklist1d] = np.nan
+
+                        dset = f[f"{suffix}/bins/{norm}"]
+                        dset[...] = weights
+
             finally:
                 lock.release()
 
@@ -493,6 +509,7 @@ def _juicer_tools_balance_helper(
 def juicer_tools_balance(
     input_uri: str,
     output_uri: str,
+    blacklist: pd.DataFrame,
     normalization_methods: List[str],
     hictools_jar: pathlib.Path,
     juicertools_jar: pathlib.Path,
@@ -513,6 +530,7 @@ def juicer_tools_balance(
         zip(
             input_uris,
             output_uris,
+            itertools.repeat(blacklist),
             itertools.repeat(normalization_methods),
             itertools.repeat(hictools_jar),
             itertools.repeat(juicertools_jar),
@@ -616,6 +634,7 @@ def main():
                 juicer_tools_balance(
                     input_cooler,
                     output_cooler,
+                    blacklist=blacklist,
                     normalization_methods=other_norms,
                     hictools_jar=hic_tools_jar,
                     juicertools_jar=juicer_tools_jar,
