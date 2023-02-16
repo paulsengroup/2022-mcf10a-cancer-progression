@@ -57,10 +57,12 @@ RUN apt-get update \
                       python3 \
                       python3-pip \
                       zstd \
+&& pip install --upgrade pip setuptools \
 && pip install 'bioframe>=0.3.3' \
                 git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
+&& pip uninstall -y pip setuptools \
 && apt-get remove -y git \
                      libcurl4-openssl-dev \
                      python3-pip \
