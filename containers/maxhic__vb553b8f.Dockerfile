@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.0 AS downloader
+FROM mambaorg/micromamba:1.3.1 AS downloader
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG PIP_NO_CACHE_DIR=0
 
@@ -16,7 +16,7 @@ RUN micromamba install -y -c conda-forge git \
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-FROM mambaorg/micromamba:1.3.0 AS base
+FROM mambaorg/micromamba:1.3.1 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
