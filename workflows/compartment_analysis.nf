@@ -11,7 +11,11 @@ workflow {
                            .filter{ !it.getSimpleName().contains("merged") })
            .set { mcools }
 
-    preproc_data_for_dchic(mcools)
+    generate_blacklist(file(params.assembly_gaps),
+                       file(params.cytoband))
+
+    preproc_data_for_dchic(mcools,
+                           generate_blacklist.out.bed)
 
     preproc_data_for_dchic.out.resolution
                           .merge(preproc_data_for_dchic.out.matrix)
@@ -61,11 +65,34 @@ workflow {
                                           postprocess_dchic_output.out.subcompartments)
 }
 
+process generate_blacklist {
+    input:
+        path assembly_gaps
+        path cytoband
+
+    output:
+        path "*.bed", emit: bed
+
+    shell:
+        '''
+        set -o pipefail
+
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
+            <(zcat '!{cytoband}' | grep 'acen$') |
+            grep '^chr[XY0-9]\\+[[:space:]]' |
+            cut -f 1-3 |
+            sort -k1,1V -k2,2n |
+            bedtools merge -i stdin |
+            cut -f1-3 > blacklist.bed
+        '''
+}
+
 process preproc_data_for_dchic {
     label 'process_low'
 
     input:
         tuple val(resolution), path(cooler)
+        path blacklist
 
     output:
         path "*.chrom.sizes", emit: chrom_sizes
@@ -76,6 +103,8 @@ process preproc_data_for_dchic {
 
     shell:
         '''
+        set -o pipefail
+
         if [ '!{resolution}' -ne 0 ]; then
             cooler='!{cooler}::/resolutions/!{resolution}'
         else
@@ -93,6 +122,19 @@ process preproc_data_for_dchic {
                       -res '!{resolution}'                 \
                       -prefix "$outprefix"                 \
                       -removeChr chrY,chrM
+
+        # Dump the bin table.
+        # 4th column contains the absolute bin id (starting from 1)
+        # The 5th column contains 1 if the bin overlaps with one or more blacklisted regions and 0 otherwise
+        cooler dump -t bins '!{cooler}' |
+            grep -v 'chr[0-9X]\\+'      |
+            cut -f 1-3                  |
+            bedtools intersect          \
+                -a stdin                \
+                -b '!{blacklist}'       \
+                -wa -c                  |
+            awk -F '\\t' 'BEGIN{OFS=FS} {print $1,$2,$3,NR,$4!=0}' |
+            tee "${outprefix}_abs.bed" > /dev/null
 
         cooler dump --na-rep nan -t bins "$cooler" |
             grep -v 'chr[0-9X]\\+'                 |
