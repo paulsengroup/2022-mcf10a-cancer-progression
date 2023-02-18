@@ -52,7 +52,8 @@ workflow {
 
     cooler_to_hic(coolers_by_sample.mix(cooler_merge.out.cool))
 
-    cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool),
+    cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool))
+    cooler_balance(cooler_zoomify.out.mcool,
                    generate_blacklist.out.bed)
 
     compress_bwt2pairs(input_bwt2pairs,
@@ -131,7 +132,6 @@ process cooler_to_hic {
                                        saveAs: { "${label}/${label}.hic" }
 
     label 'process_medium'
-    label 'process_high_memory'
 
     input:
         tuple val(label), path(cool)
@@ -140,41 +140,44 @@ process cooler_to_hic {
         path "*.hic", emit: hic
 
     shell:
-        memory_mb=task.memory.toMega() - 750
+        memory_gb=task.memory.toGiga()
+        out="${cool.baseName}.hic"
         '''
-        set -o pipefail
         trap 'rm -rf tmp/' EXIT
 
-        mkdir tmp/
-
-        zstd_wrapper='tmp/zstd_wrapper.sh'
-
-        printf '%s\\n%s\\n' \
-            '#!/usr/bin/env bash' \
-            'if [[ $# == 0 ]]; then zstd --adapt -T!{task.cpus}; else zstd -d; fi' > "$zstd_wrapper"
-        chmod 755 "$zstd_wrapper"
-
-        cat "$zstd_wrapper"
-
-        cooler dump -t chroms '!{cool}' > tmp/chrom.sizes
-
-        # See here for the format produced by AWK command
-        # https://github.com/aidenlab/juicer/wiki/Pre#short-with-score-format
-        # IMPORTANT: juicer_tools expect chromosome names to be sorted, so that's why we need the sort command
-        # Unfortunately pipes are not supported, so we have to write pixels to a temporary file
-
-        cooler dump -t pixels --join '!{cool}' |
-            awk -F '\\t' 'BEGIN{ OFS=FS } {print "1",$1,($2+$3)/2,"0","0",$4,($5+$6)/2,"1",$7}' |
-            sort -k2,2 -k6,6 -T tmp/ -S !{memory_mb}M --compress-program="$zstd_wrapper" --parallel=!{task.cpus} |
-            pigz -9 -p !{task.cpus} > tmp/pixels.txt.gz
-
-        java -Xms512m -Xmx!{memory_mb}m -jar \
-            /usr/local/share/java/juicer_tools/*.jar \
-            pre -j !{task.cpus} tmp/pixels.txt.gz matrix.hic tmp/chrom.sizes
+        cool2hic-ng \
+            --hic-tools-jar /usr/local/share/java/hic_tools/hic_tools*.jar \
+            --juicer-tools-jar /usr/local/share/java/juicer_tools/juicer_tools*.jar \
+            --tmpdir=tmp/ \
+            '!{cool}' \
+            '!{out}' \
+            --nproc '!{task.cpus}' \
+            -Xmx '!{memory_gb}g' \
+            --resolutions 1000 2000 5000 10000 20000 \
+                          50000 100000 200000 500000 \
+                          1000000 2000000 5000000 10000000
         '''
 }
 
 process cooler_zoomify {
+    label 'process_medium'
+    label 'process_long'
+
+    input:
+        tuple val(label), path(cool)
+
+    output:
+        tuple val(label), path("*.mcool"), emit: mcool
+
+    shell:
+        '''
+        cooler zoomify -p !{task.cpus}                  \
+                       -r N                             \
+                       '!{cool}'
+        '''
+}
+
+process cooler_balance {
     publishDir "${params.output_dir}", mode: 'copy',
                                        saveAs: { "${label}/${label}.mcool" }                                             
 
@@ -182,21 +185,24 @@ process cooler_zoomify {
     label 'process_long'
 
     input:
-        tuple val(label), path(cool)
+        tuple val(label), path(mcool)
         path blacklist
     
     output:
-        tuple val(label), path("*.mcool"), emit: mcool
+        tuple val(label), path("*.mcool.new"), emit: mcool
 
     shell:
+        memory_gb=task.memory.toGiga()
         '''
-        balance_args='-p !{task.cpus} --blacklist '!{blacklist}' --max-iters 500'
-
-        cooler zoomify -p !{task.cpus}                  \
-                       -r N                             \
-                       --balance                        \
-                       --balance-args="${balance_args}" \
-                       '!{cool}'
+        cp '!{mcool}' '!{mcool}.new'
+        cooler_balance.py \
+            --hic-tools-jar /usr/local/share/java/hic_tools/hic_tools*.jar \
+            --juicer-tools-jar /usr/local/share/java/juicer_tools/juicer_tools*.jar \
+            --nproc !{task.cpus} \
+            --blacklist '!{blacklist}' \
+            -Xmx !{memory_gb}g \
+            '!{mcool}' \
+            '!{mcool}.new'
         '''
 }
 
@@ -226,7 +232,6 @@ process compress_bwt2pairs {
                       -o '!{label}.bwt2pairs.cram'
         '''
 }
-
 
 process compress_validpairs {
     publishDir "${params.output_dir}", mode: 'copy',
