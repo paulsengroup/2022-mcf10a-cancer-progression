@@ -44,4 +44,3 @@ nextflow run nf-core/chipseq -r 2.0.0 \
   -profile singularity \
   -resume
 )
-
