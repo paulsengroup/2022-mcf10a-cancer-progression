@@ -17,6 +17,7 @@ RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
         "python=3.9" \
+        "cleanlab>=1,<2" \
         "hicexplorer=$HICEXPLORER_VER" \
 && micromamba clean --all -y
 
