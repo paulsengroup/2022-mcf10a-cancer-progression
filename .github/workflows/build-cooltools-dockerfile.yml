@@ -1,7 +1,7 @@
 # Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
 # SPDX-License-Identifier: MIT
 
-name: Build Bedtools Dockerfile
+name: Build cooltools Dockerfile
 
 on:
   push:
