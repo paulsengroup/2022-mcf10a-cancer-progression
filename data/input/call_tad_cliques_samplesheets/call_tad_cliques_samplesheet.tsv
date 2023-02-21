@@ -1,4 +1,4 @@
 sample	cooler_cis	cooler_trans	tads
-GRCh38_MCF10A_WT	data/output/nfcore_hic/mcools/GRCh38_MCF10A_WT_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_WT_merged.mcool::/resolutions/1000000	data/output/tad_analysis/GRCh38_MCF10A_WT_merged_domains.bed.gz
-GRCh38_MCF10A_T1	data/output/nfcore_hic/mcools/GRCh38_MCF10A_T1_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_T1_merged.mcool::/resolutions/1000000	data/output/tad_analysis/GRCh38_MCF10A_T1_merged_domains.bed.gz
-GRCh38_MCF10A_C1	data/output/nfcore_hic/mcools/GRCh38_MCF10A_C1_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_C1_merged.mcool::/resolutions/1000000	data/output/tad_analysis/GRCh38_MCF10A_C1_merged_domains.bed.gz
+GRCh38_MCF10A_WT	data/output/nfcore_hic/mcools/GRCh38_MCF10A_WT_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_WT_merged.mcool::/resolutions/1000000	data/output/tad_analysis/ICE/50000/GRCh38_MCF10A_WT_merged_domains.bed.gz
+GRCh38_MCF10A_T1	data/output/nfcore_hic/mcools/GRCh38_MCF10A_T1_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_T1_merged.mcool::/resolutions/1000000	data/output/tad_analysis/ICE/50000/GRCh38_MCF10A_T1_merged_domains.bed.gz
+GRCh38_MCF10A_C1	data/output/nfcore_hic/mcools/GRCh38_MCF10A_C1_merged.mcool::/resolutions/50000	data/output/nfcore_hic/mcools/GRCh38_MCF10A_C1_merged.mcool::/resolutions/1000000	data/output/tad_analysis/ICE/50000/GRCh38_MCF10A_C1_merged_domains.bed.gz
