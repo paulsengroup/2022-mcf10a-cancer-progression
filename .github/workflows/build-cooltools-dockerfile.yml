@@ -1,0 +1,24 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build Bedtools Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-cooltools*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/cooltools*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-cooltools*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/cooltools*.Dockerfile"
+
+jobs:
+  build-cooltools-dockerfile:
+    uses: paulsengroup/2022-mcf10a-cancer-progressione/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/cooltools*.Dockerfile"
