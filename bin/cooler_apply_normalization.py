@@ -14,6 +14,7 @@ import sys
 from typing import Union
 
 import cooler
+import numpy as np
 import pandas as pd
 from cooler.core import CSRReader, DirectRangeQuery2D
 
@@ -35,13 +36,21 @@ def make_cli():
     cli.add_argument(
         "cooler",
         type=pathlib.Path,
-        help="Path to a .cool ile (URI syntax supported).",
+        help="Path to a .cool file (URI syntax supported).",
     )
     cli.add_argument(
         "--norm-name",
         type=str,
         default="weight",
         help="Name of the normalization to be applied.",
+    )
+    cli.add_argument(
+        "--weight-type",
+        type=str,
+        default="auto",
+        choices={"auto", "divisive", "multiplicative"},
+        help="Specify whether weights are multiplicative or divisive.\n"
+        "By default, weight type is inferred from the dataset name.",
     )
     cli.add_argument(
         "--output-name",
@@ -62,11 +71,35 @@ def make_cli():
     return cli
 
 
-def make_annotator(bins, weight_dset, join):
+def weights_are_divisive(weight_name: str) -> bool:
+    divisive_weight_names = {
+        "VC",
+        "INTER_VC",
+        "GW_VC",
+        "VC_SQRT",
+        "KR",
+        "INTER_KR",
+        "GW_KR",
+        "SCALE",
+        "INTER_SCALE",
+        "GW_SCALE",
+    }
+
+    return weight_name in divisive_weight_names
+
+
+def make_annotator(bins, weight_dset, join, divisive):
     # Adapted from: https://github.com/open2c/cooler/blob/master/cooler/cli/dump.py
     def annotator(chunk):
         df = cooler.annotate(chunk, bins[[weight_dset]])
-        chunk["balanced"] = df["weight1"] * df["weight2"] * chunk["count"]
+        w1 = df[f"{weight_dset}1"]
+        w2 = df[f"{weight_dset}2"]
+
+        if divisive:
+            w1 = 1 / w1
+            w2 = 1 / w2
+
+        chunk["balanced"] = w1 * w2 * chunk["count"]
 
         if join:
             chunk = cooler.annotate(chunk, bins[["chrom", "start", "end"]], replace=True)
@@ -86,7 +119,14 @@ def get_compressor(compression_level: int, nproc: int) -> Union[list, None]:
 
 def to_cooler(chunks, bins: pd.DataFrame, output_cooler_uri: pathlib.Path, assembly: str = "unknown"):
     chunks = (chunk.rename(columns={"balanced": "count"}) for chunk in chunks)
-    cooler.create_cooler(str(output_cooler_uri), bins, chunks, dtypes={"count": float}, ordered=True, assembly=assembly)
+    cooler.create_cooler(
+        str(output_cooler_uri),
+        bins[["chrom", "start", "end"]],
+        chunks,
+        dtypes={"count": float},
+        ordered=True,
+        assembly=assembly,
+    )
 
 
 def to_text_compressed(chunks, output_file: pathlib.Path, nproc: int):
@@ -124,6 +164,7 @@ def cooler_dump_chunked(
     cool_uri: str,
     weight_dset: str,
     join: bool,
+    weight_type: str,
     chunksize=1000000,
 ):
     # Adapted from: https://github.com/open2c/cooler/blob/master/cooler/cli/dump.py
@@ -155,7 +196,12 @@ def cooler_dump_chunked(
         for dct in engine
     )
 
-    annotator = make_annotator(bins, weight_dset, join)
+    if weight_type == "auto":
+        divisive_weights = weights_are_divisive(weight_dset)
+    else:
+        divisive_weights = weight_type == "divisive"
+
+    annotator = make_annotator(bins, weight_dset, join, divisive_weights)
     return map(annotator, chunks)
 
 
@@ -164,7 +210,7 @@ def main():
     input_cooler = str(args["cooler"])
     output_file = args["output_name"]
 
-    chunks = cooler_dump_chunked(input_cooler, args["norm_name"], output_file.suffix != ".cool")
+    chunks = cooler_dump_chunked(input_cooler, args["norm_name"], output_file.suffix != ".cool", args["weight_type"])
 
     if output_file.suffix == ".cool":
         bins = cooler.Cooler(input_cooler).bins()[:]
@@ -175,7 +221,7 @@ def main():
         to_text(chunks, output_file)
 
 
-def setup_logger(level=logging.DEBUG):
+def setup_logger(level=logging.INFO):
     fmt = "[%(asctime)s] %(levelname)s: %(message)s"
     logging.basicConfig(format=fmt)
     logging.getLogger().setLevel(level)
