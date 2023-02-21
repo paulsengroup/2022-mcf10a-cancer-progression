@@ -8,10 +8,12 @@ set -e
 set -o pipefail
 set -u
 
-echo 1>&2 'Running robomics/call_tad_cliques...'
 
-wd=".nextflow-chrom3d-wd"
+step='chrom3d'
+wd=".nextflow-$step-wd"
 mkdir -p "$wd"
+
+echo 1>&2 'Running robomics/call_tad_cliques...'
 
 for dir in bin configs containers data workflows; do
   (cd "$wd" && ln -sf "../$dir/" "$dir")
@@ -67,10 +69,6 @@ function run_workflow() {
         -resume
 }
 
-step='chrom3d'
 echo 1>&2 "Running step $step..."
-
-wd=".nextflow-$step-wd"
-mkdir -p "$wd"
 (cd "$wd" && run_workflow "$step")
 echo 1>&2 "Workflow \"$step\" successfully completed!"
