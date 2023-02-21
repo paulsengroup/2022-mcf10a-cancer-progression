@@ -31,12 +31,13 @@ jobs:
       - name: Collect metadata
         id: metadata
         run: |
+          dockerfile=(${{ inputs.dockerfile-glob }})
+
+          dockerfile_name="$(basename "${dockerfile[*]}" .Dockerfile)"
+          name="$(echo "$dockerfile_name" | sed -E 's/(.*)__.*/\1/')"
+          version="$(echo "$dockerfile_name" | sed -E 's/.*__v(.*)/\1/')"
           
-          dockerfile="$(basename  ${{ inputs.dockerfile-glob }} .Dockerfile)"
-          name="$(echo "$dockerfile" | sed -E 's/(.*)__.*/\1/')"
-          version="$(echo "$dockerfile" | sed -E 's/.*__v(.*)/\1/')"
-          
-          echo "dockerfile=$dockerfile" >> $GITHUB_OUTPUT
+          echo "dockerfile=${dockerfile[*]}" >> $GITHUB_OUTPUT
           echo "name=$name" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
         
