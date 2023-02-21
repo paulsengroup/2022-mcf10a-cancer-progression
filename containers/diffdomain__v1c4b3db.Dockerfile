@@ -1,6 +1,23 @@
 # Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
 #
 # SPDX-License-Identifier: MIT
+FROM ubuntu:22.04 AS downloader
+
+ARG CONTAINER_VERSION
+ARG DIFFDOMAIN_VER=${CONTAINER_VERSION}
+
+COPY "containers/assets/robomics-diffdomain-${DIFFDOMAIN_VER}.tar.xz" /tmp/
+
+RUN apt-get update \
+&& apt-get install -y tar xz-utils \
+&& cd /tmp \
+&& tar -xf robomics-diffdomain-*.tar.xz \
+&& mv robomics-diffdomain-*/ diffdomain \
+&& chmod 755 diffdomain/diffdomain-py3/diffdomains.py \
+             diffdomain/diffdomain-py3/classification.py \
+&& rm diffdomain/diffdomain-py3/__init__.py \
+&& find diffdomain -type f -exec chmod uga+r {} + \
+&& find diffdomain -type d -exec chmod uga+rx {} +
 
 FROM mambaorg/micromamba:1.3.1 AS base
 
@@ -20,7 +37,6 @@ RUN micromamba install -y \
         'hic-straw=1.3.1' \
         'cooler>=0.9' \
         docopt \
-        git \
         h5py \
         matplotlib \
         numpy \
@@ -29,22 +45,26 @@ RUN micromamba install -y \
         statsmodels \
         tqdm \
         tracywidom \
-&& git clone https://github.com/robomics/diffDomain.git /tmp/diffDomain \
-&& cd /tmp/diffDomain \
-&& git checkout "$DIFFDOMAIN_VER" \
-&& micromamba remove -y git \
-&& micromamba clean --all -y \
-&& install -Dm0755 diffdomain-py3/diffdomains.py /opt/conda/lib/python3.10/site-packages/diffdomain_py3/diffdomains.py \
-&& install -Dm0755 diffdomain-py3/classification.py /opt/conda/lib/python3.10/site-packages/diffdomain_py3/classification.py \
-&& install -Dm0644 diffdomain-py3/utils.py /opt/conda/lib/python3.10/site-packages/diffdomain_py3/utils.py \
-&& ln -s /opt/conda/lib/python3.10/site-packages/diffdomain_py3/diffdomains.py /opt/conda/bin/diffdomains.py \
-&& ln -s /opt/conda/lib/python3.10/site-packages/diffdomain_py3/classification.py /opt/conda/bin/classification.py \
-&& cd / \
-&& rm -r /tmp/diffDomain
+&& micromamba clean --all -y
 
-ENV PATH="/opt/conda/bin:$PATH"
+COPY --from=downloader --chown=nobody:nogroup \
+    /tmp/diffdomain/diffdomain-py3/*.py \
+    /opt/diffdomain_py3/lib/
+
+COPY --from=downloader --chown=nobody:nogroup \
+    /tmp/diffdomain/LICENSE \
+    /opt/diffdomain_py3/share/
+
+USER root
+RUN mkdir /opt/diffdomain_py3/bin \
+&& ln -s /opt/diffdomain_py3/lib/diffdomains.py /opt/diffdomain_py3/bin/diffdomains.py \
+&& ln -s /opt/diffdomain_py3/lib/classification.py /opt/diffdomain_py3/bin/classification.py \
+&& chown -R nobody:nogroup /opt/diffdomain_py3
+USER mambauser
+
+ENV PATH="/opt/conda/bin:/opt/diffdomain_py3/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
-CMD ["/opt/conda/bin/diffdomains"]
+CMD ["/opt/diffdomain_py3/bin/diffdomains.py"]
 WORKDIR /data
 
 
