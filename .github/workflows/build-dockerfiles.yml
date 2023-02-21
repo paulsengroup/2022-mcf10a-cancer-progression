@@ -29,6 +29,7 @@ jobs:
         image-name: [ "bedtools",
                       "cooltools",
                       "dchic",
+                      "diffdomain",
                       "diff_expression_analysis",
                       "functional_analysis",
                       "hic_balancing",
