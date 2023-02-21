@@ -19,6 +19,7 @@ on:
 
 jobs:
   build-cooltools-dockerfile:
+    name: Build cooltools Dockerfile
     uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
     with:
       dockerfile-glob: "containers/cooltools*.Dockerfile"
