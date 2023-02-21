@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build bedtools Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-bedtools-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/bedtools*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-bedtools-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/bedtools*.Dockerfile"
+
+jobs:
+  build-bedtools-dockerfile:
+    name: Build bedtools Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/bedtools*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write

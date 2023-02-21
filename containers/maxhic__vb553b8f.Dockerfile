@@ -2,17 +2,22 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.1 AS downloader
+FROM ubuntu:22.04 AS downloader
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG PIP_NO_CACHE_DIR=0
 
 ARG CONTAINER_VERSION
 ARG MAXHIC_VER=${CONTAINER_VERSION}
 
-RUN micromamba install -y -c conda-forge git \
-&& git clone https://github.com/bcb-sut/MaxHiC /tmp/maxhic \
-&& cd /tmp/maxhic \
-&& git checkout "${MAXHIC_VER}"
+COPY "containers/assets/maxhic-${MAXHIC_VER}.tar.xz" /tmp/
+
+RUN apt-get update \
+&& apt-get install -y findutils tar xz-utils \
+&& cd /tmp \
+&& tar -xf maxhic-*.tar.xz \
+&& mv maxhic-*/ maxhic \
+&& find maxhic -type f -exec chmod uga+r {} + \
+&& find maxhic -type d -exec chmod uga+rx {} +
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
@@ -31,7 +36,7 @@ RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
         'cooler>=0.9' \
-        'numpy>=1.4' \
+        'numpy>=1.4,<1.22' \
         'pandas>=0.24' \
         'scipy>=1.1' \
         'tensorflow>=1.3,<2' \
