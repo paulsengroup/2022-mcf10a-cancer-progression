@@ -9,7 +9,7 @@ ARG PIP_NO_CACHE_DIR=0
 ARG CONTAINER_VERSION
 ARG MAXHIC_VER=${CONTAINER_VERSION}
 
-COPY "containers/assets/maxhic-${MAXHIC_VERSION}.tar.xz" /tmp/
+COPY "containers/assets/maxhic-${MAXHIC_VER}.tar.xz" /tmp/
 
 RUN apt-get update \
 && apt-get install -y tar xz \
