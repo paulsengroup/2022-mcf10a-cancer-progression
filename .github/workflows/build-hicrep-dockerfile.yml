@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build HiCRep Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-hicrep*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/hicrep*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-hicrep*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/hicrep*.Dockerfile"
+
+jobs:
+  build-hicrep-dockerfile:
+    name: Build HiCRep Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/hicrep*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
