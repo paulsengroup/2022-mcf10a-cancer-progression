@@ -2,6 +2,26 @@
 #
 # SPDX-License-Identifier: MIT
 
+FROM ubuntu:22.04 AS downloader
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+ARG PIP_NO_CACHE_DIR=0
+
+ARG CONTAINER_VERSION
+ARG DCHIC_VER=${CONTAINER_VERSION}
+
+COPY "containers/assets/dchic-${DCHIC_VER}.tar.xz" /tmp/
+
+RUN apt-get update \
+&& apt-get install -y findutils sed tar xz-utils \
+&& cd /tmp \
+&& tar -xf dchic-*.tar.xz \
+&& mv dchic-*/ dchic \
+&& rm -r dchic/demo dchic/docs \
+&& sed -i 's/name: dchic/name: base/' dchic/packages/dchic.yml \
+&& find dchic -type f -exec chmod uga+r {} + \
+&& find dchic -type d -exec chmod uga+rx {} + \
+&& chmod 755 dchic/dchicf.r
+
 FROM mambaorg/micromamba:1.3.1 AS base
 
 ARG CONTAINER_VERSION
@@ -9,27 +29,14 @@ ARG CONTAINER_VERSION
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-ARG DC_HIC_VERSION="${CONTAINER_VERSION}"
+ARG DCHIC_VERSION="${CONTAINER_VERSION}"
 
-ARG DC_HIC_GIT="https://github.com/ay-lab/dcHiC.git"
-ARG DC_HIC_GIT_SHA="${CONTAINER_VERSION}"
+COPY --from=downloader --chown=nobody:nogroup /tmp/dchic /opt/dchic
 
-RUN micromamba install -y             \
-               -c conda-forge         \
-               git                    \
-&& git clone "$DC_HIC_GIT" /tmp/dchic \
-&& cd /tmp/dchic                      \
-&& git checkout "$DC_HIC_GIT_SHA"     \
-&& sed -i 's/name: dchic/name: base/' packages/dchic.yml                \
-&& micromamba install -y -f packages/dchic.yml                          \
-&& micromamba remove -y git                                             \
-&& micromamba clean --all -y                                            \
-&& R CMD INSTALL packages/functionsdchic_*.tar.gz                       \
-&& install -Dm0755 dchicf.r /opt/conda/bin/dchicf.r                     \
-&& install -Dm0755 utility/*.{r,py,sh} /opt/conda/bin/                  \
-&& install -Dm0755 utility/Chromosome_ArmWise_PCA/*.pl /opt/conda/bin/  \
-&& install -Dm0644 LICENSE /opt/conda/share/licenses/dchic/LICENSE      \
-&& cd / && rm -rf /tmp/dchic
+RUN cd /opt/dchic \
+&& micromamba install -y -f packages/dchic.yml \
+&& micromamba clean --all -y \
+&& R CMD INSTALL packages/functionsdchic_*.tar.gz
 
 # Workaround for ImportError raised by from pysam.libchtslib import * from igv_reports/datauri.py
 # ImportError: libcrypto.so.1.0.0: cannot open shared object file: No such file or directory
@@ -39,15 +46,17 @@ RUN cd /opt/conda/lib && ln -s libcrypto.so libcrypto.so.1.0.0
 RUN touch /opt/conda/lib/R/etc/.Rprofile
 
 USER root
-RUN chown -R nobody:nogroup /opt/conda/bin  /opt/conda/share/licenses/dchic/
+RUN mkdir /opt/dchic/bin \
+&& ln -s /opt/dchic/dchicf.r /opt/dchic/bin/dchicf.r \
+&& chown -R nobody:nogroup /opt/dchic
 USER mambauser
 
 
 WORKDIR /data
 
-ENV PATH="/opt/conda/bin:$PATH"
+ENV PATH="/opt/conda/bin:/opt/dchic/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
-CMD ["/usr/local/bin/dchicf.r"]
+CMD ["/opt/dchic/bin/dchicf.r"]
 WORKDIR /data
 
 # We have to explicitly set these R_* env variables in order for the
