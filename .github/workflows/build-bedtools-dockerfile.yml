@@ -22,3 +22,7 @@ jobs:
     uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
     with:
       dockerfile-glob: "containers/bedtools*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
