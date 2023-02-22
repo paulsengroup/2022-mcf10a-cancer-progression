@@ -44,3 +44,12 @@ nextflow run nf-core/chipseq -r 2.0.0 \
   -profile singularity \
   -resume
 )
+
+./remove_symlink_loops.sh
+(cd "$wd" &&
+nextflow run nf-core/chipseq -r 2.0.0 \
+  "${args[@]}" \
+  -c configs/nfcore_chipseq_ctcf.config \
+  -profile singularity \
+  -resume
+)
