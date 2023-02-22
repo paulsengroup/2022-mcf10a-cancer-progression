@@ -26,6 +26,17 @@ workflow {
                             file(params.microarray_cnvs),
                             file(params.microarray_probe_dbs),
                             file(params.hg17_to_hg38_liftover_chain))
+
+    decompress_data(
+        Channel.of(
+            file(params.hg38_assembly_in, checkIfExists: true),
+            file(params.hg38_gtf_in, checkIfExists: true)
+        ),
+        Channel.of(
+            params.hg38_assembly_out,
+            params.hg38_gtf_out
+        )
+    )
 }
 
 process generate_chrom_sizes {
@@ -141,5 +152,25 @@ process process_microarray_data {
             --liftover-chain '!{liftover_chain}' \
             --fill-gaps |
             gzip -9c > '!{outname}'
+        '''
+}
+
+process decompress_data {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "${dest}" }
+
+    label 'process_short'
+
+    input:
+        path src
+        val dest
+
+    output:
+        path "*", emit: file
+
+    shell:
+        out=file(dest).getName()
+        '''
+        zcat '!{src}' > '!{out}'
         '''
 }
