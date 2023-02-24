@@ -8,8 +8,6 @@ set -e
 set -o pipefail
 set -u
 
-echo 1>&2 'Running nfcore/chipseq...'
-
 wd=".nextflow-nfcore-chipseq-wd"
 mkdir -p "$wd"
 
@@ -27,29 +25,16 @@ else
     args=()
 fi
 
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_h3k27ac.config \
-  -profile singularity \
-  -resume
-)
 
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_h3kxxme.config \
-  -profile singularity \
-  -resume
-)
+for config in configs/nfcore_chipseq_*.config; do
+  echo 1>&2 "Running nfcore/chipseq ($(basename "$config"))..."
 
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_ctcf.config \
-  -profile singularity \
-  -resume
-)
+  ./remove_symlink_loops.sh
+  (cd "$wd" &&
+  nextflow run nf-core/chipseq -r 2.0.0 \
+    "${args[@]}" \
+    -c "$config" \
+    -profile singularity \
+    -resume
+  )
+done
