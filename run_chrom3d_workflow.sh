@@ -32,7 +32,7 @@ fi
 ./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
-  -r v0.1.0 \
+  -r v0.3.0 \
   "${args[@]}" \
   -c configs/call_tad_cliques_chrom3d.config \
   -resume

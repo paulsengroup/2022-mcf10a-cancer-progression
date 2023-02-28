@@ -8,7 +8,9 @@ set -e
 set -o pipefail
 set -u
 
-wd=".nextflow-nfcore-chipseq-wd"
+echo 1>&2 'Running nfcore/nascent...'
+
+wd=".nextflow-nfcore-nascent-wd"
 mkdir -p "$wd"
 
 for dir in bin configs containers data workflows; do
@@ -25,16 +27,11 @@ else
     args=()
 fi
 
-
-for config in configs/nfcore_chipseq_*.config; do
-  echo 1>&2 "Running nfcore/chipseq ($(basename "$config"))..."
-
-  ./remove_symlink_loops.sh
-  (cd "$wd" &&
-  nextflow run nf-core/chipseq -r 2.0.0 \
-    "${args[@]}" \
-    -c "$config" \
-    -profile singularity \
-    -resume
-  )
-done
+./remove_symlink_loops.sh
+(cd "$wd" &&
+nextflow run nf-core/nascent -r 2.1.1 \
+  "${args[@]}" \
+  -c configs/nfcore_nascent.config \
+  -profile singularity \
+  -resume
+)

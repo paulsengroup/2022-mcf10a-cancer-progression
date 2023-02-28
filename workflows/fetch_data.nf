@@ -36,6 +36,7 @@ process process_files {
     publishDir "${params.data_dir}", mode: 'copy',
                                      saveAs: { "${out_dir}/${out_name}" }
     label 'process_short'
+    label 'error_retry'
 
     input:
         tuple val(url), val(checksum), val(out_dir), val(out_name), val(compress)
@@ -55,6 +56,9 @@ process process_files {
         printf '%s  %s' "$hash" "$tmp_file" > checksum.sha256
 
         trap 'rm -f "$tmp_file"' EXIT
+
+        # Workaround connection reset by peer errors
+        python3 -c 'import time, random, sys; s=random.uniform(1,120); print(f"Sleeping for {s}s...", file=sys.stderr); time.sleep(s)'
 
         # I am using curl instead of letting Nextflow handle remote files
         # because the latter sometime truncates files
