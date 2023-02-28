@@ -79,13 +79,13 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
-          platforms: linux/amd64,linux/arm64
+        # with:
+        #  platforms: linux/amd64,linux/arm64
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm64
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v2
+      #   with:
+      #     platforms: arm64
 
       - name: Build Docker image and push to registries
         id: docker-build
@@ -96,7 +96,7 @@ jobs:
           cache-to: type=gha,mode=min,scope=${{ needs.collect-metadata.outputs.dockerfile }}
           tags: ${{ steps.generate-tags.outputs.tags }}
           file: ${{ needs.collect-metadata.outputs.dockerfile }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64 #,linux/arm64
           build-args: |
             CONTAINER_VERSION=${{ needs.collect-metadata.outputs.version }}
             CONTAINER_TITLE=${{ needs.collect-metadata.outputs.name }}
