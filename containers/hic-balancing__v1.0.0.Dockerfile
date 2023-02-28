@@ -28,7 +28,7 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230204 AS builder
+FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230228 AS builder
 
 COPY containers/assets/hic2cool-ng-d6dab27.tar.xz /tmp/
 
