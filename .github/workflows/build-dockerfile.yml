@@ -36,11 +36,11 @@ jobs:
           dockerfile_name="$(basename "${dockerfile[*]}" .Dockerfile)"
           name="$(echo "$dockerfile_name" | sed -E 's/(.*)__.*/\1/')"
           version="$(echo "$dockerfile_name" | sed -E 's/.*__v(.*)/\1/')"
-          
+
           echo "dockerfile=${dockerfile[*]}" >> $GITHUB_OUTPUT
           echo "name=$name" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
-        
+
   build-dockerfile:
     name: Build ${{ needs.collect-metadata.outputs.name }} Dockerfile
     runs-on: ubuntu-latest
