@@ -93,7 +93,6 @@ def make_plot_contact_type(
     df: pd.DataFrame,
     relative: bool = False,
 ) -> plt.Figure:
-
     columns = {
         "cis_longRange": "cis > 20kbp",
         "cis_shortRange": "cis < 20kbp",

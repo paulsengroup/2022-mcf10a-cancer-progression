@@ -72,7 +72,6 @@ def get_compartment_labels_from_df(df: pd.DataFrame) -> List[str]:
 
 
 def compute_coverage(df: pd.DataFrame, filter: Union[str, None] = None) -> pd.DataFrame:
-
     subcompartments = get_compartment_labels_from_df(df)
 
     df = df.copy()
