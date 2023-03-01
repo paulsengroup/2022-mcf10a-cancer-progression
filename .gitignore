@@ -2,14 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
-.idea
-.nextflow*
-.vscode
-containers/images/
+.idea/
+.nextflow*/
+.vscode/
+bin/scratch/
 containers/cache/
+containers/images/
 data/
-sync.sh
-work/
 scratch/
 venv/
-bin/scratch/
+work/
+
+*.bak
+.nextflow.log*
+stage_data*.sh
+sync.sh
