@@ -81,6 +81,8 @@ process run_elixir_gost {
     shell:
         outprefix="${de_genes.baseName}_gost"
         '''
+        set -o pipefail
+
         lfc_lb=($(echo '!{lfc_lb}' | tr ',' ' '))
         lfc_ub=($(echo '!{lfc_ub}' | tr ',' ' '))
         pval=($(echo '!{pval}' | tr ',' ' '))
