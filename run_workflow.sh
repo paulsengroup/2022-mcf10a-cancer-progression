@@ -11,13 +11,13 @@ set -u
 # IMPORTANT! This script should be run from the repository root!
 
 if [ $# -ne 2 ]; then
-  2>&1 echo "Usage: $0 working-dir workflow-name"
-  2>&1 echo "Example: $0 .nextflow-fetch_data-wd fetch_data"
+  1>&2 echo "Usage: $0 working-dir workflow-name"
+  1>&2 echo "Example: $0 .nextflow-fetch_data-wd fetch_data"
   exit 1
 fi
 
 if ! command -v nextflow &> /dev/null; then
-  2>&1 echo "Unable to find nextflow in your PATH"
+  1>&2 echo "Unable to find nextflow in your PATH"
   exit 1
 fi
 
@@ -27,7 +27,7 @@ workflow="workflows/$name.nf"
 config="configs/$name.config"
 
 if [ ! -d "$wd" ]; then
-  2>&1 echo "Working directory '$wd' does not exist! Please create it before running $(basename "$0")"
+  1>&2 echo "Working directory '$wd' does not exist! Please create it before running $(basename "$0")"
   exit 1
 fi
 
@@ -37,14 +37,14 @@ trap "cd '$cwd'" EXIT
 cd "$wd"
 
 if [ ! -f "$workflow" ]; then
-  2>&1 echo "Unable to find workflow '$name'!"
-  2>&1 echo "File '$workflow' does not exist"
+  1>&2 echo "Unable to find workflow '$name'!"
+  1>&2 echo "File '$workflow' does not exist"
   exit 1
 fi
 
 if [ ! -f "$config" ]; then
-  2>&1 echo "Unable to find config for workflow '$name'!"
-  2>&1 echo "File '$config' does not exist"
+  1>&2 echo "Unable to find config for workflow '$name'!"
+  1>&2 echo "File '$config' does not exist"
   exit 1
 fi
 
@@ -64,7 +64,7 @@ else
 fi
 
 if [ ! -f "$base_config" ]; then
-  2>&1 echo "Unable to find base config '$base_config': no such file"
+  1>&2 echo "Unable to find base config '$base_config': no such file"
   exit 1
 fi
 
@@ -72,7 +72,7 @@ fi
 # Otherwise Nextflow won't add scripts located under bin/ to the runner PATH
 cp "workflows/$name.nf" "$name.nf"
 
-2>&1 echo "### Running step '$name'..."
+1>&2 echo "### Running step '$name'..."
 cmd=(nextflow run
      "${args[@]+"${args[@]}"}"
      -c "configs/$name.config"
@@ -84,7 +84,7 @@ cmd=(nextflow run
 
 "$cwd/remove_symlink_loops.sh"
 
-2>&1 echo "${cmd[@]}"
+1>&2 echo "${cmd[@]}"
 "${cmd[@]}"
 
-2>&1 echo "### Workflow \"$name\" successfully completed!"
+1>&2 echo "### Workflow \"$name\" successfully completed!"
