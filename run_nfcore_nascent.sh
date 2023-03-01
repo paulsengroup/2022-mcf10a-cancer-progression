@@ -30,7 +30,7 @@ fi
 ./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run nf-core/nascent -r 2.1.1 \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   -c configs/nfcore_nascent.config \
   -profile singularity \
   -resume

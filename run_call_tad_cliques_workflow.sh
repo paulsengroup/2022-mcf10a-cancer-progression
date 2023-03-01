@@ -31,7 +31,7 @@ fi
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
   -r v0.3.0 \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   -c configs/call_tad_cliques.config \
   -resume
 )
@@ -40,7 +40,7 @@ nextflow run https://github.com/robomics/call_tad_cliques \
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
   -r v0.3.0 \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   -c configs/call_tad_cliques_vs_control.config \
   -resume
 )

@@ -32,7 +32,7 @@ for config in configs/nfcore_chipseq_*.config; do
   ./remove_symlink_loops.sh
   (cd "$wd" &&
   nextflow run nf-core/chipseq -r 2.0.0 \
-    "${args[@]}" \
+    "${args[@]+"${args[@]}"}" \
     -c "$config" \
     -profile singularity \
     -resume

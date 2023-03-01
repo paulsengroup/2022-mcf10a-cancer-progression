@@ -31,7 +31,7 @@ function run_workflow() {
 
     cp "workflows/$name.nf" "$name.nf"
     nextflow run \
-        "${args[@]}" \
+        "${args[@]+"${args[@]}"}" \
         -c "configs/$name.config" \
         -c "$base_config" \
         -process.cache=deep \

@@ -30,7 +30,7 @@ fi
 ./remove_symlink_loops.sh
 (cd "$wd" &&
 nextflow run nf-core/rnaseq -r 3.10.1 \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   -c configs/nfcore_rnaseq.config \
   -profile singularity \
   -resume

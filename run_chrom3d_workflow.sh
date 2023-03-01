@@ -33,7 +33,7 @@ fi
 (cd "$wd" &&
 nextflow run https://github.com/robomics/call_tad_cliques \
   -r v0.3.0 \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   -c configs/call_tad_cliques_chrom3d.config \
   -resume
 )
@@ -60,7 +60,7 @@ function run_workflow() {
 
     ../remove_symlink_loops.sh
     nextflow run \
-        "${args[@]}" \
+        "${args[@]+"${args[@]}"}" \
         -c "configs/$name.config" \
         -c "$base_config" \
         -process.cache=deep \
