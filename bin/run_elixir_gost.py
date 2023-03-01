@@ -57,7 +57,7 @@ def make_cli():
     cli.add_argument(
         "--gprofiler-api-url",
         type=str,
-        default="https://biit.cs.ut.ee/gprofiler_archive3/e105_eg52_p16",
+        default="https://biit.cs.ut.ee/gprofiler_archive3/e107_eg54_p17",
     )
 
     return cli
