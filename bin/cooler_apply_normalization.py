@@ -14,7 +14,6 @@ import sys
 from typing import Union
 
 import cooler
-import numpy as np
 import pandas as pd
 from cooler.core import CSRReader, DirectRangeQuery2D
 
