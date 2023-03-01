@@ -46,7 +46,7 @@ option_list <- list(
     c("-r", "--sample_suffix"),
     type = "character",
     default = "_REP\\d$",
-    metavar = "string" ,
+    metavar = "string",
     help = "Regex used to strip sample suffixes (e.g. repl number)"
   ),
   make_option(
@@ -103,7 +103,7 @@ construct_dds_from_count_matrix <-
     # Construct dds
     dds <- DESeqDataSetFromMatrix(countData = counts,
                                   colData = coldata,
-                                  design = ~ condition)
+                                  design = ~condition)
 
     keep <- rowSums(counts(dds)) >= min_counts
     dds <- dds[keep,]
@@ -112,7 +112,6 @@ construct_dds_from_count_matrix <-
 
     return(dds)
   }
-
 
 
 write_results_to_disk <- function(dds, contrast, outprefix) {
@@ -199,7 +198,7 @@ plot_count_matrix <- function(dds, contrast, outprefix) {
 
 # Parse CLI options
 opt_parser <- OptionParser(option_list = option_list)
-opt        <- parse_args(opt_parser)
+opt <- parse_args(opt_parser)
 
 missing_options <- list()
 
