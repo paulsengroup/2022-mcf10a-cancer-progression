@@ -20,12 +20,14 @@ for dir in bin configs containers data workflows; do
 done
 
 if [[ $HOSTNAME == *.saga* ]]; then
+    base_config='configs/base_saga.config'
     args=("${@:2}"
         --max_memory=400.G
         --max_cpus=52
         --max_time=336.h
         --project="${SLURM_PROJECT_ID-changeme}")
 else
+    base_config='configs/base_hovig.config'
     args=()
 fi
 
@@ -34,6 +36,7 @@ fi
 nextflow run https://github.com/robomics/call_tad_cliques \
   -r v0.3.0 \
   "${args[@]+"${args[@]}"}" \
+  -c "$base_config" \
   -c configs/call_tad_cliques_chrom3d.config \
   -resume
 )

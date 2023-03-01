@@ -52,7 +52,7 @@ process process_files {
         set -o pipefail
 
         hash='!{checksum}'
-        tmp_file="$(mktemp -t '!{dest}.XXXXXXXXXX')"
+        tmp_file='!{dest}.tmp'
         printf '%s  %s' "$hash" "$tmp_file" > checksum.sha256
 
         trap 'rm -f "$tmp_file"' EXIT
