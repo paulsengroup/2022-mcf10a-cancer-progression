@@ -8,6 +8,9 @@ set -e
 set -u
 set -o pipefail
 
+
+# TODO: rewrite using run_external_workflow.sh
+
 function run_workflow() {
   set -e
   set -u
