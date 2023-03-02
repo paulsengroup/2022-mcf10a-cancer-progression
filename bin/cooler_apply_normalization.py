@@ -14,7 +14,6 @@ import sys
 from typing import Union
 
 import cooler
-import numpy as np
 import pandas as pd
 from cooler.core import CSRReader, DirectRangeQuery2D
 
@@ -67,7 +66,12 @@ def make_cli():
         default=mp.cpu_count(),
         help="Maximum number of parallel processes.",
     )
-    cli.add_argument("--force", action="store_true", default=False, help="Overwrite existing files (if any).")
+    cli.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing files (if any).",
+    )
     return cli
 
 
@@ -117,7 +121,12 @@ def get_compressor(compression_level: int, nproc: int) -> Union[list, None]:
     return None
 
 
-def to_cooler(chunks, bins: pd.DataFrame, output_cooler_uri: pathlib.Path, assembly: str = "unknown"):
+def to_cooler(
+    chunks,
+    bins: pd.DataFrame,
+    output_cooler_uri: pathlib.Path,
+    assembly: str = "unknown",
+):
     chunks = (chunk.rename(columns={"balanced": "count"}) for chunk in chunks)
     cooler.create_cooler(
         str(output_cooler_uri),
@@ -210,7 +219,12 @@ def main():
     input_cooler = str(args["cooler"])
     output_file = args["output_name"]
 
-    chunks = cooler_dump_chunked(input_cooler, args["norm_name"], output_file.suffix != ".cool", args["weight_type"])
+    chunks = cooler_dump_chunked(
+        input_cooler,
+        args["norm_name"],
+        output_file.suffix != ".cool",
+        args["weight_type"],
+    )
 
     if output_file.suffix == ".cool":
         bins = cooler.Cooler(input_cooler).bins()[:]

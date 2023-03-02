@@ -29,14 +29,24 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--liftover-chain", type=pathlib.Path, help="Path to the chain file to use when lifting-over coordinates."
+        "--liftover-chain",
+        type=pathlib.Path,
+        help="Path to the chain file to use when lifting-over coordinates.",
     )
 
     cli.add_argument(
-        "--path-to-liftover", type=pathlib.Path, default=pathlib.Path("liftOver"), help="Path to UCSC liftOver."
+        "--path-to-liftover",
+        type=pathlib.Path,
+        default=pathlib.Path("liftOver"),
+        help="Path to UCSC liftOver.",
     )
 
-    cli.add_argument("--fill-gaps", action="store_true", default=False, help="Fill gaps between SNP probes.")
+    cli.add_argument(
+        "--fill-gaps",
+        action="store_true",
+        default=False,
+        help="Fill gaps between SNP probes.",
+    )
 
     cli.add_argument(
         "--chrom-sizes",
@@ -45,7 +55,11 @@ def make_cli():
         help="Path to the .chrom.sizes file to use when filling gaps between SNPs",
     )
 
-    cli.add_argument("tsv", type=pathlib.Path, help="TSV with CNVs (e.g. *_copynumber.txt.gz from GSE19920).")
+    cli.add_argument(
+        "tsv",
+        type=pathlib.Path,
+        help="TSV with CNVs (e.g. *_copynumber.txt.gz from GSE19920).",
+    )
 
     return cli
 
@@ -79,7 +93,13 @@ def probes_to_bed(df: pd.DataFrame) -> pd.DataFrame:
 
 def run_liftover(bed: pd.DataFrame, path_to_chain: pathlib.Path, path_to_liftover: pathlib.Path) -> pd.DataFrame:
     with tempfile.NamedTemporaryFile(mode="rt") as hits, tempfile.NamedTemporaryFile(mode="rt") as miss:
-        cmd = [path_to_liftover, "stdin", str(path_to_chain), str(hits.name), str(miss.name)]
+        cmd = [
+            path_to_liftover,
+            "stdin",
+            str(path_to_chain),
+            str(hits.name),
+            str(miss.name),
+        ]
 
         logging.info("Running liftOver...")
         with sp.Popen(cmd, stdin=sp.PIPE, stderr=sp.PIPE) as liftover:
@@ -161,7 +181,9 @@ def main():
 
     probe_db = pd.concat([import_probes(probe_file) for probe_file in args["probe_ids"]])
     logging.info(
-        "Imported %s unique probes from file(s) %s", len(probe_db), ", ".join((str(p) for p in args["probe_ids"]))
+        "Imported %s unique probes from file(s) %s",
+        len(probe_db),
+        ", ".join((str(p) for p in args["probe_ids"])),
     )
     probes = probes_to_bed(probe_db)
 

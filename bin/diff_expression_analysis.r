@@ -46,7 +46,7 @@ option_list <- list(
     c("-r", "--sample_suffix"),
     type = "character",
     default = "_REP\\d$",
-    metavar = "string" ,
+    metavar = "string",
     help = "Regex used to strip sample suffixes (e.g. repl number)"
   ),
   make_option(
@@ -69,7 +69,7 @@ construct_dds_from_count_matrix <-
     num_conditions <-
       length(read.table(path_to_count_matrix,
                         nrows = 1)) - 1
-    
+
     colClasses <-
       c("character", replicate(num_conditions, "numeric"))
     counts <-
@@ -83,27 +83,27 @@ construct_dds_from_count_matrix <-
       )
 
     print(head(counts))
-    
+
     if (round) {
       counts <- round(counts)
     }
-    
-    
+
+
     cols <- colnames(counts)
     conditions <- gsub(opt$sample_suffix, "", cols)
     if (is.character(seq_types)) {
       seq_types <- replicate(length(cols), seq_types)
     }
-    
+
     # Generate sample df
     coldata <-
       data.frame(condition = factor(conditions),
                  type = factor(seq_types))
-    
+
     # Construct dds
     dds <- DESeqDataSetFromMatrix(countData = counts,
                                   colData = coldata,
-                                  design = ~ condition)
+                                  design = ~condition)
 
     keep <- rowSums(counts(dds)) >= min_counts
     dds <- dds[keep,]
@@ -112,7 +112,6 @@ construct_dds_from_count_matrix <-
 
     return(dds)
   }
-
 
 
 write_results_to_disk <- function(dds, contrast, outprefix) {
@@ -138,24 +137,24 @@ write_results_to_disk <- function(dds, contrast, outprefix) {
 plot_sample_to_sample_dist <- function(dds, contrast, outprefix) {
   plot_file <-
     stringr::str_interp("${outprefix}${contrast}_sample_to_sample_dist_heatmap.pdf")
-  
+
   vsd <- vst(dds, blind = FALSE)
   sampleDists <- dist(t(assay(vsd)))
-  
+
   sampleDistMatrix <- as.matrix(sampleDists)
   rownames(sampleDistMatrix) <-
     paste(vsd$condition, vsd$type, sep = "-")
   colnames(sampleDistMatrix) <- NULL
   colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
-  
-  
+
+
   hmap <- pheatmap(
     sampleDistMatrix,
     clustering_distance_rows = sampleDists,
     clustering_distance_cols = sampleDists,
     col = colors
   )
-  
+
   pdf(
     file = plot_file,
     onefile = TRUE,
@@ -175,7 +174,7 @@ plot_count_matrix <- function(dds, contrast, outprefix) {
   select <- order(rowMeans(counts(dds, normalized = TRUE)),
                   decreasing = TRUE)[1:20]
   df <- as.data.frame(colData(dds)[, c("condition", "type")])
-  
+
   hmap <-
     pheatmap(
       assay(vsd)[select,],
@@ -184,7 +183,7 @@ plot_count_matrix <- function(dds, contrast, outprefix) {
       cluster_cols = FALSE,
       annotation_col = df
     )
-  
+
   pdf(
     file = plot_file,
     onefile = TRUE,
@@ -199,7 +198,7 @@ plot_count_matrix <- function(dds, contrast, outprefix) {
 
 # Parse CLI options
 opt_parser <- OptionParser(option_list = option_list)
-opt        <- parse_args(opt_parser)
+opt <- parse_args(opt_parser)
 
 missing_options <- list()
 

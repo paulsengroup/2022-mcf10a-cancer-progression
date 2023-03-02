@@ -75,7 +75,7 @@ sleep 1 && ./remove_symlink_loops.sh
 # For example, mysample_001_R1.fastq.gz is ok, but mysample_1_R1.fastq.gz is not ok!
 cd "$launch_dir"
 nextflow run ./hic \
-  "${args[@]}" \
+  "${args[@]+"${args[@]}"}" \
   --input "$input_name" \
   --outdir "$outdir/$sample_name" \
   --bwt2_index "$bw2_idx" \

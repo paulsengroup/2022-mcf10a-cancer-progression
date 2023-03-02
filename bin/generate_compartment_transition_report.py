@@ -339,7 +339,7 @@ def make_heatmap(
 
     grid = np.zeros([len(ranks), len(ranks)], dtype=int)
 
-    for ((comp1, comp2), size) in df.groupby([condition1, condition2])["size"].sum().items():
+    for (comp1, comp2), size in df.groupby([condition1, condition2])["size"].sum().items():
         i1, i2 = ranks[comp1], ranks[comp2]
         grid[i1, i2] = size * bin_size
 
@@ -441,7 +441,7 @@ def main():
     num_plots = len(cond_pairs)
     fig, axs = plt.subplots(num_plots, 1, figsize=(6.4, 6.4 * num_plots))
 
-    for (ax, (cond1, cond2)) in zip(axs, cond_pairs):
+    for ax, (cond1, cond2) in zip(axs, cond_pairs):
         make_heatmap(df, cond1, cond2, bin_size, ax)
 
     outname = output_prefix.parent / f"{output_prefix.name}_compartment_transition_heatmaps.svg"

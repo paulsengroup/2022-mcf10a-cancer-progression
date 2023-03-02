@@ -9,9 +9,9 @@
 @@ -32,7 +34,7 @@
  import warnings
  warnings.warn = warn
- 
+
 -scriptPath = os.path.dirname(os.path.abspath(__file__)) ## Get the absolute path of this script. Used to refer to data files used by this script.
 +scriptPath = "/opt/conda/share/gofigure"
- 
+
  ## Long list of various arguments used by this script. Only an input file and output directory are required.
  def read_arguments():

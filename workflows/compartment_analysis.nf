@@ -126,13 +126,13 @@ process preproc_data_for_dchic {
         # Dump the bin table.
         # 4th column contains the absolute bin id (starting from 1)
         # The 5th column contains 1 if the bin overlaps with one or more blacklisted regions and 0 otherwise
-        cooler dump -t bins '!{cooler}' |
-            grep -v 'chr[0-9X]\\+'      |
-            cut -f 1-3                  |
-            bedtools intersect          \
-                -a stdin                \
-                -b '!{blacklist}'       \
-                -wa -c                  |
+        cooler dump -t bins "$cooler" |
+            grep -v 'chr[0-9X]\\+'    |
+            cut -f 1-3                |
+            bedtools intersect        \
+                -a stdin              \
+                -b '!{blacklist}'     \
+                -wa -c                |
             awk -F '\\t' 'BEGIN{OFS=FS} {print $1,$2,$3,NR,$4!=0}' |
             tee "${outprefix}_abs.bed" > /dev/null
 

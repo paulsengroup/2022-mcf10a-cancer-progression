@@ -57,7 +57,7 @@ def make_cli():
     cli.add_argument(
         "--gprofiler-api-url",
         type=str,
-        default="https://biit.cs.ut.ee/gprofiler_archive3/e105_eg52_p16",
+        default="https://biit.cs.ut.ee/gprofiler_archive3/e107_eg54_p17",
     )
 
     return cli
@@ -65,7 +65,17 @@ def make_cli():
 
 def import_data(column_id: str, lfc_cutoffs: Tuple[float, float], pval_cutoff: float) -> pd.DataFrame:
     df = pd.read_table(sys.stdin).reset_index().rename(columns={"index": "id"}).dropna()
+
+    if len(df) == 0:
+        raise RuntimeError("Unable to read any records from stdin")
+
     df["significant"] = (~df["log2FoldChange"].between(*lfc_cutoffs)) & (df["padj"] <= pval_cutoff)
+
+    if df["significant"].sum() == 0:
+        raise RuntimeError("All records read from stdin are not significant!")
+
+    # Remove version from identifier
+    df["id"] = df["id"].str.replace(r"\.\d+$", "", regex=True)
 
     return df[[column_id, "significant"]]
 

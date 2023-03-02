@@ -48,6 +48,7 @@ RUN touch /opt/conda/lib/R/etc/.Rprofile
 USER root
 RUN mkdir /opt/dchic/bin \
 && ln -s /opt/dchic/dchicf.r /opt/dchic/bin/dchicf.r \
+&& for f in /opt/dchic/utility/*.{r,py,sh}; do ln -s "$f" "/opt/dchic/bin/$(basename "$f")"; done \
 && chown -R nobody:nogroup /opt/dchic
 USER mambauser
 

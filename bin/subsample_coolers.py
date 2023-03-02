@@ -42,7 +42,12 @@ def make_cli():
         help="Use cis insteractions only to compute the subsampling fraction.",
     )
     cli.add_argument("--seed", type=int, default=1595040562, help="Seed for PRNG initialization.")
-    cli.add_argument("--force", action="store_true", default=False, help="Overwrite existing files (if any).")
+    cli.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing files (if any).",
+    )
     cli.add_argument(
         "--nproc",
         type=int,
@@ -71,9 +76,15 @@ def generate_output_names(uris: List[pathlib.Path], suffix: str = "_subsampl") -
 def read_or_compute_sum(uri: str, cis_only: bool, pool) -> int:
     cf = cooler.Cooler(uri)
     if cis_only:
-        return cf.info.get("cis", np.sum(cooltools.api.coverage.coverage(cf, map=pool.map)[0] // 2, dtype=int))
+        return cf.info.get(
+            "cis",
+            np.sum(cooltools.api.coverage.coverage(cf, map=pool.map)[0] // 2, dtype=int),
+        )
 
-    return cf.info.get("sum", np.sum(cooltools.api.coverage.coverage(cf, map=pool.map)[1] // 2, dtype=int))
+    return cf.info.get(
+        "sum",
+        np.sum(cooltools.api.coverage.coverage(cf, map=pool.map)[1] // 2, dtype=int),
+    )
 
 
 def compute_number_of_interactions(uris: List[pathlib.Path], cis_only: bool, pool) -> Dict[str, Union[int]]:
@@ -114,8 +125,17 @@ def cooltools_sample(
     np.random.seed(seed)  # TODO: I am not sure how PRNG and chunking works
 
     logging.info("Subsampling interactions from %s", input_uri)
-    cooltools.api.sample.sample(input_uri, output_uri, count=target_interactions, cis_count=target_interactions_cis)
-    logging.info("Written %s interactions to %s", str(cooler.Cooler(output_uri).info.get("sum")), output_uri)
+    cooltools.api.sample.sample(
+        input_uri,
+        output_uri,
+        count=target_interactions,
+        cis_count=target_interactions_cis,
+    )
+    logging.info(
+        "Written %s interactions to %s",
+        str(cooler.Cooler(output_uri).info.get("sum")),
+        output_uri,
+    )
 
 
 def main():
@@ -145,7 +165,10 @@ def main():
                 target_number_of_interactions = interactions
                 uri_with_fewer_interactions = uri
 
-        logging.info("Subsampling to (approximately) %d interactions", int(target_number_of_interactions))
+        logging.info(
+            "Subsampling to (approximately) %d interactions",
+            int(target_number_of_interactions),
+        )
         pool.starmap(
             cooltools_sample,
             zip(
