@@ -5,6 +5,7 @@ name: Run black
 
 on:
   push:
+    branches: [ main ]
     paths:
       - ".github/workflows/black.yml"
       - "bin/*.py"
