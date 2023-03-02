@@ -78,4 +78,3 @@ LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf1
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-diffdomains}"
 LABEL org.opencontainers.image.version="${CONTAINER_VERSION:-latest}"
-

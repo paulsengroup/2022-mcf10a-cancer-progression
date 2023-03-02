@@ -55,4 +55,3 @@ export -f run_clodius
 
 printf '%s\n' "$data_dir/output/tad_analysis/"*/*/*_domains.bed.gz |
 xargs -L 1 -P "$(nproc)" bash -c "\"$clodius_wrapper\" \"$wd\" \"$chrom_sizes\" \"\$1\"" bash
-

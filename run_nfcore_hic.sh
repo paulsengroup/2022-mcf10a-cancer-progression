@@ -8,6 +8,9 @@ set -e
 set -u
 set -o pipefail
 
+
+# TODO: rewrite using run_external_workflow.sh
+
 function run_workflow() {
   set -e
   set -u
@@ -20,7 +23,7 @@ function run_workflow() {
   outdir="$(readlink -f ./data/scratch/nfcore_hic)"
   input_name="${bname}{_R1,_R2}.fastq.gz"
 
-  printf 2>&1 "Processing %s...\n" "$sample_name"
+  printf 1>&2 "Processing %s...\n" "$sample_name"
 
   if [[ $HOSTNAME == *.saga* ]]; then
     sbatch -A "${SLURM_PROJECT_ID-changeme}" \
@@ -48,7 +51,7 @@ function run_workflow() {
       --max_time 336.h &>/dev/null
   fi
 
-  printf 2>&1 "DONE processing %s!\n" "$sample_name"
+  printf 1>&2 "DONE processing %s!\n" "$sample_name"
 }
 
 export -f run_workflow

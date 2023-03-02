@@ -93,9 +93,17 @@ def make_cli():
     )
 
     cli.add_argument("--hic-tools-jar", type=existing_file, help="Path to the hic_tools jar file.")
-    cli.add_argument("--juicer-tools-jar", type=existing_file, required=True, help="Path to the juicer_tools jar file.")
     cli.add_argument(
-        "--hic2cool-ng", type=find_executable, default="hic2cool-ng", help="Path to hic2cool-ng executable."
+        "--juicer-tools-jar",
+        type=existing_file,
+        required=True,
+        help="Path to the juicer_tools jar file.",
+    )
+    cli.add_argument(
+        "--hic2cool-ng",
+        type=find_executable,
+        default="hic2cool-ng",
+        help="Path to hic2cool-ng executable.",
     )
 
     cli.add_argument(
@@ -155,7 +163,12 @@ def make_cli():
         type=str,
         default="32g",
     )
-    cli.add_argument("--force", action="store_true", default=False, help="Overwrite existing files (if any).")
+    cli.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing files (if any).",
+    )
 
     return cli
 
@@ -226,7 +239,19 @@ def fetch_pixels(cf: cooler.Cooler, chrom1: str, chrom2: str) -> pd.DataFrame:
     pixels["frag1"] = pixels["str1"]
     pixels["frag2"] = pixels["str2"]
 
-    return pixels[["str1", "chrom1", "start1", "frag1", "str2", "chrom2", "start2", "frag2", "count"]]
+    return pixels[
+        [
+            "str1",
+            "chrom1",
+            "start1",
+            "frag1",
+            "str2",
+            "chrom2",
+            "start2",
+            "frag2",
+            "count",
+        ]
+    ]
 
 
 def dump_pixels_helper_(uri: str, dest):
@@ -246,7 +271,12 @@ def dump_pixels_helper_(uri: str, dest):
         num_pixels += len(pixels)
 
     if isinstance(dest, pathlib.Path) or isinstance(dest, str):
-        logging.info('[%s] Written a total of %s pixels to file "%s".', cf.binsize, num_pixels, dest)
+        logging.info(
+            '[%s] Written a total of %s pixels to file "%s".',
+            cf.binsize,
+            num_pixels,
+            dest,
+        )
     else:
         logging.info("[%d] Written a total of %s pixels.", cf.binsize, num_pixels)
 
@@ -343,7 +373,6 @@ def run_juicer_tools_add_norm(
     xms: str,
     xmx: str,
 ):
-
     if norm == "NONE":
         return
 
@@ -411,7 +440,12 @@ def run_cooler_balance(
 
     if cis_only:
         chunk_size = 5000000
-        logging.info("[%d - %s] balancing using chunks of size %d...", bin_size, strategy, chunk_size)
+        logging.info(
+            "[%d - %s] balancing using chunks of size %d...",
+            bin_size,
+            strategy,
+            chunk_size,
+        )
     else:
         chunk_size = int(cf.info["nnz"] / num_chunks)
         logging.info("[%d - %s] balancing using %d chunks...", bin_size, strategy, num_chunks)
@@ -465,7 +499,6 @@ def _juicer_tools_balance_helper(
     xmx: str,
     lock,
 ):
-
     hic = None
     try:
         hic = cooler_to_hic(
@@ -560,7 +593,6 @@ def split_norm_strategies(strats: List[str]) -> Tuple[List[str], List[str]]:
 
 
 def run_hic2coolng_extract_norms(hic: pathlib.Path, uri: str, norm: str, hic2cool_ng: pathlib.Path):
-
     logging.info("[%d] Copying %s weights...", cooler.Cooler(uri).binsize, norm)
     cmd = [
         str(hic2cool_ng),
@@ -652,7 +684,12 @@ def main():
         if len(ice_norms) != 0:
             for uri, strategy in generate_tasks(output_cooler, ice_norms):
                 bias, stats = run_cooler_balance(
-                    uri, strategy, blacklist, args["nproc"], pool, mad_max=args["mad_max_threshold"]
+                    uri,
+                    strategy,
+                    blacklist,
+                    args["nproc"],
+                    pool,
+                    mad_max=args["mad_max_threshold"],
                 )
                 write_weights(uri, strategy, bias, stats)
 

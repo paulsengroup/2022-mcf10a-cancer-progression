@@ -8,48 +8,14 @@ set -e
 set -o pipefail
 set -u
 
-echo 1>&2 'Running nfcore/chipseq...'
 
 wd=".nextflow-nfcore-chipseq-wd"
 mkdir -p "$wd"
 
-for dir in bin configs containers data workflows; do
-    (cd "$wd" && ln -sf "../$dir/" "$dir")
-done
+./setup_workflow_workdir.sh "$PWD" "$wd"
 
-if [[ $HOSTNAME == *.saga* ]]; then
-    args=("${@:2}"
-        --max_memory=400.GB
-        --max_cpus=52
-        --max_time=336.h
-        --project="${SLURM_PROJECT_ID-changeme}")
-else
-    args=()
-fi
-
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_h3k27ac.config \
-  -profile singularity \
-  -resume
-)
-
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_h3kxxme.config \
-  -profile singularity \
-  -resume
-)
-
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/chipseq -r 2.0.0 \
-  "${args[@]}" \
-  -c configs/nfcore_chipseq_ctcf.config \
-  -profile singularity \
-  -resume
-)
+1>&2 echo 'Running nfcore/chipseq...'
+./run_external_workflow.sh \
+  "$wd" \
+  'workflows/nfcore-chipseq-v2.0.0.tar.xz' \
+   configs/nfcore_chipseq*.config

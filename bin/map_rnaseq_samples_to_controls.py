@@ -70,7 +70,7 @@ def main():
     outdir = args["output-dir"]
     outdir.mkdir(exist_ok=True)
 
-    for (i, (control, samples)) in enumerate(mappings.items()):
+    for i, (control, samples) in enumerate(mappings.items()):
         pattern = "(" + ")|(".join((str(x) for x in samples)) + ")"
         outpath = outdir / pathlib.Path(f"{i:03d}_{path_to_gene_count_table.stem}_{control}.tsv")
 

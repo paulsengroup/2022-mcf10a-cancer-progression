@@ -8,30 +8,14 @@ set -e
 set -o pipefail
 set -u
 
-echo 1>&2 'Running nfcore/rnaseq...'
 
 wd=".nextflow-nfcore-rnaseq-wd"
 mkdir -p "$wd"
 
-for dir in bin configs containers data workflows; do
-    (cd "$wd" && ln -sf "../$dir/" "$dir")
-done
+./setup_workflow_workdir.sh "$PWD" "$wd"
 
-if [[ $HOSTNAME == *.saga* ]]; then
-    args=("${@:2}"
-        --max_memory=400.GB
-        --max_cpus=52
-        --max_time=336.h
-        --project="${SLURM_PROJECT_ID-changeme}")
-else
-    args=()
-fi
-
-./remove_symlink_loops.sh
-(cd "$wd" &&
-nextflow run nf-core/rnaseq -r 3.10.1 \
-  "${args[@]}" \
-  -c configs/nfcore_rnaseq.config \
-  -profile singularity \
-  -resume
-)
+1>&2 echo 'Running nfcore/rnaseq...'
+./run_external_workflow.sh \
+  "$wd" \
+  'workflows/nfcore-rnaseq-v3.10.1.tar.xz' \
+   configs/nfcore_rnaseq*.config

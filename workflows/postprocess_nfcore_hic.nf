@@ -7,7 +7,7 @@ nextflow.enable.dsl=2
 
 workflow {
     input_dirs = Channel.fromPath(params.nfcore_stage_dirs, type: 'dir')
-    
+
     sample_names = [:]
     conditions = [:]
 
@@ -36,11 +36,11 @@ workflow {
                                           file("${it}/hicpro/stats/", type: "dir", checkIfExists: true),
                                           file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))
                                       }
-    
+
     coolers_by_condition = input_coolers.map { tuple(it[0], it[2]) }
                                         .groupTuple(by: 0, size: 2)
                                         .map { tuple(it[0], it[1].flatten()) }
-                      
+
     coolers_by_sample = input_coolers.map { tuple(it[1], it[2].flatten()) }
 
     multiqc(input_dirs)
@@ -117,10 +117,10 @@ process generate_blacklist {
 process cooler_merge {
     input:
         tuple val(label), path(cool)
-        
+
     output:
         tuple val("${label}_merged"), path("*.cool"), emit: cool
-        
+
     shell:
         '''
         cooler merge '!{label}_merged.cool' *.cool
@@ -179,7 +179,7 @@ process cooler_zoomify {
 
 process cooler_balance {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${label}.mcool" }                                             
+                                       saveAs: { "${label}/${label}.mcool" }
 
     label 'process_medium'
     label 'process_long'
@@ -187,7 +187,7 @@ process cooler_balance {
     input:
         tuple val(label), path(mcool)
         path blacklist
-    
+
     output:
         tuple val(label), path("*.mcool.new"), emit: mcool
 
@@ -208,8 +208,8 @@ process cooler_balance {
 
 process compress_bwt2pairs {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }                                             
-    
+                                       saveAs: { "${label}/${it}" }
+
     label 'process_long'
     label 'process_high'
 
@@ -235,7 +235,7 @@ process compress_bwt2pairs {
 
 process compress_validpairs {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }                                             
+                                       saveAs: { "${label}/${it}" }
 
     label 'process_long'
     label 'process_high'

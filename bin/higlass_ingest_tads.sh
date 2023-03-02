@@ -47,5 +47,3 @@ for beddb in "$data_dir/output/tad_analysis/clodius/GRCh38_"*merged*.beddb; do
         --assembly hg38 \
         "${beddb#"$data_dir/"}"
 done
-
-
