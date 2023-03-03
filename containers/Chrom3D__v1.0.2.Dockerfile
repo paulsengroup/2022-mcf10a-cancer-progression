@@ -8,36 +8,34 @@ FROM ubuntu:22.04 AS builder
 
 
 RUN apt-get update \
-&& apt-get install -y autoconf \
-                      bzip2 \
-                      curl \
-                      gawk \
+&& apt-get install -y cmake \
                       g++ \
-                      make \
-                      python3 \
-                      bedtools \
-                      libbz2-dev \
-                      liblzma-dev \
-                      zlib1g-dev \
                       git \
-                      libboost-dev
+                      libboost-dev \
+                      libboost-filesystem-dev \
+                      libboost-random-dev
 
+RUN git config --global user.email bot@example.com \
+&& git config --global user.name bot
 
-RUN cd /tmp \
-&& git clone https://github.com/robomics/Chrom3D.git -b fix-compiler-warnings
+RUN git clone 'https://github.com/Chrom3D/Chrom3D.git' /tmp/Chrom3D \
+&& cd /tmp/Chrom3D \
+&& git remote add robomics 'https://github.com/robomics/Chrom3D.git' \
+&& git fetch robomics \
+&& git switch -c patched v1.0.2 \
+&& git merge robomics/add-cmake-support -m 'patch #1' \
+&& git merge robomics/fix-compiler-warnings -m 'patch #2'
+
+RUN cmake -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_INSTALL_PREFIX=/tmp/chrom3d-staging \
+         -S /tmp/Chrom3D/ \
+         -B /tmp/build/ \
+&& cmake --build /tmp/build/ -j $(nproc) \
+&& cmake --install /tmp/build/
+
 #&& echo "$Chrom3D_CHECKSUM" >> checksums.sha256 \
 #&& shasum -a256 -c checksums.sha256 \
 #&& tar -xf "v1.0.2.tar.gz"
-
-ARG SRCPATH=tmp/Chrom3D/src
-ARG TCLAPINCLUDE=tmp/Chrom3D/src/tclap-1.2.1/include
-ARG BOOSTINCLUDE=$(whereis boost)
-ARG CFLAGS=-O3
-
-RUN g++ -O3 -std=c++11 -I $TCLAPINCLUDE -I BOOSTINCLUDE \
-     $SRCPATH/Util.cpp $SRCPATH/Bead.cpp $SRCPATH/Chromosome.cpp $SRCPATH/Randomizer.cpp \
-     $SRCPATH/Constraint.cpp $SRCPATH/Model.cpp $SRCPATH/MCMC.cpp $SRCPATH/Chrom3D.cpp -o Chrom3D
-
 
 
 FROM ubuntu:22.04 AS base
@@ -48,28 +46,27 @@ RUN ln -snf /usr/share/zoneinfo/CET /etc/localtime \
 ARG PIP_NO_CACHE_DIR=0
 
 RUN apt-get update \
-&& apt-get install -y  \
+&& apt-get install -y bedtools \
                       gawk \
                       python3 \
-                      bedtools \
-                      libboost-dev \
-                      python3-dev             \
-                      python3-pip             \
-&& pip install pandas                            \
-&&   rm -rf /var/lib/apt/lists/*
-
+                      python3-pip \
+&& pip install 'pandas==1.5.*' \
+&& apt-get remove -y python3-pip \
+&& rm -rf /var/lib/apt/lists/*
 
 
 ARG CONTAINER_VERSION
 ARG CONTAINER_TITLE
 
 
-COPY --from=builder "Chrom3D" "/usr/local/bin"
+COPY --from=builder "/tmp/chrom3d-staging/" "/usr/local/"
+
 CMD ["/usr/local/bin/Chrom3D"]
 WORKDIR /data
 
-RUN Chrom3D --help
-RUN python3 --version
+RUN bedtools --version
+RUN Chrom3D --version
+RUN python3 -c 'import pandas; print(pandas.__version__)'
 
 
 LABEL org.opencontainers.image.authors='Saleh Oshaghi <mohao@uio.no>'
