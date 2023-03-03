@@ -52,6 +52,7 @@ RUN apt-get update \
                       python3-pip \
 && pip install 'pandas==1.5.*' \
 && apt-get remove -y python3-pip \
+&& apt-get autoremove -y \
 && rm -rf /var/lib/apt/lists/*
 
 
