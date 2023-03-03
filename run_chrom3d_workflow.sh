@@ -16,11 +16,11 @@ mkdir -p "$wd"
 ./setup_workflow_workdir.sh "$PWD" "$wd"
 
 1>&2 echo 'Running robomics/call_tad_cliques...'
+echo \
 ./run_external_workflow.sh \
   "$wd" \
   'workflows/robomics-call_tad_cliques-v0.3.0.tar.xz' \
    configs/call_tad_cliques_chrom3d.config
 
-exit 0  # TODO: removeme!
 
 ./run_workflow.sh "$wd" "$step"
