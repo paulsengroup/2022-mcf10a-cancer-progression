@@ -30,7 +30,7 @@ process preprocess_significant_interactions{
         path "*.gtrack", emit: gtrack
     shell:
     '''
-    generate_cliques_bedpe.py !{domain} !{clique} > T1_output_significant.txt
+    generate_list_of_interacting_domains_from_cliques.py !{domain} !{clique} > T1_output_significant.txt
     chrom3d_tad_to_gtrack.sh T1_output_significant.txt '!{bin_size}' '!{chr_sizes}' '!{cytoband}' '!{gaps}' '!{lads}' '!{translocation}'
     '''
 }
