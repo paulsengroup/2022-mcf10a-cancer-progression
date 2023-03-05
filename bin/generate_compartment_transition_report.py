@@ -10,8 +10,9 @@ import pathlib
 import subprocess as sp
 import sys
 import tempfile
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -318,13 +319,56 @@ def make_alluvial_plot(
     replace_compartment_labels_svg(outname)
 
 
+def make_subcomp_transition_matrix(
+    df: pd.DataFrame,
+    condition1: str,
+    condition2: str,
+    ranks: Dict[str, int],
+    bin_size: int,
+) -> np.ndarray:
+    assert condition1 in df.columns
+    assert condition2 in df.columns
+    grid = np.zeros([len(ranks), len(ranks)], dtype=int)
+
+    for (comp1, comp2), size in df.groupby([condition1, condition2])["size"].sum().items():
+        i1, i2 = ranks[comp1], ranks[comp2]
+        grid[i1, i2] = size * bin_size
+
+    return grid
+
+
+def make_heatmap_helper(grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_factor: float = 1.0):
+    # Negative values will be transparent
+    cmap = mpl.cm.get_cmap(cmap)
+    cmap.set_under("k", alpha=0)
+
+    ax.imshow(grid, cmap=cmap, vmin=0)
+
+    # Show Mbps involved in transitions
+    max_val = np.nanmax(grid)
+    for (j, i), label in np.ndenumerate(grid):
+        if label < 0:
+            continue
+        if label / max_val >= 0.40:
+            color = "white"
+        else:
+            color = "black"
+
+        # I can't figure out a better way to make sure a float is formatted using at most 4 digits (plus the dot)
+        label = str(label / label_scale_factor)
+        if len(label) > 5:
+            label = label[:5]
+        ax.text(i, j, label, ha="center", va="center", color=color)
+
+
 def make_heatmap(
     df: pd.DataFrame,
     condition1: str,
     condition2: str,
     bin_size: int,
     ax: plt.Axes,
-    cmap: str = "Reds",
+    cmap1: str = "Reds",
+    cmap2: str = "Greys",
 ) -> None:
     assert condition1 in df.columns
     assert condition2 in df.columns
@@ -337,23 +381,31 @@ def make_heatmap(
     else:
         ranks = {"B": 0, "A": 1}
 
-    grid = np.zeros([len(ranks), len(ranks)], dtype=int)
+    grid = make_subcomp_transition_matrix(df, condition1, condition2, ranks, bin_size)
 
-    for (comp1, comp2), size in df.groupby([condition1, condition2])["size"].sum().items():
-        i1, i2 = ranks[comp1], ranks[comp2]
-        grid[i1, i2] = size * bin_size
+    filler = np.full_like(grid[0], -1.0)
+    grid1 = np.c_[grid, filler, filler]  # Add two transparent columns to the right
+    make_heatmap_helper(grid1, ax, cmap1, 1.0e6)
 
-    ax.imshow(grid, cmap=cmap)
+    ax.imshow(grid1, cmap=cmap1, vmin=0)
 
-    min_val = grid.min()
-    delta = grid.max() - min_val
+    rsum = np.sum(grid, axis=0)
+    csum = np.sum(grid, axis=1)
 
-    for (j, i), label in np.ndenumerate(grid):
-        if label - min_val >= (delta * 0.85):
-            color = "white"
-        else:
-            color = "black"
-        ax.text(i, j, f"{(label / 1.0e6):.1f}", ha="center", va="center", color=color)
+    transition_vect = (2 * np.diag(grid)) / (rsum + csum)
+    # Make all but the last two columns transparent
+    filler1 = np.full_like(grid, -1.0)
+    filler2 = np.full_like(transition_vect, -1.0)
+    grid2 = np.c_[filler1, transition_vect, filler2]
+    make_heatmap_helper(grid2, ax, cmap2)
+
+    transition_vect = (2 * np.diag(grid)) / (rsum + csum).sum()
+    # Make all but the last two columns transparent
+    filler1 = np.full_like(grid, -1.0)
+    filler2 = np.full_like(transition_vect, -1.0)
+    grid3 = np.c_[filler1, filler2, transition_vect]
+
+    make_heatmap_helper(grid3, ax, cmap2)
 
     ax.set(title=f"Compartment transitions (Mbp) - {condition1} vs {condition2}")
 
@@ -443,6 +495,7 @@ def main():
 
     for ax, (cond1, cond2) in zip(axs, cond_pairs):
         make_heatmap(df, cond1, cond2, bin_size, ax)
+        plot_transition_rates(df, cond1, cond2, bin_size, None)
 
     outname = output_prefix.parent / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
     fig.savefig(outname)
