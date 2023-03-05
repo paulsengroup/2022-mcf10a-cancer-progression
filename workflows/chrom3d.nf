@@ -60,6 +60,8 @@ workflow {
 
 
 process generate_blacklist {
+    label 'very_short'
+
     input:
         tuple val(label),
               path(translocations)
@@ -87,7 +89,8 @@ process generate_blacklist {
 }
 
 process preprocess_significant_interactions{
-    // publishDir "${params.outdir}", mode: 'copy'
+    label 'very_short'
+
     input:
         tuple val(label),
               path(domains),
@@ -117,6 +120,8 @@ process preprocess_significant_interactions{
 }
 
 process generate_seed_sequence {
+    label 'very_short'
+
     input:
         path files
         val num_seeds
@@ -133,6 +138,9 @@ process generate_seed_sequence {
 
 process run_chrom3d {
     publishDir "${params.outdir}/cmms", mode: 'copy'
+
+    label 'error_retry'
+
     input:
         tuple val(label),
               path(input_gtrack),
