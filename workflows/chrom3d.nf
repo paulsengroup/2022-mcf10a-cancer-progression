@@ -77,8 +77,8 @@ process generate_blacklist {
         '''
         set -o pipefail
 
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
-            <(zcat '!{cytoband}' | grep 'acen$') \
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
+            <(zcat '!{cytoband}' | grep 'acen$') \\
             <(zcat '!{translocations}') |
             grep '^chr[XY0-9]\\+[[:space:]]' |
             cut -f 1-3 |
@@ -110,11 +110,11 @@ process preprocess_significant_interactions{
         '''
         generate_list_of_interacting_domains_from_cliques.py '!{domains}' '!{cliques}' > '!{outprefix}.bedpe'
 
-        chrom3d_tad_to_gtrack.sh \
-            '!{outprefix}.bedpe' \
-            '!{bin_size}' \
-            '!{chr_sizes}' \
-            '!{lads}' \
+        chrom3d_tad_to_gtrack.sh \\
+            '!{outprefix}.bedpe' \\
+            '!{bin_size}' \\
+            '!{chr_sizes}' \\
+            '!{lads}' \\
             '!{blacklist}'
         '''
 }
@@ -161,11 +161,11 @@ process run_chrom3d {
     shell:
         outname="${input_gtrack.simpleName}.cmm"
         '''
-        Chrom3D -o '!{outname}' \
-                -r '!{radius}' \
-                -n '!{N}' \
-                -l '!{L}' \
-                -s '!{seed}' \
+        Chrom3D -o '!{outname}' \\
+                -r '!{radius}' \\
+                -n '!{N}' \\
+                -l '!{L}' \\
+                -s '!{seed}' \\
                 --nucleus '!{input_gtrack}'
         '''
 }
