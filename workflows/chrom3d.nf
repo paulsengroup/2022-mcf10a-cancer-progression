@@ -6,47 +6,158 @@
 nextflow.enable.dsl=2
 
 workflow {
-    preprocess_significant_interactions(Channel.fromPath(params.domains),
-    Channel.fromPath(params.cliques),
-    file(params.lads), file(params.cytoband), file(params.gaps), file(params.chr_sizes), params.bin_size, file(params.translocation), params.outdir)
+    Channel.fromPath(params.translocations, checkIfExists: true)
+           .map { tuple(it.getName().replaceAll(/_translocations.bed$/, ""), file(it)) }
+           .set { translocations }
 
-    run_chrom3d(preprocess_significant_interactions.out.gtrack, params.N, params.L, params.r)
+    Channel.fromPath(params.domains, checkIfExists: true)
+           .map { tuple(it.getName().replaceAll(/_all_domains.bed.gz$/, ""), file(it)) }
+           .set { domains }
+
+    Channel.fromPath(params.cliques, checkIfExists: true)
+           .map { tuple(it.getName().replaceAll(/_all_cliques.tsv.gz$/, ""), file(it)) }
+           .set { cliques }
+
+    Channel.fromPath(params.lads, checkIfExists: true)
+           .map { tuple(it.getName().replaceAll(/_LMNB1_unionrep_peaks.bed.gz$/, ""), file(it)) }
+           .set { lads }
+
+    generate_blacklist(translocations,
+                       file(params.gaps),
+                       file(params.cytoband))
+
+    domains\
+        .join(cliques, failOnDuplicate: true, failOnMismatch: true)
+        .join(lads, failOnDuplicate: true, failOnMismatch: true)
+        .join(generate_blacklist.out.bed, failOnDuplicate: true, failOnMismatch: true)
+        .set { preprocess_significant_interactions_input_ch }
+
+    preprocess_significant_interactions(
+        preprocess_significant_interactions_input_ch,
+        file(params.chr_sizes, checkIfExists: true),
+        params.bin_size)
+
+    generate_seed_sequence(
+        preprocess_significant_interactions.out.gtrack
+            .map { it[1] }  // Discard label
+            .collect(),
+            params.number_of_models)
+
+    generate_seed_sequence.out.txt
+        .splitText()
+        .map { it.trim() }
+        .set { seeds }
+
+    preprocess_significant_interactions.out.gtrack
+        .combine(seeds)
+        .set { chrom3d_input_ch }
+
+    run_chrom3d(chrom3d_input_ch,
+                params.N,
+                params.L,
+                params.r)
+}
+
+
+process generate_blacklist {
+    input:
+        tuple val(label),
+              path(translocations)
+        path assembly_gaps
+        path cytoband
+
+    output:
+        tuple val(label),
+              path("blacklist.bed"),
+        emit: bed
+
+    shell:
+        '''
+        set -o pipefail
+
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
+            <(zcat '!{cytoband}' | grep 'acen$') \
+            <(zcat '!{translocations}') |
+            grep '^chr[XY0-9]\\+[[:space:]]' |
+            cut -f 1-3 |
+            sort -k1,1V -k2,2n |
+            bedtools merge -i stdin |
+            cut -f1-3 > blacklist.bed
+        '''
 }
 
 process preprocess_significant_interactions{
-    publishDir "${params.outdir}", mode: 'copy'
+    // publishDir "${params.outdir}", mode: 'copy'
     input:
-        //tuple val(sampleId), path(read)
-        path domain
-        path clique
-        path lads
-        path cytoband
-        path gaps
+        tuple val(label),
+              path(domains),
+              path(cliques),
+              path(lads),
+              path(blacklist)
         path chr_sizes
         val bin_size
-        path translocation
-        path outdir
+
     output:
-        path "*.gtrack", emit: gtrack
+        tuple val(label),
+              path("*.gtrack"),
+        emit: gtrack
+
     shell:
-    '''
-    generate_list_of_interacting_domains_from_cliques.py !{domain} !{clique} > T1_output_significant.txt
-    chrom3d_tad_to_gtrack.sh T1_output_significant.txt '!{bin_size}' '!{chr_sizes}' '!{cytoband}' '!{gaps}' '!{lads}' '!{translocation}'
-    '''
+        outprefix="${domains.simpleName}"
+        '''
+        generate_list_of_interacting_domains_from_cliques.py '!{domains}' '!{cliques}' > '!{outprefix}.bedpe'
+
+        chrom3d_tad_to_gtrack.sh \
+            '!{outprefix}.bedpe' \
+            '!{bin_size}' \
+            '!{chr_sizes}' \
+            '!{lads}' \
+            '!{blacklist}'
+        '''
+}
+
+process generate_seed_sequence {
+    input:
+        path files
+        val num_seeds
+
+    output:
+        path "seeds.txt", emit: txt
+
+    shell:
+        '''
+        generate_seed_sequence.py !{files} --number-of-seeds='!{num_seeds}' > seeds.txt
+        '''
 }
 
 
-process run_chrom3d{
-    publishDir "${params.outdir}", mode: 'copy'
+process run_chrom3d {
+    publishDir "${params.outdir}/cmms", mode: 'copy'
     input:
-        path input_gtrack
+        tuple val(label),
+              path(input_gtrack),
+              val(seed)
         val N
         val L
         val radius
+
     output:
-        path "*.cmm"
+        tuple val(label),
+              path("*.cmm"),
+        emit: cmm
+
+        tuple val(label),
+              val(seed),
+        emit: seed
+
     shell:
-    '''
-    Chrom3D -o !{input_gtrack}.cmm -r !{radius} -n !{N} -l !{L} --nucleus !{input_gtrack}
-    '''
+        outname="${input_gtrack.simpleName}.cmm"
+        '''
+        Chrom3D -o '!{outname}' \
+                -r '!{radius}' \
+                -n '!{N}' \
+                -l '!{L}' \
+                -s '!{seed}' \
+                --nucleus '!{input_gtrack}'
+        '''
 }
