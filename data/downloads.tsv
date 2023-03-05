@@ -83,3 +83,6 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/066/SRR10434766/SRR10434766.fastq.gz	d
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/068/SRR10434768/SRR10434768.fastq.gz	af6aa6c7d2ac1279fe4e0e153f7d158e8fafba7677c89f3edec5359da40db276	input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz	FALSE
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/076/SRR11445276/SRR11445276.fastq.gz	2ca82487c3ca7f1e00f54033cb2d2cf8fd59751f54fefecba4ba28001e5a0747	input/raw_data/proseq/PROseq_001_MCF10A_WT_R1.fastq.gz	FALSE
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/077/SRR11445277/SRR11445277.fastq.gz	c15589edfa0222fb48d32f4a6aeb5b4f9943a1f1ab3bf68e9ecc2e207054cabd	input/raw_data/proseq/PROseq_002_MCF10A_WT_R1.fastq.gz	FALSE
+https://www.dropbox.com/s/3wefqyk5vwk0myx/MCF10A_LMNB1_UnionRep_peaks.bed?dl=1	553b2cbe699c51e48bfbcb3b3dd51f10940e9cee10f8ada12705928075b2977a	input/lads/GRCh38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	TRUE
+https://www.dropbox.com/s/5nyrlo2365bxtlu/MCF10AT1_LMNB1_UnionRep_peaks.bed?dl=1	721a8a3c9a0b1fdd88059f052d7fe2e37f018596a0b5262302b56da99840ac71	input/lads/GRCh38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	TRUE
+https://www.dropbox.com/s/glt0z98vz39jwlk/MCF10CA1a_LMNB1_UnionRep_peaks.bed?dl=1	dd5d2d5394b366e24c21c7d7eaf1165b150deb8d65a173c2a5e4cd5730bc9560	input/lads/GRCh38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	TRUE
