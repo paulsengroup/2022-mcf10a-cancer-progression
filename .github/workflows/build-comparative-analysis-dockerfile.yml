@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build comparative-analysis Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-comparative-analysis*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/comparative-analysis*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-comparative-analysis*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/comparative-analysis*.Dockerfile"
+
+jobs:
+  build-comparative-analysis-dockerfile:
+    name: Build comparative-analysis Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/comparative-analysis*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
