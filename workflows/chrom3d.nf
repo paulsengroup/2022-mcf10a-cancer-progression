@@ -45,7 +45,7 @@ workflow {
 
     generate_seed_sequence.out.txt
         .splitText()
-        .map { it.trim() }
+        .map { tuple(it.trim().split("\t")) }
         .set { seeds }
 
     preprocess_significant_interactions.out.gtrack
@@ -144,6 +144,7 @@ process run_chrom3d {
     input:
         tuple val(label),
               path(input_gtrack),
+              val(id),
               val(seed)
         val N
         val L
@@ -159,7 +160,7 @@ process run_chrom3d {
         emit: seed
 
     shell:
-        outname="${input_gtrack.simpleName}.cmm"
+        outname="${input_gtrack.simpleName}_${id}.cmm"
         '''
         Chrom3D -o '!{outname}' \\
                 -r '!{radius}' \\
