@@ -68,7 +68,10 @@ def main():
     lb = args["lower_bound"]
     ub = args["upper_bound"]
 
-    seeds = (str(random.randint(lb, ub)) for _ in range(args["number_of_seeds"]))
+    num_seeds = args["number_of_seeds"]
+    num_seeds_str_length = len(str(num_seeds))
+
+    seeds = (f"{i:0{num_seeds_str_length}d}\t{random.randint(lb, ub)}" for i in range(num_seeds))
     print(args["sep"].join(seeds))
 
 
