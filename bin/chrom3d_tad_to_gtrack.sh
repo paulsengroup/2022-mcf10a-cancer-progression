@@ -38,15 +38,15 @@ cut -f 1,2,3 tmp1.bedpe > tmp1_left.bedpe
 cut -f 4,5,6 tmp1.bedpe > tmp1_right.bedpe
 cat tmp1_left.bedpe tmp1_right.bedpe | sort -u | bedtools sort -g "$3" > tmp1_beads.bedpe
 bedtools complement -L -i tmp1_beads.bedpe -g "$3" | cat - tmp1_beads.bedpe | bedtools sort -g "$3" > tmp1_beads_complemented1.bedpe
-bedtools makewindows -b tmp1_beads_complemented1.bedpe -w "$2" > tmp1_beads_complemented.bedpe
+bedtools makewindows -b tmp1_beads_complemented1.bedpe -w "$2" > tmp1_beads_complemented.bed
 
 # I don't think this is working as intended, grepping for acen will discard all transolcations and assembly gaps
 #zcat "$4" "$5" | grep acen | bedtools pairtobed -a tmp1.bedpe -b stdin -type neither > tmp1_noncen_nongap.bedpe
 #cat "$7" | grep acen | bedtools pairtobed -a tmp1_noncen_nongap.bedpe -b stdin -type neither > tmp1_noncen_nongap_.bedpe
 
-cat "$5" | bedtools pairtobed -a tmp1_beads_complemented.bedpe -b stdin -type neither > tmp1_noncen_nongap.bedpe
+bedtools pairtobed -a tmp1.bedpe -b "$5" -type neither > tmp1_noncen_nongap.bedpe
 
-makeGtrack.py tmp1_noncen_nongap.bedpe tmp1_beads_complemented.bedpe > "$name""_""$2"_t.gtrack
+makeGtrack.py tmp1_noncen_nongap.bedpe tmp1_beads_complemented.bed > "$name""_""$2"_t.gtrack
 
 zcat "$4" |
 bedtools intersect -c -a "$name""_""$2"_t.gtrack -b stdin | \
