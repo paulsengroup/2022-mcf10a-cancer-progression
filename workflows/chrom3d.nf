@@ -115,7 +115,7 @@ process preprocess_significant_interactions{
             '!{bin_size}' \\
             '!{chr_sizes}' \\
             '!{lads}' \\
-            '!{blacklist}'
+            '!{blacklist}' > '!{outprefix}_LADs_diploid.gtrack'
         '''
 }
 

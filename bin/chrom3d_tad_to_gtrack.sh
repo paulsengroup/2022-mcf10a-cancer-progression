@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (C) 2023 Saleh Oshaghi <mohao@uio.no>
+#
+# SPDX-License-Identifier: MIT
 
 set -e
 set -u
@@ -41,9 +44,9 @@ bedtools makewindows -b tmp1_beads_complemented1.bedpe -w "$2" > tmp1_beads_comp
 #zcat "$4" "$5" | grep acen | bedtools pairtobed -a tmp1.bedpe -b stdin -type neither > tmp1_noncen_nongap.bedpe
 #cat "$7" | grep acen | bedtools pairtobed -a tmp1_noncen_nongap.bedpe -b stdin -type neither > tmp1_noncen_nongap_.bedpe
 
-makeGtrack.py tmp1.bedpe tmp1_beads_complemented.bedpe > "$name""_""$2"_t.gtrack
+cat "$5" | bedtools pairtobed -a tmp1_beads_complemented.bedpe -b stdin -type neither > tmp1_noncen_nongap.bedpe
 
-# TODO filter using the unifed blacklist ("$5")
+makeGtrack.py tmp1_noncen_nongap.bedpe tmp1_beads_complemented.bedpe > "$name""_""$2"_t.gtrack
 
 zcat "$4" |
 bedtools intersect -c -a "$name""_""$2"_t.gtrack -b stdin | \
@@ -51,8 +54,4 @@ awk '{if($8 >= 1) print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t1\t" $7; else prin
 | bedtools sort > "$name""_""$2"_LADs_t.gtrack
 
 make_diploid_gtrack.py "$name""_""$2"_LADs_t.gtrack > "$name""_""$2"_LADs_diploid_t.gtrack
-awk 'BEGIN{print "###seqid\tstart\tend\tid\tradius\tperiphery\tedges"}1' "$name""_""$2"_LADs_diploid_t.gtrack > "$name""_""$2"_LADs_diploid.gtrack
-
-# TODO instead of generating unique file names based on the inputs, consider printing the final output to stdout
-# and let the caller decide what the output should be called
-mv ./*diploid.gtrack "$wd/"
+awk 'BEGIN{print "###seqid\tstart\tend\tid\tradius\tperiphery\tedges"}1' "$name""_""$2"_LADs_diploid_t.gtrack

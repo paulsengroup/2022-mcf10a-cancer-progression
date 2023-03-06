@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Copyright (C) 2023 Jonas Paulsen <jonaspau@uio.no>
+#
+# SPDX-License-Identifier: MIT
+
 import re
 import sys
 
