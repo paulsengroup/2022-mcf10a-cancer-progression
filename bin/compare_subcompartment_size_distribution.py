@@ -52,7 +52,7 @@ def import_data(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
 
 @functools.cache
 def get_compartment_ranks() -> dict:
-    compartment_labels = tuple(["B", "B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3", "A"])
+    compartment_labels = tuple(["B3", "B2", "B1", "B0", "A0", "A1", "A2", "A3"])
     return {k: v for v, k in enumerate(compartment_labels)}
 
 
@@ -72,20 +72,24 @@ def plot_compartment_size_distribution_by_condition(
     assert len(cols) == len(axs)
 
     for ax, col in zip(axs, cols):
-        df1 = bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col]).drop(columns=["n_intervals"])
+        df1 = bf.cluster(
+            df[["chrom", "start", "end", col]],
+            min_dist=0,
+            on=[col],
+            return_input=True,
+            return_cluster_ids=False,
+            return_cluster_intervals=True,
+        )
+        df1["Subcompartment length"] = df1["cluster_end"] - df1["cluster_start"]
 
-        df1["Subcompartment length"] = df1["end"] - df1["start"]
-
-        sns.violinplot(df1, x=col, y="Subcompartment length", ax=ax)
-        sns.violinplot(df1, x=col, y="Subcompartment length", ax=ax)
+        sns.violinplot(df1, x=col, y="Subcompartment length", ax=ax, order=get_compartment_ranks().keys())
         ax.set(title=col, ylim=[0, int(5.0e6)])
 
 
 def plot_compartment_size_distribution_by_subcomp(
     df: pd.DataFrame, axs: List[plt.Axes], filter: Union[str, None] = None
 ) -> None:
-    subcomps = get_compartment_labels_from_df(df)
-    assert len(subcomps) == len(axs)
+    assert len(get_compartment_ranks()) == len(axs)
 
     if filter is not None:
         df = df[df["chrom"] == filter]
@@ -94,19 +98,22 @@ def plot_compartment_size_distribution_by_subcomp(
 
     dfs = []
     for col in cols:
-        df1 = (
-            bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col])
-            .drop(columns=["n_intervals"])
-            .rename(columns={col: "Subcompartment"})
-        )
+        df1 = bf.cluster(
+            df[["chrom", "start", "end", col]],
+            min_dist=0,
+            on=[col],
+            return_input=True,
+            return_cluster_ids=False,
+            return_cluster_intervals=True,
+        ).rename(columns={col: "Subcompartment"})
 
         df1["Condition"] = col
         dfs.append(df1)
 
     df = pd.concat(dfs)
-    df["Subcompartment length"] = df["end"] - df["start"]
+    df["Subcompartment length"] = df["cluster_end"] - df["cluster_start"]
 
-    for subcmp, ax in zip(subcomps, axs):
+    for subcmp, ax in zip(get_compartment_ranks().keys(), axs):
         sns.violinplot(
             df[df["Subcompartment"] == subcmp],
             x="Condition",
