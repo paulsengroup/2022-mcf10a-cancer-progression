@@ -72,11 +72,16 @@ def plot_compartment_size_distribution_by_condition(
     assert len(cols) == len(axs)
 
     for ax, col in zip(axs, cols):
-        df1 = bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col]).drop(columns=["n_intervals"])
+        df1 = bf.cluster(
+            df[["chrom", "start", "end", col]],
+            min_dist=0,
+            on=[col],
+            return_input=True,
+            return_cluster_ids=False,
+            return_cluster_intervals=True,
+        )
+        df1["Subcompartment length"] = df1["cluster_end"] - df1["cluster_start"]
 
-        df1["Subcompartment length"] = df1["end"] - df1["start"]
-
-        sns.violinplot(df1, x=col, y="Subcompartment length", ax=ax)
         sns.violinplot(df1, x=col, y="Subcompartment length", ax=ax)
         ax.set(title=col, ylim=[0, int(5.0e6)])
 
@@ -94,17 +99,20 @@ def plot_compartment_size_distribution_by_subcomp(
 
     dfs = []
     for col in cols:
-        df1 = (
-            bf.merge(df[["chrom", "start", "end", col]], min_dist=0, on=[col])
-            .drop(columns=["n_intervals"])
-            .rename(columns={col: "Subcompartment"})
-        )
+        df1 = bf.cluster(
+            df[["chrom", "start", "end", col]],
+            min_dist=0,
+            on=[col],
+            return_input=True,
+            return_cluster_ids=False,
+            return_cluster_intervals=True,
+        ).rename(columns={col: "Subcompartment"})
 
         df1["Condition"] = col
         dfs.append(df1)
 
     df = pd.concat(dfs)
-    df["Subcompartment length"] = df["end"] - df["start"]
+    df["Subcompartment length"] = df["cluster_end"] - df["cluster_start"]
 
     for subcmp, ax in zip(subcomps, axs):
         sns.violinplot(
