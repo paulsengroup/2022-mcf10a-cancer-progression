@@ -35,6 +35,7 @@ COPY --from=downloader --chown=nobody:nogroup /tmp/dchic /opt/dchic
 
 RUN cd /opt/dchic \
 && micromamba install -y -f packages/dchic.yml \
+&& micromamba install -y -c conda-forge pigz \
 && micromamba clean --all -y \
 && R CMD INSTALL packages/functionsdchic_*.tar.gz
 
@@ -43,7 +44,8 @@ RUN cd /opt/dchic \
 # I am pretty sure we're not actually accessing any symbol from libcrypto, so this workaround should be ok.
 RUN cd /opt/conda/lib && ln -s libcrypto.so libcrypto.so.1.0.0
 
-RUN touch /opt/conda/lib/R/etc/.Rprofile
+# See https://www.rdocumentation.org/packages/bigparallelr/versions/0.3.1/topics/assert_cores
+RUN echo 'try(bigparallelr::set_blas_ncores(1), silent = TRUE)' > /opt/conda/lib/R/etc/.Rprofile
 
 USER root
 RUN mkdir /opt/dchic/bin \
