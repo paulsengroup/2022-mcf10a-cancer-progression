@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS downloader
+FROM ubuntu:22.04 AS patch_dchic
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG PIP_NO_CACHE_DIR=0
 
@@ -10,9 +10,15 @@ ARG CONTAINER_VERSION
 ARG DCHIC_VER=${CONTAINER_VERSION}
 
 COPY "containers/assets/dchic-${DCHIC_VER}.tar.xz" /tmp/
+COPY "containers/patches/dchic.patch" /tmp/
 
 RUN apt-get update \
-&& apt-get install -y findutils sed tar xz-utils \
+&& apt-get install -y \
+      findutils \
+      patch \
+      sed \
+      tar \
+      xz-utils \
 && cd /tmp \
 && tar -xf dchic-*.tar.xz \
 && mv dchic-*/ dchic \
@@ -20,7 +26,9 @@ RUN apt-get update \
 && sed -i 's/name: dchic/name: base/' dchic/packages/dchic.yml \
 && find dchic -type f -exec chmod uga+r {} + \
 && find dchic -type d -exec chmod uga+rx {} + \
+&& patch -d dchic < /tmp/dchic.patch \
 && chmod 755 dchic/dchicf.r
+
 
 FROM mambaorg/micromamba:1.3.1 AS base
 
@@ -31,10 +39,11 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG DCHIC_VERSION="${CONTAINER_VERSION}"
 
-COPY --from=downloader --chown=nobody:nogroup /tmp/dchic /opt/dchic
+COPY --from=patch_dchic --chown=nobody:nogroup /tmp/dchic/packages /opt/dchic/packages
 
 RUN cd /opt/dchic \
 && micromamba install -y -f packages/dchic.yml \
+&& micromamba install -y -c conda-forge pigz \
 && micromamba clean --all -y \
 && R CMD INSTALL packages/functionsdchic_*.tar.gz
 
@@ -43,7 +52,10 @@ RUN cd /opt/dchic \
 # I am pretty sure we're not actually accessing any symbol from libcrypto, so this workaround should be ok.
 RUN cd /opt/conda/lib && ln -s libcrypto.so libcrypto.so.1.0.0
 
-RUN touch /opt/conda/lib/R/etc/.Rprofile
+# See https://www.rdocumentation.org/packages/bigparallelr/versions/0.3.1/topics/assert_cores
+RUN echo 'try(bigparallelr::set_blas_ncores(1), silent = TRUE)' > /opt/conda/lib/R/etc/.Rprofile
+
+COPY --from=patch_dchic --chown=nobody:nogroup /tmp/dchic /opt/dchic
 
 USER root
 RUN mkdir /opt/dchic/bin \
