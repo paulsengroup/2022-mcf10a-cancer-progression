@@ -47,15 +47,15 @@ workflow {
     )
 
     preproc_coolers_for_dchic.out.bins
-        .groupTuple(sort: true), size: mcools.size())
+        .groupTuple(sort: true, size: mcools.size())
         .set { bins }
 
     preproc_coolers_for_dchic.out.biases
-        .groupTuple(sort: true), size: mcools.size())
+        .groupTuple(sort: true, size: mcools.size())
         .set { biases }
 
     preproc_coolers_for_dchic.out.matrix
-        .groupTuple(sort: true), size: mcools.size())
+        .groupTuple(sort: true, size: mcools.size())
         .set { matrices }
 
     stage_dchic_inputs(
@@ -331,7 +331,7 @@ process run_dchic_cis {
               path(input_tar),
               path("*.cis.tar.zst"),
               val(ref_genome_name),
-              val("${sample_file.simpleName}_${resolution}")
+              val("${sample_file.simpleName}")
 
     shell:
         output_prefix="${sample_file.simpleName}"
