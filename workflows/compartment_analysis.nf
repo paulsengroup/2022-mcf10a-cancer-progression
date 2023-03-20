@@ -72,6 +72,7 @@ workflow {
         .join(bins, failOnDuplicate: true, failOnMismatch: true)
         .join(stage_dchic_inputs.out.ref_genome_name, failOnDuplicate: true, failOnMismatch: true)
         .join(stage_dchic_inputs.out.tar, failOnDuplicate: true, failOnMismatch: true)
+        .combine([params.dchic_seed])
         .set{ dchic_input_ch }
 
     run_dchic_cis(dchic_input_ch) |
@@ -81,7 +82,10 @@ workflow {
         run_dchic_dloop |
         run_dchic_subcomp |
         run_dchic_viz |
-        map { tuple(it[0], it[5], it[7]) } |
+        // 0: resolution
+        // 5: working_dir_tar
+        // 8: output_prefix
+        map { tuple(it[0], it[5], it[8]) } |
         postprocess_dchic_output
 
     generate_subcompartment_transition_report(
@@ -318,7 +322,8 @@ process run_dchic_cis {
               path(matrices),
               path(bins),
               val(ref_genome_name),
-              path(input_tar)
+              path(input_tar),
+              val(seed)
 
     output:
         tuple val(resolution),
@@ -328,6 +333,7 @@ process run_dchic_cis {
               path(input_tar),
               path("*.cis.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val("${sample_file.simpleName}")
 
     shell:
@@ -350,6 +356,7 @@ process run_dchic_cis {
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
             --pthread '!{task.cpus}' \\
+            --seed '!{seed}' \\
             --pcatype cis
 
         mkdir -p DifferentialResult
@@ -370,6 +377,7 @@ process run_dchic_select {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -380,6 +388,7 @@ process run_dchic_select {
               path(input_tar),
               path("*select.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -402,6 +411,7 @@ process run_dchic_select {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
             --pcatype select
 
         tar -cf - *_pca/ DifferentialResult/ |
@@ -421,6 +431,7 @@ process run_dchic_analyze {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -431,6 +442,7 @@ process run_dchic_analyze {
               path(input_tar),
               path("*.analyze.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -453,6 +465,7 @@ process run_dchic_analyze {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
             --pcatype analyze
 
         tar -cf - *_pca/ DifferentialResult/ |
@@ -472,6 +485,7 @@ process run_dchic_fithic {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -482,6 +496,7 @@ process run_dchic_fithic {
               path(input_tar),
               path("*.fithic.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -511,6 +526,7 @@ process run_dchic_fithic {
             --fithicpath="$(which fithic)" \\
             --pythonpath="$(which python3)" \\
             --sthreads '!{task.cpus}' \\
+            --seed '!{seed}' \\
             --pcatype fithic
 
         tar -cf - *_pca/ DifferentialResult/ |
@@ -530,6 +546,7 @@ process run_dchic_dloop {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -540,6 +557,7 @@ process run_dchic_dloop {
               path(input_tar),
               path("*.dloop.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -562,6 +580,7 @@ process run_dchic_dloop {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
             --pcatype dloop
 
         tar -cf - *_pca/ DifferentialResult/ |
@@ -581,6 +600,7 @@ process run_dchic_subcomp {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -591,6 +611,7 @@ process run_dchic_subcomp {
               path(input_tar),
               path("*.subcomp.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -613,6 +634,7 @@ process run_dchic_subcomp {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
             --pcatype subcomp
 
         tar -cf - *_pca/ DifferentialResult/ |
@@ -632,6 +654,7 @@ process run_dchic_viz {
               path(input_tar),
               path(working_dir_tar),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     output:
@@ -642,6 +665,7 @@ process run_dchic_viz {
               path(input_tar),
               path("*.viz.tar.zst"),
               val(ref_genome_name),
+              val(seed),
               val(output_prefix)
 
     shell:
@@ -664,6 +688,7 @@ process run_dchic_viz {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
             --pcatype viz
 
         tar -cf - *_pca/ DifferentialResult/ |
