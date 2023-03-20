@@ -12,7 +12,7 @@ import subprocess as sp
 import sys
 import tempfile
 from collections import Counter
-from typing import Dict, Iterable, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -508,9 +508,12 @@ def make_heatmap_plots_subcmd(args: Dict) -> None:
         fig, ax = plt.subplots(1, 1, figsize=(args["height"], args["width"]))
         if cond1 == cond2:
             make_heatmap_cis(df[cond1], bin_size, ax)
+            cond1 = cond1.removesuffix(".state")
             outstem = output_prefix.parent / f"{output_prefix.name}_{cond1}_subcomp_transition_heatmap"
         else:
             make_heatmap_trans(df[cond1], df[cond2], bin_size, ax)
+            cond1 = cond1.removesuffix(".state")
+            cond2 = cond2.removesuffix(".state")
             outstem = output_prefix.parent / f"{output_prefix.name}_{cond1}_vs_{cond2}_subcomp_transition_heatmap"
 
         if (outstem.with_suffix(".png").exists() or outstem.with_suffix(".svg").exists()) and not args["force"]:
