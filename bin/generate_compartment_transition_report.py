@@ -495,7 +495,6 @@ def main():
 
     for ax, (cond1, cond2) in zip(axs, cond_pairs):
         make_heatmap(df, cond1, cond2, bin_size, ax)
-        plot_transition_rates(df, cond1, cond2, bin_size, None)
 
     outname = output_prefix.parent / f"{output_prefix.name}_compartment_transition_heatmaps.svg"
     fig.savefig(outname)

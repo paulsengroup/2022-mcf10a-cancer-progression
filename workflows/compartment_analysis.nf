@@ -735,16 +735,16 @@ process postprocess_dchic_output {
         srcdir='DifferentialResult/!{output_prefix}/fdr_result'
         for f in "$srcdir/"*sample_group*.bedGraph; do
             outname="!{output_prefix}$(echo "$f" | sed 's/.*sample_group//')"
-            gzip -9c "$f" > "!{resolution}/$outname.gz"
+            if [[ "$f" == *.subcompartments.* ]]; then
+                postprocess_dchic_subcompartments.py "$f" |
+                    gzip -9c > "!{resolution}/$outname.gz"
+            else
+                gzip -9c "$f" > "!{resolution}/$outname.gz"
+            fi
         done
 
         tar -cf - 'DifferentialResult/!{output_prefix}/viz' |
             xz -T!{task.cpus} -9 --extreme > '!{resolution}/!{output_prefix}.viz.tar.xz'
-
-        srcdir='DifferentialResult/!{output_prefix}/fdr_result'
-        outname="!{resolution}/$(basename "$srcdir/"*subcompartments.bedGraph)"
-        postprocess_dchic_subcompartments.py \\
-             "$srcdir/"*subcompartments.bedGraph | gzip -9c | tee "$outname" > /dev/null
         '''
 }
 
