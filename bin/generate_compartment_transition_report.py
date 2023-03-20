@@ -153,9 +153,7 @@ def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
 
     bin_size = (df["end"] - df["start"]).max()
     df.loc[df["state.mode"] == "None", "state.mode"] = pd.NA
-    df1 = df.filter(regex=".state$").copy()
-
-    return bin_size, df1
+    return bin_size, df.set_index(["chrom", "start", "end"])
 
 
 def group_and_sort_subcompartments(df: pd.DataFrame, aggregate_subcompartments: bool) -> pd.DataFrame:
@@ -288,12 +286,15 @@ def make_alluvial_plot(
 
 
 def compute_subcomp_transision_matrix_cis(
-    subcompartment_labels: Iterable[str], subcomp_ranks: Dict[str, int]
+    subcompartment_labels: pd.Series, subcomp_ranks: Dict[str, int]
 ) -> npt.NDArray:
-    counts = np.zeros([len(subcomp_ranks), len(subcomp_ranks)], dtype=int)
+    counter = Counter()
+    for _, labels in subcompartment_labels.groupby(level="chrom"):
+        pairs = sliding_window_view(labels, 2)
+        counter += Counter(zip(pairs[:, 0], pairs[:, 1]))
 
-    pairs = sliding_window_view(subcompartment_labels, 2)
-    for (sc1, sc2), count in Counter(zip(pairs[:, 0], pairs[:, 1])).items():
+    counts = np.zeros([len(subcomp_ranks), len(subcomp_ranks)], dtype=int)
+    for (sc1, sc2), count in counter.items():
         i1 = subcomp_ranks[sc1]
         i2 = subcomp_ranks[sc2]
         counts[i1, i2] = count
@@ -302,8 +303,8 @@ def compute_subcomp_transision_matrix_cis(
 
 
 def compute_subcomp_transition_matrix_trans(
-    states1: Iterable[str],
-    states2: Iterable[str],
+    states1: pd.Series,
+    states2: pd.Series,
     subcomp_ranks: Dict[str, int],
 ) -> np.ndarray:
     assert len(states1) == len(states2)
@@ -361,7 +362,7 @@ def make_heatmap_trans(
     label2 = states2.name
     assert label1 != label2
 
-    grid = compute_subcomp_transition_matrix_trans(states1.to_numpy(), states2.to_numpy(), ranks)
+    grid = compute_subcomp_transition_matrix_trans(states1, states2, ranks)
     grid *= bin_size
 
     rsum = np.sum(grid, axis=0)
@@ -373,7 +374,7 @@ def make_heatmap_trans(
     make_heatmap_helper(grid1, ax, cmap1, 1.0e6)
 
     # Plot transition frequencies (normalized by rowsum + colsum)
-    transition_vect = (np.diag(grid)) / (rsum + csum - np.diag(grid))
+    transition_vect = (2 * np.diag(grid)) / (rsum + csum)
     # Make all but the sencond to last column transparent
     filler1 = np.full_like(grid, -1.0)
     filler2 = np.full_like(transition_vect, -1.0)
@@ -410,7 +411,7 @@ def make_heatmap_cis(
         ranks = {"B": 0, "A": 1}
 
     label = states.name
-    grid = compute_subcomp_transision_matrix_cis(states.to_numpy(), ranks)
+    grid = compute_subcomp_transision_matrix_cis(states, ranks)
     grid *= bin_size
 
     rsum = np.sum(grid, axis=0)
