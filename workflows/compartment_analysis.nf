@@ -85,15 +85,12 @@ workflow {
         postprocess_dchic_output
 
     generate_subcompartment_transition_report(
-        postprocess_dchic_output.out.resolution,
         postprocess_dchic_output.out.subcompartments
     )
     plot_subcompartment_coverage(
-        postprocess_dchic_output.out.resolution,
         postprocess_dchic_output.out.subcompartments
     )
     plot_subcompartment_size_distribution(
-        postprocess_dchic_output.out.resolution,
         postprocess_dchic_output.out.subcompartments
     )
 }
@@ -733,8 +730,8 @@ process generate_subcompartment_transition_report {
     label 'very_short'
 
     input:
-        val resolution
-        path bedgraph
+        tuple val(resolution),
+              path(bedgraph)
 
     output:
         val resolution, emit: resolution
@@ -772,8 +769,8 @@ process plot_subcompartment_coverage {
     label 'very_short'
 
     input:
-        val resolution
-        path bedgraph
+        tuple val(resolution),
+              path(bedgraph)
 
     output:
         val resolution, emit: resolution
@@ -805,8 +802,8 @@ process plot_subcompartment_size_distribution {
     label 'very_short'
 
     input:
-        val resolution
-        path bedgraph
+        tuple val(resolution),
+              path(bedgraph)
 
     output:
         val resolution, emit: resolution
