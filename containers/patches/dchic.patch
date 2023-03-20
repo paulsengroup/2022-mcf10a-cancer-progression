@@ -1,0 +1,71 @@
+diff --git a/dchicf.r b/dchicf.r
+index e67a7b5..14e6e4e 100644
+--- a/dchicf.r
++++ b/dchicf.r
+@@ -1,6 +1,5 @@
+ #!/usr/bin/env Rscript
+
+-set.seed(123)
+ #libraries required
+ library(bigstatsr)
+ library(Rcpp)
+@@ -1294,6 +1293,26 @@ subcompartment_level <- function(vec) {
+ 	return(df)
+ }
+
++try_depmixs4_fit <- function(model, max_attempts=5) {
++	for (i in 1:max_attempts) {
++		result <- tryCatch(
++			depmixS4::fit(model),
++			error=function(msg) {
++				warning("depmixS4::fit() failed with the following error (attempt ", i, "/", max_attempts, "):")
++				warning(msg)
++				return(NA)
++			})
++		if (!is.na(result)) {
++			if (i != 1) {
++				warning("deepmixS4::fit() succeeded after ", i, " attempts")
++			}
++
++			return(result)
++		}
++	}
++	stop("deepmixS4::fit() failed. See previous error messages for more information")
++}
++
+ hmmsegment <- function(compartment_file, prefix_master, subnum) {
+
+ 	chrom  <- unique(compartment_file$chr)
+@@ -1311,9 +1330,9 @@ hmmsegment <- function(compartment_file, prefix_master, subnum) {
+ 			mod_f  <- depmixS4::depmix(sample ~ 1, data=df, nstates=subnum, family=gaussian())
+ 			mod_b  <- depmixS4::depmix(sample ~ 1, data=df[order(-df$start),], nstates=subnum, family=gaussian())
+ 			cat ("Running forward segmentation\n")
+-			fmod_f <- depmixS4::fit(mod_f)
++			fmod_f <- try_depmixs4_fit(mod_f)
+ 			cat ("Running backward segmentation\n")
+-			fmod_b <- depmixS4::fit(mod_b)
++			fmod_b <- try_depmixs4_fit(mod_b)
+ 			df[,"state_f"] <- fmod_f@posterior$state
+ 			df[,"state_b"] <- rev(fmod_b@posterior$state)
+ 			print (head(df))
+@@ -2801,7 +2820,9 @@ option_list = list(
+
+  	make_option(c("--pthread"), type="integer", default=1, help="Number of threads to be used for pca calculation per chromosome per sample Can be used using cis/trans section
+  		[default 1]\n
+- 	Note: The total number of threads will be used is = sthread X cthread X pthread\n")
++ 	Note: The total number of threads will be used is = sthread X cthread X pthread\n"),
++
++	make_option(c("--seed"), type="integer", default=123, help="Seed used for random number generation\n")
+ )
+ opt <- parse_args(OptionParser(option_list=option_list))
+
+@@ -2848,6 +2869,9 @@ if (sthread > 1) {
+ 	parallel::clusterExport(cl_sthread, c("expectedInteraction","ijk2matfunc_cis","extractTrans","ijk2matfunc_trans","mat2fbm"))
+ }
+
++# Init PRNG
++set.seed(as.integer(opt$seed))
++
+ #Read input file
+ data <- read.table(paste0(inputfile), h=F, as.is=T)
+ colnames(data) <- c("mat","bed","prefix","prefix.master")
