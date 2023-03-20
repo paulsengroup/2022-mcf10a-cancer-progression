@@ -94,9 +94,6 @@ workflow {
     plot_subcompartment_coverage(
         postprocess_dchic_output.out.subcompartments
     )
-    plot_subcompartment_size_distribution(
-        postprocess_dchic_output.out.subcompartments
-    )
 }
 
 process generate_blacklist {
@@ -761,12 +758,14 @@ process generate_subcompartment_transition_report {
     output:
         val resolution, emit: resolution
         path "${resolution}/plots/*.svg", emit: svg
-        path "${resolution}/*.tsv", emit: tsv
+        path "${resolution}/plots/*.png", emit: png
 
     shell:
-        outprefix="${resolution}/${bedgraph.simpleName}"
+        outprefix="${resolution}/plots/${bedgraph.simpleName}"
         '''
+        # Plot alluvials
         generate_compartment_transition_report.py \\
+            --plot-type=alluvial \\
             --output-prefix='!{outprefix}_subcompartments' \\
             --base-color="white" \\
             --width=5 \\
@@ -775,6 +774,7 @@ process generate_subcompartment_transition_report {
             '!{bedgraph}'
 
         generate_compartment_transition_report.py \\
+            --plot-type=alluvial \\
             --aggregate-subcompartments \\
             --output-prefix='!{outprefix}_compartments' \\
             --highlight-color="#b40426ff" \\
@@ -782,8 +782,17 @@ process generate_subcompartment_transition_report {
             --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \\
             '!{bedgraph}'
 
-        mkdir -p '!{resolution}/plots/'
-        mv '!{resolution}/'*.svg '!{resolution}/plots/'
+        # Plot heatmaps
+        generate_compartment_transition_report.py \\
+            --plot-type=heatmap \\
+            --output-prefix='!{outprefix}_subcompartments' \\
+            '!{bedgraph}'
+
+        generate_compartment_transition_report.py \\
+            --plot-type=heatmap \\
+            --aggregate-subcompartments \\
+            --output-prefix='!{outprefix}_compartments' \\
+            '!{bedgraph}'
         '''
 }
 
@@ -814,33 +823,6 @@ process plot_subcompartment_coverage {
         compare_subcompartment_coverage.py \\
             '!{bedgraph}' \\
             '!{outprefix}_subcompartment_coverage'
-
-        mkdir -p '!{resolution}/plots/'
-        mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
-        '''
-}
-
-process plot_subcompartment_size_distribution {
-    publishDir params.output_dir, mode: 'copy'
-
-    label 'process_low'
-    label 'very_short'
-
-    input:
-        tuple val(resolution),
-              path(bedgraph)
-
-    output:
-        val resolution, emit: resolution
-        path "${resolution}/plots/*.svg", emit: svg
-        path "${resolution}/plots/*.png", emit: png
-
-    shell:
-        outprefix="${resolution}/${bedgraph.simpleName}_size_distribution"
-        '''
-        compare_subcompartment_size_distribution.py \\
-            '!{bedgraph}' \\
-            '!{outprefix}'
 
         mkdir -p '!{resolution}/plots/'
         mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
