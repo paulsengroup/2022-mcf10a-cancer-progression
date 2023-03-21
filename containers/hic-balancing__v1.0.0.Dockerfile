@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM curlimages/curl:7.88.1 AS downloader
+FROM curlimages/curl:8.00.1 AS downloader
 
 ARG CONTAINER_VERSION
 ARG JUICERTOOLS_VER=2.20.00
