@@ -51,7 +51,7 @@ def make_cli():
 
 
 def import_data(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
-    df = pd.read_table(path_to_bedgraph).rename(columns={"chr": "chrom"})
+    df = pd.read_table(path_to_bedgraph)
     df1 = df[["chrom", "start", "end", "padj"]].copy()
     df2 = df.filter(regex=".state$")
 
