@@ -187,9 +187,9 @@ def rename_compartments(df: pd.DataFrame, mappings: Union[dict, None] = None) ->
     if mappings is None:
         mappings = get_comp_to_label_mappings()
 
-    cols = [col for col in df.columns if col != "size"]
-    for col in cols:
-        df[col] = df[col].apply(lambda x: mappings[x])
+    for col in df.columns:
+        if col.endswith(".state"):
+            df[col] = df[col].apply(lambda x: mappings[x])
 
     return df
 
@@ -470,8 +470,8 @@ def add_path_suffix(path: pathlib.Path, suffix: str, extension: str) -> pathlib.
 
 
 def make_alluvial_plots_subcmd(args: Dict) -> None:
-    bin_size, df = import_data(args["bedgraph"])
-    df = group_and_sort_subcompartments(df, args["aggregate_subcompartments"])
+    _, df = import_data(args["bedgraph"])
+    df = group_and_sort_subcompartments(df.filter(regex=r"\.state$"), args["aggregate_subcompartments"])
 
     output_prefix = args["output_prefix"]
 
@@ -528,7 +528,7 @@ def make_heatmap_plots_subcmd(args: Dict) -> None:
 
 def main():
     args = vars(make_cli().parse_args())
-    args["output_prefix"].parent.mkdir(exist_ok=True)
+    args["output_prefix"].parent.mkdir(parents=True, exist_ok=True)
 
     if "alluvial" in args["plot_type"]:
         make_alluvial_plots_subcmd(args)
