@@ -364,6 +364,7 @@ process run_dchic_cis {
 
 process run_dchic_select {
     label 'error_retry'
+    label 'process_long'
     label 'process_low'
 
     input:
@@ -412,12 +413,13 @@ process run_dchic_select {
             --pcatype select
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.select.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.select.tar.zst'
         '''
 }
 
 process run_dchic_analyze {
     label 'error_retry'
+    label 'process_long'
     label 'process_low'
 
     input:
@@ -466,12 +468,13 @@ process run_dchic_analyze {
             --pcatype analyze
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.analyze.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.analyze.tar.zst'
         '''
 }
 
 process run_dchic_fithic {
     label 'error_retry'
+    label 'process_long'
     label 'process_medium'
 
     input:
@@ -527,12 +530,13 @@ process run_dchic_fithic {
             --pcatype fithic
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.fithic.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.fithic.tar.zst'
         '''
 }
 
 process run_dchic_dloop {
     label 'error_retry'
+    label 'process_long'
     label 'process_low'
 
     input:
@@ -581,7 +585,7 @@ process run_dchic_dloop {
             --pcatype dloop
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.dloop.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.dloop.tar.zst'
         '''
 }
 
@@ -635,7 +639,7 @@ process run_dchic_subcomp {
             --pcatype subcomp
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.subcomp.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.subcomp.tar.zst'
         '''
 }
 
@@ -689,7 +693,7 @@ process run_dchic_viz {
             --pcatype viz
 
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.viz.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.viz.tar.zst'
         '''
 }
 
