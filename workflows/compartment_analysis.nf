@@ -83,9 +83,9 @@ workflow {
         run_dchic_subcomp |
         run_dchic_viz |
         // 0: resolution
-        // 5: working_dir_tar
-        // 8: output_prefix
-        map { tuple(it[0], it[5], it[8]) } |
+        // 4: input_tar
+        // 7: output_prefix
+        map { tuple(it[0], it[4], it[7]) } |
         postprocess_dchic_output
 
     generate_subcompartment_transition_report(
@@ -304,7 +304,7 @@ process stage_dchic_inputs {
         cp '!{chrom_sizes_}' '!{ref_folder}/!{ref_genome_name}.chrom.sizes'
 
         tar -cf - biases/ '!{ref_folder}' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 -o '!{output_prefix}.tar.zst'
         '''
 }
 
@@ -327,7 +327,6 @@ process run_dchic_cis {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.cis.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -344,7 +343,7 @@ process run_dchic_cis {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS=1
 
-        zstdcat '!{input_tar}' | tar -xf -
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -352,13 +351,13 @@ process run_dchic_cis {
             --gfolder *_goldenpathData/ \\
             --genome '!{ref_genome_name}' \\
             --diffdir '!{output_prefix}' \\
-            --pthread '!{task.cpus}' \\
+            --cthread '!{task.cpus}' \\
             --seed '!{seed}' \\
             --pcatype cis
 
-        mkdir -p DifferentialResult
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=19 -o '!{output_prefix}.cis.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.cis.tar.zst'
+        tar -cf - *_pca/ |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.cis.tar.zst'
         '''
 }
 
@@ -373,7 +372,6 @@ process run_dchic_select {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -383,8 +381,7 @@ process run_dchic_select {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
-              path("*select.tar.zst"),
+              path("*.select.tar.zst"),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -399,9 +396,7 @@ process run_dchic_select {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS='!{task.cpus}'
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -412,8 +407,9 @@ process run_dchic_select {
             --seed '!{seed}' \\
             --pcatype select
 
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.select.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.select.tar.zst'
+        tar -cf - *_pca/*_pca/*_mat/ |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.select.tar.zst'
         '''
 }
 
@@ -428,7 +424,6 @@ process run_dchic_analyze {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -438,7 +433,6 @@ process run_dchic_analyze {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.analyze.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -454,9 +448,7 @@ process run_dchic_analyze {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS='!{task.cpus}'
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -467,8 +459,9 @@ process run_dchic_analyze {
             --seed '!{seed}' \\
             --pcatype analyze
 
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.analyze.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.analyze.tar.zst'
+        tar -cf - 'DifferentialResult/!{output_prefix}/' |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.analyze.tar.zst'
         '''
 }
 
@@ -483,7 +476,6 @@ process run_dchic_fithic {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -493,7 +485,6 @@ process run_dchic_fithic {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.fithic.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -509,9 +500,7 @@ process run_dchic_fithic {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS=1
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         # This step fails with an error like:
         # Error in ids_sample[[i]] : subscript out of bounds
@@ -529,8 +518,10 @@ process run_dchic_fithic {
             --seed '!{seed}' \\
             --pcatype fithic
 
+        # TODO fixme
+        cp -L '!{input_tar}' '!{output_prefix}.fithic.tar.zst'
         tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.fithic.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.fithic.tar.zst'
         '''
 }
 
@@ -545,7 +536,6 @@ process run_dchic_dloop {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -555,7 +545,6 @@ process run_dchic_dloop {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.dloop.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -571,9 +560,7 @@ process run_dchic_dloop {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS='!{task.cpus}'
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -584,8 +571,9 @@ process run_dchic_dloop {
             --seed '!{seed}' \\
             --pcatype dloop
 
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.dloop.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.dloop.tar.zst'
+        tar -cf - 'DifferentialResult/!{output_prefix}/fdr_result/' |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.dloop.tar.zst'
         '''
 }
 
@@ -599,7 +587,6 @@ process run_dchic_subcomp {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -609,7 +596,6 @@ process run_dchic_subcomp {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.subcomp.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -625,9 +611,7 @@ process run_dchic_subcomp {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS='!{task.cpus}'
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -638,8 +622,9 @@ process run_dchic_subcomp {
             --seed '!{seed}' \\
             --pcatype subcomp
 
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.subcomp.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.subcomp.tar.zst'
+        tar -cf - 'DifferentialResult/!{output_prefix}/fdr_result/'*.subcompartments.* |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.subcomp.tar.zst'
         '''
 }
 
@@ -653,7 +638,6 @@ process run_dchic_viz {
               path(matrices),
               path(bins),
               path(input_tar),
-              path(working_dir_tar),
               val(ref_genome_name),
               val(seed),
               val(output_prefix)
@@ -663,7 +647,6 @@ process run_dchic_viz {
               path(sample_file),
               path(matrices),
               path(bins),
-              path(input_tar),
               path("*.viz.tar.zst"),
               val(ref_genome_name),
               val(seed),
@@ -679,9 +662,7 @@ process run_dchic_viz {
         export TMPDIR="$PWD/tmp"
         export OPENBLAS_NUM_THREADS='!{task.cpus}'
 
-        zstdcat '!{input_tar}' | tar -xf - &
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        wait
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
         dchicf.r \\
             --file '!{sample_file}' \\
@@ -692,20 +673,26 @@ process run_dchic_viz {
             --seed '!{seed}' \\
             --pcatype viz
 
-        tar -cf - *_pca/ DifferentialResult/ |
-            zstd -T'!{task.cpus}' --adapt=min=1,max=3 -o '!{output_prefix}.viz.tar.zst'
+        cp -L '!{input_tar}' '!{output_prefix}.viz.tar.zst'
+        tar -cf - 'DifferentialResult/!{output_prefix}/viz/' |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.viz.tar.zst'
         '''
 }
 
 process postprocess_dchic_output {
     publishDir params.output_dir, mode: 'copy'
 
+    label 'process_high'
+
     input:
         tuple val(resolution),
-              path(working_dir_tar),
+              path(input_tar),
               val(output_prefix)
 
     output:
+        tuple val(resolution),
+              path("${resolution}/${output_prefix}.dchic.tar.zst"),
+              emit: dchic_archive
         tuple val(resolution),
               path("${resolution}/${output_prefix}.pcOri.bedGraph.gz"),
               emit: pc_ori
@@ -729,23 +716,35 @@ process postprocess_dchic_output {
         '''
         set -o pipefail
 
-        zstdcat '!{working_dir_tar}' | tar -xf -
-        mkdir '!{resolution}/'
+        mkdir '!{resolution}/' '!{output_prefix}'
+        zstdcat '!{input_tar}' |
+            tar -C '!{output_prefix}/' -xf - --ignore-zeros \\
+                --exclude=biases \\
+                --exclude='*_goldenpathData'
 
-        # Compress output files
-        srcdir='DifferentialResult/!{output_prefix}/fdr_result'
-        for f in "$srcdir/"*sample_group*.bedGraph; do
-            outname="!{output_prefix}$(echo "$f" | sed 's/.*sample_group//')"
-            if [[ "$f" == *.subcompartments.* ]]; then
-                postprocess_dchic_subcompartments.py "$f" |
+        function process_bedgraph {
+            bgraph="$1"
+            outname="!{output_prefix}$(echo "$bgraph" | sed 's/.*sample_group//')"
+            if [[ "$bgraph" == *.subcompartments.* ]]; then
+                postprocess_dchic_subcompartments.py "$bgraph" |
                     gzip -9c > "!{resolution}/$outname.gz"
             else
-                gzip -9c "$f" > "!{resolution}/$outname.gz"
+                gzip -9c "$bgraph" > "!{resolution}/$outname.gz"
             fi
-        done
+        }
 
-        tar -cf - 'DifferentialResult/!{output_prefix}/viz' |
+        export -f process_bedgraph
+
+        # Compress output files
+        srcdir='!{output_prefix}/DifferentialResult/!{output_prefix}/fdr_result'
+        printf '%s\\n' "$srcdir/"*sample_group*.bedGraph |
+            xargs -P '!{task.cpus}' -I {} bash -c 'process_bedgraph "$@"' _ {}
+
+        tar -C '!{output_prefix}/DifferentialResult' -cf - '!{output_prefix}/viz' |
             xz -T!{task.cpus} -9 --extreme > '!{resolution}/!{output_prefix}.viz.tar.xz'
+
+        tar -cf - '!{output_prefix}' |
+            zstd -T!{task.cpus} --adapt=min=13,max=19 -o '!{resolution}/!{output_prefix}.dchic.tar.zst'
         '''
 }
 
