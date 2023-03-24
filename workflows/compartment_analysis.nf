@@ -78,7 +78,7 @@ workflow {
     run_dchic_cis(dchic_input_ch) |
         run_dchic_select |
         run_dchic_analyze |
-        // run_dchic_fithic |
+        run_dchic_fithic |
         run_dchic_dloop |
         run_dchic_subcomp |
         run_dchic_viz |
@@ -239,9 +239,7 @@ process preproc_coolers_for_dchic {
             awk -F '\\t' 'BEGIN{OFS=FS} {print $1,$2,$3,NR,$4!=0}' |
             pigz -9 -p '!{task.cpus}' > '!{outprefix}_abs.bed.gz'
 
-        cooler dump --na-rep nan -t bins "$cooler" |
-            grep '^chr[0-9X]\\+'                   |
-            awk -F '\\t' 'BEGIN{ OFS=FS } { printf "%s\\t%.0f\\t%s\\n", $1,$2+(!{resolution}/2),$4 }' |
+        dump_bias_vectors_for_fithic.py "$cooler" |
             pigz -9 -p '!{task.cpus}' > '!{outprefix}.biases.gz'
 
         readarray -t chroms < <(cut -f 1 '!{chrom_sizes}')
@@ -514,13 +512,12 @@ process run_dchic_fithic {
             --diffdir '!{output_prefix}' \\
             --fithicpath="$(which fithic)" \\
             --pythonpath="$(which python3)" \\
-            --sthreads '!{task.cpus}' \\
+            --sthread '!{task.cpus}' \\
             --seed '!{seed}' \\
             --pcatype fithic
 
-        # TODO fixme
         cp -L '!{input_tar}' '!{output_prefix}.fithic.tar.zst'
-        tar -cf - *_pca/ DifferentialResult/ |
+        tar -cf - 'DifferentialResult/!{output_prefix}/fithic_run/' |
             zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.fithic.tar.zst'
         '''
 }

@@ -1,5 +1,17 @@
+diff --git a/README.md b/README.md
+index 8dfe479..efc782c 100644
+--- a/README.md
++++ b/README.md
+@@ -234,3 +234,7 @@ We previously released a different version of dcHiC (under the branch "dcHiC-v1"
+ For help with installation, technical issues, interpretation, or other details, feel free to raise an issue or contact us:
+
+ Abhijit Chakraborty (abhijit@lji.org), Jeffrey Wang (jeffreywang@lji.org), Ferhat Ay (ferhatay@lji.org)
++
++## Citation
++
++[Chakraborty A, Wang JG, Ay F. dcHiC detects differential compartments across multiple Hi-C datasets. Nat Commun. 2022;13(1):6827. Published 2022 Nov 11. doi:10.1038/s41467-022-34626-6](https://www.nature.com/articles/s41467-022-34626-6)
 diff --git a/dchicf.r b/dchicf.r
-index e67a7b5..14e6e4e 100644
+index e67a7b5..fca187e 100644
 --- a/dchicf.r
 +++ b/dchicf.r
 @@ -1,6 +1,5 @@
@@ -36,7 +48,7 @@ index e67a7b5..14e6e4e 100644
  hmmsegment <- function(compartment_file, prefix_master, subnum) {
 
  	chrom  <- unique(compartment_file$chr)
-@@ -1311,9 +1330,9 @@ hmmsegment <- function(compartment_file, prefix_master, subnum) {
+@@ -1311,14 +1330,19 @@ hmmsegment <- function(compartment_file, prefix_master, subnum) {
  			mod_f  <- depmixS4::depmix(sample ~ 1, data=df, nstates=subnum, family=gaussian())
  			mod_b  <- depmixS4::depmix(sample ~ 1, data=df[order(-df$start),], nstates=subnum, family=gaussian())
  			cat ("Running forward segmentation\n")
@@ -48,7 +60,17 @@ index e67a7b5..14e6e4e 100644
  			df[,"state_f"] <- fmod_f@posterior$state
  			df[,"state_b"] <- rev(fmod_b@posterior$state)
  			print (head(df))
-@@ -2801,7 +2820,9 @@ option_list = list(
+ 			state_f <- aggregate(sample ~ state_f, mean, data=df)
+ 			state_b <- aggregate(sample ~ state_b, mean, data=df)
++			# Deal with the possibility that state_[fb] do not have any bins for one or more state labels
++			missing_states <- setdiff(c(1:subnum), state_f$state_f)
++			state_f <- rbind(state_f, list(missing_states, rep(NA, length(missing_states))))
++			missing_states <- setdiff(c(1:subnum), state_b$state_b)
++			state_b <- rbind(state_b, list(missing_states, rep(NA, length(missing_states))))
+ 			state_f <- state_f[order(state_f$sample),]
+ 			state_b <- state_b[order(state_b$sample),]
+ 			state_f[,"state"] <- c(1:subnum)
+@@ -2801,7 +2825,9 @@ option_list = list(
 
   	make_option(c("--pthread"), type="integer", default=1, help="Number of threads to be used for pca calculation per chromosome per sample Can be used using cis/trans section
   		[default 1]\n
@@ -59,7 +81,7 @@ index e67a7b5..14e6e4e 100644
  )
  opt <- parse_args(OptionParser(option_list=option_list))
 
-@@ -2848,6 +2869,9 @@ if (sthread > 1) {
+@@ -2848,6 +2874,9 @@ if (sthread > 1) {
  	parallel::clusterExport(cl_sthread, c("expectedInteraction","ijk2matfunc_cis","extractTrans","ijk2matfunc_trans","mat2fbm"))
  }
 
