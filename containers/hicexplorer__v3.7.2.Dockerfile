@@ -19,6 +19,7 @@ RUN micromamba install -y \
         "python=3.9" \
         "cleanlab>=1,<2" \
         "hicexplorer=$HICEXPLORER_VER" \
+        procps-ng \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

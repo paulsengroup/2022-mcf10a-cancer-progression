@@ -20,6 +20,7 @@ RUN micromamba install -y \
         bioframe \
         "cooltools=$COOLTOOLS_VER" \
         ucsc-bedgraphtobigwig \
+        procps-ng \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

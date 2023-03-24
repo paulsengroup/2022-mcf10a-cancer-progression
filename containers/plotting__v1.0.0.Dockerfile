@@ -23,6 +23,7 @@ RUN micromamba install -y \
         natsort \
         numpy \
         pandas \
+        procps-ng \
         pyBigWig \
         r-alluvial \
         r-data.table \

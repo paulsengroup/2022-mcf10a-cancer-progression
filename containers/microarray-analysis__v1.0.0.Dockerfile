@@ -19,6 +19,7 @@ RUN micromamba install -y \
         bioframe \
         numpy \
         pandas \
+        procps-ng \
         ucsc-liftover \
 && micromamba clean --all -y
 

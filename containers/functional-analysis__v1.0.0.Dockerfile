@@ -53,6 +53,7 @@ RUN micromamba install -y                            \
                bioframe                              \
                gprofiler-official                    \
                numpy                                 \
+               procps-ng                             \
                scikit-learn                          \
                scipy                                 \
                seaborn                               \

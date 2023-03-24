@@ -39,6 +39,7 @@ COPY --from=builder "/tmp/bedtools2/LICENSE" "/usr/local/share/licenses/bedtools
 
 RUN apt-get update \
 &&  apt-get install -y bzip2 \
+                       procps \
                        xz-utils \
                        zlib1g \
 &&  rm -rf /var/lib/apt/lists/*

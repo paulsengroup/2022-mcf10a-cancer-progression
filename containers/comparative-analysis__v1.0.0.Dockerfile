@@ -18,6 +18,7 @@ RUN micromamba install -y \
                numpy \
                pandas \
                pigz \
+               procps-ng \
                pyBigWig \
 && micromamba clean --all -y
 

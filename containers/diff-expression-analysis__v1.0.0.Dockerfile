@@ -34,6 +34,7 @@ RUN micromamba install -y                                              \
                r-optparse                                              \
                r-pheatmap                                              \
                r-stringr                                               \
+               procps-ng                                               \
 && micromamba clean --all -y
 
 RUN touch /opt/conda/lib/R/etc/.Rprofile

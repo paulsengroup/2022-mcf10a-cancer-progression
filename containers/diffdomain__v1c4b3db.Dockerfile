@@ -41,6 +41,7 @@ RUN micromamba install -y \
         matplotlib \
         numpy \
         pandas \
+        procps-ng \
         seaborn \
         statsmodels \
         tqdm \

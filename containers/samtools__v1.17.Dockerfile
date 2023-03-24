@@ -75,6 +75,7 @@ RUN apt-get update \
                       libdeflate0 \
                       libncurses5 \
                       lzma \
+                      procps \
                       zlib1g \
 && rm -rf /var/lib/apt/lists/*
 
