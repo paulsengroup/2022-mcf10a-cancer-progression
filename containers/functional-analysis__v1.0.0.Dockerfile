@@ -37,7 +37,7 @@ RUN install -Dm0755 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/gofigure.py" /tmp/gofi
 && install -Dm0755 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/scripts/"*.py /tmp/gofigure/ \
 && install -Dm0644 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/LICENSE" /tmp/gofigure/LICENSE
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG CONTAINER_VERSION
 
