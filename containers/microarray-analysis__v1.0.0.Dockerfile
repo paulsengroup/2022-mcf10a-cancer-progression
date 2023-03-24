@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -19,6 +19,7 @@ RUN micromamba install -y \
         bioframe \
         numpy \
         pandas \
+        procps-ng \
         ucsc-liftover \
 && micromamba clean --all -y
 

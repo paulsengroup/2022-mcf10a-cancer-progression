@@ -21,6 +21,7 @@ RUN apt-get update \
 && pip install "hicrep==$HICREP_VER" \
 && apt-get remove -y -q cython3 \
                          gcc \
+                         procps \
                          python3-dev \
                          python3-pip \
 && apt-get autoremove -y \
