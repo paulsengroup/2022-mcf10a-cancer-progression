@@ -81,6 +81,7 @@ workflow {
         run_dchic_fithic |
         run_dchic_dloop |
         run_dchic_subcomp |
+        // run_dchic_enrich |
         run_dchic_viz |
         // 0: resolution
         // 4: input_tar
@@ -622,6 +623,61 @@ process run_dchic_subcomp {
         cp -L '!{input_tar}' '!{output_prefix}.subcomp.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/fdr_result/'*.subcompartments.* |
             zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.subcomp.tar.zst'
+        '''
+}
+
+process run_dchic_enrich {
+    label 'error_retry'
+    label 'process_low'
+
+    input:
+        tuple val(resolution),
+              path(sample_file),
+              path(matrices),
+              path(bins),
+              path(input_tar),
+              val(ref_genome_name),
+              val(seed),
+              val(output_prefix)
+
+    output:
+        tuple val(resolution),
+              path(sample_file),
+              path(matrices),
+              path(bins),
+              path("*.enrich.tar.zst"),
+              val(ref_genome_name),
+              val(seed),
+              val(output_prefix)
+
+    shell:
+        '''
+        set -o pipefail
+
+        mkdir tmp/
+        trap 'rm -rf tmp/' EXIT
+
+        export TMPDIR="$PWD/tmp"
+        export OPENBLAS_NUM_THREADS='!{task.cpus}'
+
+        zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
+
+        dchicf.r \\
+            --file '!{sample_file}' \\
+            --dirovwt T \\
+            --gfolder *_goldenpathData/ \\
+            --genome '!{ref_genome_name}' \\
+            --diffdir '!{output_prefix}' \\
+            --seed '!{seed}' \\
+            --region both \\
+            --pcgroup pcQnm \\
+            --interaction intra \\
+            --compare F \\
+            --pcatype enrich
+
+        cp -L '!{input_tar}' '!{output_prefix}.enrich.tar.zst'
+        tar -cf - 'DifferentialResult/!{output_prefix}/geneEnrichment/' |
+            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.enrich.tar.zst'
         '''
 }
 
