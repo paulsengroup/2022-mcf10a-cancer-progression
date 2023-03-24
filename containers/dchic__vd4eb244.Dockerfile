@@ -30,7 +30,7 @@ RUN apt-get update \
 && chmod 755 dchic/dchicf.r
 
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG CONTAINER_VERSION
 
@@ -43,7 +43,9 @@ COPY --from=patch_dchic --chown=nobody:nogroup /tmp/dchic/packages /opt/dchic/pa
 
 RUN cd /opt/dchic \
 && micromamba install -y -f packages/dchic.yml \
-&& micromamba install -y -c conda-forge pigz \
+&& micromamba install -y -c conda-forge \
+    pigz \
+    procps-ng \
 && micromamba clean --all -y \
 && R CMD INSTALL packages/functionsdchic_*.tar.gz
 

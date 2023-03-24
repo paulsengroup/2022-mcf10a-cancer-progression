@@ -15,6 +15,7 @@ RUN dnf update -y \
                    gawk \
                    perl-Digest-SHA \
                    pigz \
+                   procps \
                    python3 \
                    rsync \
                    sed \

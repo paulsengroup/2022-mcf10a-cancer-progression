@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG CONTAINER_VERSION
 
@@ -34,6 +34,7 @@ RUN micromamba install -y                                              \
                r-optparse                                              \
                r-pheatmap                                              \
                r-stringr                                               \
+               procps-ng                                               \
 && micromamba clean --all -y
 
 RUN touch /opt/conda/lib/R/etc/.Rprofile

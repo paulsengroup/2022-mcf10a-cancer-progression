@@ -54,6 +54,7 @@ RUN apt-get update \
                       libtbb2 \
                       openjdk-18-jre \
                       pigz \
+                      procps \
                       python3 \
                       python3-pip \
                       zstd \

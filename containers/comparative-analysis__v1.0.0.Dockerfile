@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG CONTAINER_VERSION
 
@@ -18,6 +18,7 @@ RUN micromamba install -y \
                numpy \
                pandas \
                pigz \
+               procps-ng \
                pyBigWig \
 && micromamba clean --all -y
 
