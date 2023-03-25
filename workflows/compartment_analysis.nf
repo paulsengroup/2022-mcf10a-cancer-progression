@@ -7,7 +7,8 @@ nextflow.enable.dsl=2
 
 workflow {
     def mcools = file(params.mcools, checkIfExists: true).sort()
-    def resolutions = params.resolutions?.split(',').sort()
+    def resolutions = params.resolutions.sort()
+    def dchic_cis_mem = [resolutions, params.dchic_cis_gbs_per_cpu].transpose()
 
     generate_blacklist(
         file(params.assembly_gaps, checkIfExists: true),
@@ -72,6 +73,7 @@ workflow {
         .join(bins, failOnDuplicate: true, failOnMismatch: true)
         .join(stage_dchic_inputs.out.ref_genome_name, failOnDuplicate: true, failOnMismatch: true)
         .join(stage_dchic_inputs.out.tar, failOnDuplicate: true, failOnMismatch: true)
+        .join(Channel.of(dchic_cis_mem).flatten().collate(2), failOnDuplicate: true, failOnMismatch: true)
         .combine([params.dchic_seed])
         .set{ dchic_input_ch }
 
@@ -309,8 +311,11 @@ process stage_dchic_inputs {
 
 process run_dchic_cis {
     label 'error_retry'
-    label 'process_medium'
-    label 'process_very_long'
+
+    cpus 10
+    memory { memory * task.cpus * task.attempt }
+    time { 16.hour * task.attempt }
+
 
     input:
         tuple val(resolution),
@@ -319,6 +324,7 @@ process run_dchic_cis {
               path(bins),
               val(ref_genome_name),
               path(input_tar),
+              val(memory),
               val(seed)
 
     output:
