@@ -34,6 +34,12 @@ workflow {
     plot_subcompartment_vs_epigenetic_markers(
         overlap_subcompartments_with_epigenetic_markers.out.pickle
     )
+
+    annotate_domains_with_subcompartments(
+        subcomp_bgs,
+        file(params.tads, checkIfExists: true),
+        file(params.cliques, checkIfExists: true)
+    )
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
@@ -84,5 +90,34 @@ process plot_subcompartment_vs_epigenetic_markers {
         outprefix="${resolution}/plots/${pickled_df.simpleName}"
         '''
         plot_subcomp_epigen_marker_overlaps.py '!{pickled_df}' '!{outprefix}'
+        '''
+}
+
+
+process annotate_domains_with_subcompartments {
+    publishDir "${params.output_dir}/annotated_domains/", mode: 'copy'
+    label 'process_short'
+    label 'process_medium'
+
+    input:
+        tuple val(resolution),
+              path(subcompartments)
+
+        path tads
+        path cliques
+
+    output:
+        tuple val(resolution), path("${resolution}/*.bed.gz"), emit: tads
+        tuple val(resolution), path("${resolution}/*.tsv.gz"), emit: cliques
+
+    shell:
+        outprefix="${resolution}/${subcompartments.simpleName}"
+        '''
+        annotate_domains_with_subcompartments.py \\
+            '!{subcompartments}' \\
+            --nproc='!{task.cpus}' \\
+            --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
+            --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
+            --output-folder '!{resolution}'
         '''
 }
