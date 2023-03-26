@@ -6,9 +6,15 @@
 nextflow.enable.dsl=2
 
 workflow {
+    Channel.of(params.resolutions)
+       .flatten()
+       .map { res ->
+              def template = params.subcompartment_bedgraph_template as String
+              def bgraph = template.replace('{{resolution}}', "${res}")
 
-    Channel.fromPath(params.subcompartment_bedgraph, checkIfExists: true)
-           .set { subcomp_bgs }
+              tuple(res, file(bgraph, checkIfExists: true, glob: false, type: 'file'))
+            }
+       .set { subcomp_bgs }
 
     Channel.fromPath(["${params.nfcore_chip_folder}/*",
                       "${params.lads_folder}"],
@@ -22,7 +28,7 @@ workflow {
         subcomp_bgs.combine(coverage_only_flags),
         epigen_marker_folders.collect(),
         file(params.subcomp_marker_file_table, checkIfExists: true),
-        params.condition_labels
+        params.condition_labels?.join(',')
     )
 
     plot_subcompartment_vs_epigenetic_markers(
@@ -35,21 +41,21 @@ process overlap_subcompartments_with_epigenetic_markers {
     label 'process_medium'
 
     input:
-        tuple path(subcompartments),
+        tuple val(resolution),
+              path(subcompartments),
               val(coverage_only)
         path nfcore_chip_folder
         path marker_file_table
         val pretty_labels
 
     output:
-        path "*.pickle", emit: pickle
-        path "*.tsv.gz", emit: tsv
+        tuple val(resolution), path("*.pickle"), emit: pickle
+        tuple val(resolution), path("*.tsv.gz"), emit: tsv
 
     shell:
         outprefix = subcompartments.getSimpleName() + (coverage_only ? "_coverage" : "")
         coverage_only_flag = coverage_only ? "--coverage-only" : ""
         '''
-        ls -lah .
         overlap_subcomps_with_epigen_markers.py \\
             '!{subcompartments}' \\
             '!{marker_file_table}' \\
@@ -63,18 +69,19 @@ process overlap_subcompartments_with_epigenetic_markers {
 }
 
 process plot_subcompartment_vs_epigenetic_markers {
-    publishDir "${params.output_dir}/subcomps_vs_epigenetic_markers/plots/", mode: 'copy'
+    publishDir "${params.output_dir}/subcomps_vs_epigenetic_markers/", mode: 'copy'
     label 'very_short'
 
     input:
-        path pickled_df
+        tuple val(resolution),
+              path(pickled_df)
 
     output:
-        path "*.png", emit: png
-        path "*.svg", emit: svg
+        tuple val(resolution), path("${resolution}/plots/*.png"), emit: png
+        tuple val(resolution), path("${resolution}/plots/*.svg"), emit: svg
 
     shell:
-        outprefix = pickled_df.getSimpleName()
+        outprefix="${resolution}/plots/${pickled_df.simpleName}"
         '''
         plot_subcomp_epigen_marker_overlaps.py '!{pickled_df}' '!{outprefix}'
         '''
