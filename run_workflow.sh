@@ -51,7 +51,7 @@ fi
 args=("${@:3}")
 if [[ $HOSTNAME == *.saga* ]]; then
   base_config="configs/base_saga.config"
-  args+=(--max_memory=400.G
+  args+=(--max_memory=400.GB
          --max_cpus=52
          --max_time=336.h
          --project="${SLURM_PROJECT_ID-changeme}")
@@ -79,6 +79,7 @@ cmd=(nextflow run
      -c "$base_config"
      -process.cache=deep
      "$name.nf"
+     -with-report
      -ansi-log
      -resume)
 
