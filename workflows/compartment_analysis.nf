@@ -507,10 +507,11 @@ process run_dchic_fithic {
 
         zstdcat '!{input_tar}' | tar -xf - --ignore-zeros
 
-        # This step fails with an error like:
-        # Error in ids_sample[[i]] : subscript out of bounds
-        # Calls: fithicformat
-        # Execution halted
+        # If this step fails with an error like:
+        #   Error in ids_sample[[i]] : subscript out of bounds
+        #   Calls: fithicformat
+        #   Execution halted
+        # this most likely means the bias vector are not valid (e.g. weights are not centered around 1)
         dchicf.r \\
             --file '!{sample_file}' \\
             --dirovwt T \\
