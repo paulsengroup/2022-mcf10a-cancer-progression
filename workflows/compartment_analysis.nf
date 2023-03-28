@@ -305,7 +305,7 @@ process stage_dchic_inputs {
         cp '!{chrom_sizes_}' '!{ref_folder}/!{ref_genome_name}.chrom.sizes'
 
         tar -cf - biases/ '!{ref_folder}' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 -o '!{output_prefix}.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 -o '!{output_prefix}.tar.zst'
         '''
 }
 
@@ -362,7 +362,7 @@ process run_dchic_cis {
 
         cp -L '!{input_tar}' '!{output_prefix}.cis.tar.zst'
         tar -cf - *_pca/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.cis.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.cis.tar.zst'
         '''
 }
 
@@ -414,7 +414,7 @@ process run_dchic_select {
 
         cp -L '!{input_tar}' '!{output_prefix}.select.tar.zst'
         tar -cf - *_pca/*_pca/*_mat/ |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.select.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.select.tar.zst'
         '''
 }
 
@@ -466,7 +466,7 @@ process run_dchic_analyze {
 
         cp -L '!{input_tar}' '!{output_prefix}.analyze.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.analyze.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.analyze.tar.zst'
         '''
 }
 
@@ -526,7 +526,7 @@ process run_dchic_fithic {
 
         cp -L '!{input_tar}' '!{output_prefix}.fithic.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/fithic_run/' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.fithic.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.fithic.tar.zst'
         '''
 }
 
@@ -578,7 +578,7 @@ process run_dchic_dloop {
 
         cp -L '!{input_tar}' '!{output_prefix}.dloop.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/fdr_result/' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.dloop.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.dloop.tar.zst'
         '''
 }
 
@@ -629,7 +629,7 @@ process run_dchic_subcomp {
 
         cp -L '!{input_tar}' '!{output_prefix}.subcomp.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/fdr_result/'*.subcompartments.* |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.subcomp.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.subcomp.tar.zst'
         '''
 }
 
@@ -684,7 +684,7 @@ process run_dchic_enrich {
 
         cp -L '!{input_tar}' '!{output_prefix}.enrich.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/geneEnrichment/' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.enrich.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.enrich.tar.zst'
         '''
 }
 
@@ -735,7 +735,7 @@ process run_dchic_viz {
 
         cp -L '!{input_tar}' '!{output_prefix}.viz.tar.zst'
         tar -cf - 'DifferentialResult/!{output_prefix}/viz/' |
-            zstd -T'!{task.cpus}' --adapt=min=3,max=13 >> '!{output_prefix}.viz.tar.zst'
+            zstd -T'!{task.cpus}' --adapt=min=3,max=6 >> '!{output_prefix}.viz.tar.zst'
         '''
 }
 
