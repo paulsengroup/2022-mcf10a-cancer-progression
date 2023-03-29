@@ -9,16 +9,14 @@ import collections
 import functools
 import itertools
 import logging
-import multiprocessing as mp
 import pathlib
 import typing
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Iterable, List, Tuple, Union
 
 import bioframe as bf
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-import scipy.stats as ss
 
 
 def make_cli():
@@ -61,20 +59,10 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--use-subcompartment-scores",
+        "--aggregate-subcompartments",
         action="store_true",
         default=False,
-        help="Use subcompartment scores instead of subcompartment labels to annotate TADs/cliques.",
-    )
-
-    cli.add_argument("--seed", type=int, default=3960467180, help="Seed to use for PRNG.")
-
-    cli.add_argument(
-        "--nproc",
-        type=int,
-        choices=range(1, mp.cpu_count() + 1),
-        default=mp.cpu_count(),
-        help="Maximum number of parallel processes.",
+        help="Aggregate subcompartments to A/B compartments.",
     )
 
     return cli
@@ -97,17 +85,28 @@ def get_subcompartment_ranks() -> dict:
 
 
 @functools.cache
-def get_output_df_columns() -> List[str]:
-    return [f"{s}.state" for s in get_subcompartment_ranks().keys()] + [
-        "state.mode",
-        "unimodality.score1",
-        "unimodality.score2",
-        "stderr",
-        "mean_abs_dev",
-    ]
+def get_compartment_ranks() -> dict:
+    compartment_labels = tuple(["B", "A"])
+    return {k: v for v, k in enumerate(compartment_labels)}
 
 
-def import_subcomps(path_to_bedgraph: pathlib.Path) -> Dict[str, pd.DataFrame]:
+@functools.cache
+def get_output_df_columns(aggregate_subcompartments: bool) -> List[str]:
+    if aggregate_subcompartments:
+        cols = [f"{s}.state" for s in get_compartment_ranks().keys()]
+    else:
+        cols = [f"{s}.state" for s in get_subcompartment_ranks().keys()]
+    return cols + ["state.mode", "state.stderr", "state.mean_abs_dev"]
+
+
+def states_contain_subcompartments(states: Iterable[str]) -> bool:
+    unique_states = set(states)
+
+    compartment_labels = set(list(get_compartment_ranks().keys()))
+    return len(unique_states.intersection(compartment_labels)) == 0
+
+
+def import_subcomps(path_to_bedgraph: pathlib.Path, aggregate_subcompartments: bool) -> Dict[str, pd.DataFrame]:
     df = pd.read_table(path_to_bedgraph)
     df1 = df[["chrom", "start", "end", "padj"]]
 
@@ -119,8 +118,13 @@ def import_subcomps(path_to_bedgraph: pathlib.Path) -> Dict[str, pd.DataFrame]:
     for state_col, score_col in zip(states, scores):
         label = score_col.removesuffix(".score")
         df2 = df1.copy()
-        df2["state"] = states[state_col]
-        df2["score"] = scores[score_col]
+        if aggregate_subcompartments:
+            df2["state"] = states[state_col].str.extract(r"^([AB])\d+$")
+            df2["score"] = scores[score_col].map(lambda n: -1 if n < 0 else +1)
+        else:
+            df2["state"] = states[state_col]
+            df2["score"] = scores[score_col]
+
         dfs[label] = df2
 
     return dfs
@@ -155,12 +159,12 @@ def compute_state_distribution(df: pd.DataFrame) -> collections.Counter:
 def compute_modal_state(counts: collections.Counter) -> List[str]:
     mode = []
     mode_freq = 0
-    for subcomp, count in counts.most_common():
+    for comp, count in counts.most_common():
         if count > mode_freq:
-            mode = [subcomp]
+            mode = [comp]
             mode_freq = count
         elif count == mode_freq:
-            mode.append(subcomp)
+            mode.append(comp)
         else:
             break
 
@@ -175,71 +179,43 @@ def compute_mean_absolute_deviation(scores: npt.NDArray) -> float:
     return typing.cast(float, np.mean(np.abs(scores - np.mean(scores))))
 
 
-def randomize_scores(scores: npt.NDArray) -> npt.NDArray:
-    return scores + 0.5 + np.random.uniform(-0.5, 0.5, len(scores))
-
-
-def test_state_for_unimodality(scores: npt.NDArray) -> Tuple[float, float]:
-    assert ((0.0 <= scores) & (scores <= 8.0)).all()
-
-    if len(scores) < 3:
-        return np.nan, np.nan
-
-    def sse(v1, v2):
-        assert len(v1) == len(v2)
-        return np.sum(((v1 / v1.max()) - (v2 / v2.max())) ** 2)
-
-    x = np.linspace(0, 8, 100)
-
-    # Fit distribution while fixing loc
-    hist, _ = np.histogram(scores, bins=8, range=(0, 8))
-    c, loc, scale = ss.genextreme.fit(scores, floc=np.argmax(hist))
-    sse1 = sse(ss.gaussian_kde(scores)(x), ss.genextreme(c=c, loc=loc, scale=scale).pdf(x))
-
-    c, loc, scale = ss.genextreme.fit(scores)
-    sse2 = sse(ss.gaussian_kde(scores)(x), ss.genextreme(c=c, loc=loc, scale=scale).pdf(x))
-
-    return sse1, sse2
-
-
-def compute_state_stats(df: pd.DataFrame, use_subcompartment_scores: bool) -> Tuple:
+def compute_state_stats(df: pd.DataFrame) -> Tuple:
     assert len(df) != 0
     counts = compute_state_distribution(df)
-
     mode = compute_modal_state(counts)
 
-    if use_subcompartment_scores:
-        scores = df["score"].to_numpy()
-        unimodality_score, unimodality_pval = test_state_for_unimodality(scores)
-    else:
-        scores = df["state"].map(get_subcompartment_ranks()).to_numpy()
-        unimodality_score, unimodality_pval = test_state_for_unimodality(randomize_scores(scores))
+    df_contains_subcompartments = states_contain_subcompartments(df["state"])
+    ranks = get_subcompartment_ranks() if df_contains_subcompartments else get_compartment_ranks()
 
-    counts = np.array([counts[subcmp] for subcmp in get_subcompartment_ranks().keys()])
+    counts = np.array([counts[subcmp] for subcmp in ranks.keys()])
+
+    scores = df["state"].map(ranks).to_numpy()
 
     return (
         *counts,
         ",".join(mode),
-        unimodality_score,
-        unimodality_pval,
         compute_stderr(scores),
         compute_mean_absolute_deviation(scores),
     )
 
 
-def compute_stats_for_tad(key, grp, use_subcompartment_scores):
-    result = compute_state_stats(grp[["state", "score"]], use_subcompartment_scores)
-    return list(key) + list(result)
+def compute_stats_for_tad(key, grp):
+    return list(key) + list(compute_state_stats(grp[["state", "score"]]))
 
 
-def compute_state_stats_for_tads(df: pd.DataFrame, use_subcompartment_scores: bool, ppool) -> pd.DataFrame:
-    task_gen = (tuple([key, grp, use_subcompartment_scores]) for key, grp in df.groupby(by=["chrom", "start", "end"]))
-    data = ppool.starmap(compute_stats_for_tad, task_gen)
-    return pd.DataFrame(data, columns=["chrom", "start", "end"] + get_output_df_columns())
+def compute_state_stats_for_tads(df: pd.DataFrame) -> pd.DataFrame:
+    data = []
+
+    for key, grp in df.groupby(by=["chrom", "start", "end"]):
+        data.append(compute_stats_for_tad(key, grp))
+
+    df_has_subcompartments = states_contain_subcompartments(df["state"])
+    cols = ["chrom", "start", "end"] + get_output_df_columns(aggregate_subcompartments=not df_has_subcompartments)
+    return pd.DataFrame(data, columns=cols)
 
 
-def compute_state_stats_for_clique(clique, domains, tad_ids, use_subcompartment_scores: bool):
-    cols = domains.filter(regex=r"\.state$").columns.tolist()
+def compute_state_stats_for_clique(clique, domains, tad_ids):
+    cols = domains.filter(regex=r"[AB\d+]\.state$").columns.tolist()
     states = pd.DataFrame(data=[domains.loc[tid, cols] for tid in tad_ids], columns=cols)
     states = pd.Series(
         itertools.chain.from_iterable(
@@ -247,23 +223,23 @@ def compute_state_stats_for_clique(clique, domains, tad_ids, use_subcompartment_
         ),
         name="state",
     )
-    return [clique] + list(compute_state_stats(states.to_frame(), use_subcompartment_scores))
+    return [clique] + list(compute_state_stats(states.to_frame()))
 
 
-def annotate_cliques(cliques: pd.DataFrame, domains: pd.DataFrame, use_subcompartment_scores: bool, ppool):
-    task_gen = (
-        tuple([clique, domains, tad_ids, use_subcompartment_scores]) for clique, (tad_ids, _) in cliques.iterrows()
+def annotate_cliques(cliques: pd.DataFrame, domains: pd.DataFrame):
+    data = []
+    for clique, (tad_ids, _) in cliques.iterrows():
+        data.append(compute_state_stats_for_clique(clique, domains, tad_ids))
+
+    num_states = len(domains.filter(regex=r"^[AB\d]+\.state$").columns)
+
+    return pd.DataFrame(
+        data=data, columns=["clique"] + get_output_df_columns(aggregate_subcompartments=num_states <= 2)
     )
-    data = ppool.starmap(compute_state_stats_for_clique, task_gen)
-
-    return pd.DataFrame(data=data, columns=["clique"] + get_output_df_columns())
 
 
-def annotate_domains(
-    subcomps: pd.DataFrame, domains: pd.DataFrame, use_subcompartment_scores: bool, ppool
-) -> pd.DataFrame:
-    df = overlap_domains_with_subcomps(subcomps, domains)
-    return compute_state_stats_for_tads(df, use_subcompartment_scores, ppool)
+def annotate_domains(subcomps: pd.DataFrame, domains: pd.DataFrame) -> pd.DataFrame:
+    return compute_state_stats_for_tads(overlap_domains_with_subcomps(subcomps, domains))
 
 
 def setup_logger(level=logging.INFO):
@@ -277,7 +253,9 @@ def main():
     domain_files = args["domains"]
     clique_files = args.get("cliques", [None] * len(domain_files))
 
-    subcomp_dfs = import_subcomps(args["dchic-bedgraph"])
+    aggregate_subcompartments = args["aggregate_subcompartments"]
+
+    subcomp_dfs = import_subcomps(args["dchic-bedgraph"], aggregate_subcompartments)
     labels = tuple(subcomp_dfs.keys())
 
     if len(domain_files) != len(labels):
@@ -286,35 +264,31 @@ def main():
     if len(clique_files) != len(labels):
         raise RuntimeError(f"Expected {len(labels)} clique file(s), found {len(clique_files)}")
 
-    np.random.seed(args["seed"])
-
     outfolder = args["output_folder"]
     outfolder.mkdir(parents=True, exist_ok=True)
-    with mp.Pool(args["nproc"]) as ppool:
-        for label, dom_bed, clique_tsv in zip(labels, domain_files, clique_files):
-            logging.info("[%s] annotating domains...", label)
-            outfile = outfolder / dom_bed.name
-            if not args["force"]:
-                handle_path_collisions(outfile)
 
-            doms = annotate_domains(
-                subcomp_dfs[label], import_domains(dom_bed), args["use_subcompartment_scores"], ppool
-            )
-            logging.info("[%s] writing domains to %s...", label, outfile)
-            doms.to_csv(outfile, sep="\t", index=False, header=True, na_rep="nan")
+    for label, dom_bed, clique_tsv in zip(labels, domain_files, clique_files):
+        logging.info("[%s] annotating domains...", label)
+        outfile = outfolder / dom_bed.name
+        if not args["force"]:
+            handle_path_collisions(outfile)
 
-            if clique_tsv is None:
-                logging.info("[%s] clique file not available. SKIPPING clique annotation!", label)
-                continue
+        doms = annotate_domains(subcomp_dfs[label], import_domains(dom_bed))
+        logging.info("[%s] writing domains to %s...", label, outfile)
+        doms.to_csv(outfile, sep="\t", index=False, header=True, na_rep="nan")
 
-            logging.info("[%s] annotating cliques...", label)
-            outfile = outfolder / clique_tsv.name
-            if not args["force"]:
-                handle_path_collisions(outfile)
+        if clique_tsv is None:
+            logging.info("[%s] clique file not available. SKIPPING clique annotation!", label)
+            continue
 
-            cliques = annotate_cliques(import_cliques(clique_tsv), doms, args["use_subcompartment_scores"], ppool)
-            logging.info("[%s] writing cliques to %s...", label, outfile)
-            cliques.to_csv(outfile, sep="\t", index=False, header=True, na_rep="nan")
+        logging.info("[%s] annotating cliques...", label)
+        outfile = outfolder / clique_tsv.name
+        if not args["force"]:
+            handle_path_collisions(outfile)
+
+        cliques = annotate_cliques(import_cliques(clique_tsv), doms)
+        logging.info("[%s] writing cliques to %s...", label, outfile)
+        cliques.to_csv(outfile, sep="\t", index=False, header=True, na_rep="nan")
 
 
 if __name__ == "__main__":

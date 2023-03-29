@@ -97,7 +97,6 @@ process plot_subcompartment_vs_epigenetic_markers {
 process annotate_domains_with_subcompartments {
     publishDir "${params.output_dir}/annotated_domains/", mode: 'copy'
     label 'process_short'
-    label 'process_medium'
 
     input:
         tuple val(resolution),
@@ -115,7 +114,6 @@ process annotate_domains_with_subcompartments {
         '''
         annotate_domains_with_subcompartments.py \\
             '!{subcompartments}' \\
-            --nproc='!{task.cpus}' \\
             --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
             --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
             --output-folder '!{resolution}'
