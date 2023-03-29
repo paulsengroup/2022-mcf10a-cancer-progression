@@ -60,7 +60,7 @@ workflow {
 
 
 process generate_blacklist {
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         tuple val(label),
@@ -89,7 +89,7 @@ process generate_blacklist {
 }
 
 process preprocess_significant_interactions{
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         tuple val(label),
@@ -120,7 +120,7 @@ process preprocess_significant_interactions{
 }
 
 process generate_seed_sequence {
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         path files

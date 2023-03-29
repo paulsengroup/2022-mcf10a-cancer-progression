@@ -252,7 +252,7 @@ process generate_subcompartment_transition_report {
     publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         val resolution
@@ -291,7 +291,7 @@ process plot_subcompartment_coverage {
     publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         val resolution
@@ -324,7 +324,7 @@ process plot_subcompartment_size_distribution {
     publishDir params.output_dir, mode: 'copy'
 
     label 'process_low'
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         val resolution
