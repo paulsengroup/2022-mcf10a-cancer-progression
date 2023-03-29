@@ -24,7 +24,7 @@ workflow {
 }
 
 process extract_chrom_sizes_from_mcool {
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         path mcool
@@ -79,7 +79,7 @@ process run_hicrep {
 process plot_scc {
     publishDir "${params.output_dir}/plots", mode: 'copy'
 
-    label 'very_short'
+    label 'process_very_short'
 
     input:
         path chrom_sizes
