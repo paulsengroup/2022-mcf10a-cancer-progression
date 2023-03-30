@@ -12,13 +12,14 @@ import subprocess as sp
 import sys
 import tempfile
 from collections import Counter
-from typing import Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.lib.stride_tricks import sliding_window_view
 
 
@@ -318,12 +319,14 @@ def compute_subcomp_transition_matrix_trans(
     return counts
 
 
-def make_heatmap_helper(grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_factor: float = 1.0):
+def make_heatmap_helper(
+    grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_factor: float = 1.0, percentage: bool = False
+) -> Any:
     # Negative values will be transparent
     cmap = mpl.cm.get_cmap(cmap)
     cmap.set_under("k", alpha=0)
 
-    ax.imshow(grid, cmap=cmap, vmin=0)
+    img = ax.imshow(grid, cmap=cmap, vmin=0)
 
     # Show Mbps involved in transitions
     max_val = np.nanmax(grid)
@@ -335,11 +338,16 @@ def make_heatmap_helper(grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_f
         else:
             color = "black"
 
-        # I can't figure out a better way to make sure a float is formatted using at most 4 digits (plus the dot)
-        label = str(label / label_scale_factor)
-        if len(label) > 5:
-            label = label[:5]
+        if percentage:
+            label = f"{(100 * label / label_scale_factor):.1f}%"
+        else:
+            # I can't figure out a better way to make sure a float is formatted using at most 4 digits (plus the dot)
+            label = str(label / label_scale_factor)
+            if len(label) > 5:
+                label = label[:5]
         ax.text(i, j, label, ha="center", va="center", color=color)
+
+    return img
 
 
 def make_heatmap_trans(
@@ -371,7 +379,7 @@ def make_heatmap_trans(
     # Plot grid
     filler = np.full_like(grid[0], -1.0)
     grid1 = np.c_[grid, filler, filler]  # Add two transparent columns to the right
-    make_heatmap_helper(grid1, ax, cmap1, 1.0e6)
+    img1 = make_heatmap_helper(grid1, ax, cmap1, 1.0e6)
 
     # Plot transition frequencies (normalized by rowsum + colsum)
     transition_vect = (2 * np.diag(grid)) / (rsum + csum)
@@ -379,7 +387,7 @@ def make_heatmap_trans(
     filler1 = np.full_like(grid, -1.0)
     filler2 = np.full_like(transition_vect, -1.0)
     grid2 = np.c_[filler1, transition_vect, filler2]
-    make_heatmap_helper(grid2, ax, cmap2)
+    _ = make_heatmap_helper(grid2, ax, cmap2, percentage=True)
 
     # Plot transition frequencies (normalized by matrix sum)
     transition_vect = np.diag(grid) / grid.sum()
@@ -387,12 +395,21 @@ def make_heatmap_trans(
     filler1 = np.full_like(grid, -1.0)
     filler2 = np.full_like(transition_vect, -1.0)
     grid3 = np.c_[filler1, filler2, transition_vect]
-    make_heatmap_helper(grid3, ax, cmap2)
 
-    ax.set(title=f"Compartment transitions (Mbp) - {label1} vs {label2}", xlabel=label2, ylabel=label1)
+    img3 = make_heatmap_helper(grid3, ax, cmap2, percentage=True)
+
+    ax.set(title=f"Sub-compartment transitions (Mbp) - {label1} vs {label2}", xlabel=label2, ylabel=label1)
 
     ax.set_xticks(range(len(ranks)), labels=list(ranks.keys()))
     ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
+
+    divider = make_axes_locatable(ax)
+    cax1 = divider.append_axes("right", size="5%", pad=0.05)
+    cax2 = divider.append_axes("right", size="5%", pad=0.05)
+
+    plt.colorbar(img1, cax=cax1, ticks=[])
+    cbar2 = plt.colorbar(img3, cax=cax2, ticks=(0.0, grid3.max()))
+    cbar2.ax.set_yticklabels(["Low", "High"])
 
 
 def make_heatmap_cis(
@@ -422,25 +439,33 @@ def make_heatmap_cis(
     np.fill_diagonal(grid1, grid.diagonal())
     filler = np.full_like(grid[0], -1.0)
     grid1 = np.c_[grid1, filler]  # Add one transparent column to the right
-    make_heatmap_helper(grid1, ax, cmap2, 1.0e6)
+    _ = make_heatmap_helper(grid1, ax, cmap2, 1.0e6)
 
     # Plot grid except diagonal
     filler = np.full_like(grid[0], -1.0)
     grid2 = grid.copy()
     np.fill_diagonal(grid2, -1.0)
     grid2 = np.c_[grid2, filler]  # Add one transparent columns to the right
-    make_heatmap_helper(grid2, ax, cmap1, 1.0e6)
+    img2 = make_heatmap_helper(grid2, ax, cmap1, 1.0e6)
 
     # Plot transition frequencies (normalized by row/col)
     transition_vect = (2 * np.diag(grid)) / (rsum + csum)
     filler = np.full_like(grid, -1.0)
     grid3 = np.c_[filler, transition_vect]
-    make_heatmap_helper(grid3, ax, cmap2)
+    img3 = make_heatmap_helper(grid3, ax, cmap2, percentage=True)
 
     ax.set(title=f"Sub-compartment transitions (Mbp) - {label}", xlabel=label, ylabel=label)
 
     ax.set_xticks(range(len(ranks)), labels=list(ranks.keys()))
     ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
+
+    divider = make_axes_locatable(ax)
+    cax1 = divider.append_axes("right", size="5%", pad=0.05)
+    cax2 = divider.append_axes("right", size="5%", pad=0.05)
+
+    plt.colorbar(img2, cax=cax1, ticks=[])
+    cbar2 = plt.colorbar(img3, cax=cax2, ticks=(0.0, grid3.max()))
+    cbar2.ax.set_yticklabels(["Low", "High"])
 
 
 def compute_transition_coefficients(df: pd.DataFrame) -> pd.DataFrame:
@@ -521,7 +546,7 @@ def make_heatmap_plots_subcmd(args: Dict) -> None:
                 f"Refusing to overwrite file: {outstem}.{{png,svg}}\n" "Pass --force to overwrite existing file(s)."
             )
 
-        plt.tight_layout()
+        # plt.tight_layout()
         fig.savefig(outstem.with_suffix(".svg"))
         fig.savefig(outstem.with_suffix(".png"), dpi=600)
 
