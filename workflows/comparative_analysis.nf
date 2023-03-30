@@ -40,6 +40,12 @@ workflow {
         file(params.tads, checkIfExists: true),
         file(params.cliques, checkIfExists: true)
     )
+
+    cluster_domains_by_subcompartment(
+        annotate_domains_with_subcompartments.out.tads.groupTuple()
+            .join(annotate_domains_with_subcompartments.out.cliques.groupTuple())
+            .map { tuple(it[0], it.drop(1).flatten().sort()) }
+    )
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
@@ -117,5 +123,43 @@ process annotate_domains_with_subcompartments {
             --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
             --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
             --output-folder '!{resolution}'
+        '''
+}
+
+process cluster_domains_by_subcompartment {
+    publishDir "${params.output_dir}/annotated_domains/", mode: 'copy'
+    label 'process_short'
+
+    input:
+        tuple val(resolution),
+              path(annotated_domains)
+
+    output:
+        tuple val(resolution), path("${resolution}/*.tsv.gz"), emit: clusters
+        tuple val(resolution), path("${resolution}/plots/*.png"), emit: png
+        tuple val(resolution), path("${resolution}/plots/*.svg"), emit: svg
+
+    shell:
+        outprefix=annotated_domains.collect { "${resolution}/${it.simpleName}" }.join(" ")
+        '''
+        inputs=(!{annotated_domains})
+        outputs=(!{outprefix})
+
+        for i in "${!inputs[@]}"; do
+            cluster_domains_by_subcompartment_state.py \\
+                "${inputs[$i]}" \\
+                --output-prefix="${outputs[$i]}"
+        done
+
+        cluster_domains_by_subcompartment_state.py \\
+            *_cliques.tsv.gz \\
+            --output-prefix='!{resolution}/cliques_merged'
+
+        cluster_domains_by_subcompartment_state.py \\
+            *_domains.bed.gz \\
+            --output-prefix='!{resolution}/tads_merged'
+
+        mkdir '!{resolution}/plots'
+        mv '!{resolution}/'*.{png,svg} '!{resolution}/plots/'
         '''
 }
