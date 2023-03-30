@@ -323,7 +323,7 @@ def make_heatmap_helper(
     grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_factor: float = 1.0, percentage: bool = False
 ) -> Any:
     # Negative values will be transparent
-    cmap = mpl.cm.get_cmap(cmap)
+    cmap = mpl.colormaps[cmap]
     cmap.set_under("k", alpha=0)
 
     img = ax.imshow(grid, cmap=cmap, vmin=0)
