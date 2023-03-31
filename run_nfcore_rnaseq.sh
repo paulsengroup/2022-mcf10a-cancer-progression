@@ -17,7 +17,7 @@ mkdir -p "$wd"
 1>&2 echo 'Running nfcore/rnaseq...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/nfcore-rnaseq-v3.10.1.tar.xz' \
+  'workflows/nfcore-rnaseq-v3.11.1.tar.xz' \
    configs/nfcore_rnaseq*.config
 
 bin/fix_nfcore_rnaseq_output.sh "$wd/data/output/nfcore_rnaseq" MCF10A_REP1_WT MCF10A_WT_REP1 --replace
