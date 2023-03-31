@@ -12,7 +12,7 @@ import subprocess as sp
 import sys
 import tempfile
 from collections import Counter
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -319,21 +319,33 @@ def compute_subcomp_transition_matrix_trans(
     return counts
 
 
-def make_heatmap_helper(
-    grid: np.ndarray, ax: plt.Axes, cmap: str, label_scale_factor: float = 1.0, percentage: bool = False
+def plot_heatmap(
+    grid: np.ndarray,
+    ax: plt.Axes,
+    cmap: str,
+    xlabel: Union[None, str] = None,
+    ylabel: Union[None, str] = None,
+    title: Union[None, str] = None,
+    subcompartment_labels: Union[None, List[str]] = None,
+    label_scale_factor: float = 1.0,
+    vmin=0.0,
+    vmax=None,
+    percentage: bool = False,
 ) -> Any:
     # Negative values will be transparent
     cmap = mpl.colormaps[cmap]
     cmap.set_under("k", alpha=0)
 
-    img = ax.imshow(grid, cmap=cmap, vmin=0)
+    if vmax is None:
+        vmax = grid.max()
+
+    img = ax.imshow(grid, cmap=cmap, vmin=vmin, vmax=vmax)
 
     # Show Mbps involved in transitions
-    max_val = np.nanmax(grid)
     for (j, i), label in np.ndenumerate(grid):
         if label < 0:
             continue
-        if label / max_val >= 0.40:
+        if label / vmax >= 0.40:
             color = "white"
         else:
             color = "black"
@@ -347,17 +359,59 @@ def make_heatmap_helper(
                 label = label[:5]
         ax.text(i, j, label, ha="center", va="center", color=color)
 
+    if title is not None:
+        ax.set_title(title, multialignment="center")
+    if xlabel is not None:
+        ax.set(xlabel=xlabel)
+    if ylabel is not None:
+        ax.set(ylabel=ylabel)
+    if subcompartment_labels is not None:
+        ax.set_xticks(range(len(subcompartment_labels)), labels=subcompartment_labels)
+        ax.set_yticks(range(len(subcompartment_labels)), labels=subcompartment_labels)
+
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    ax.tick_params(axis="both", which="both", left=False, bottom=False)
+
     return img
 
 
-def make_heatmap_trans(
+def plot_barplot(grid: npt.NDArray, ax: plt.Axes, barcolor: str, edgecolor: str = "white") -> Any:
+    rsum = np.sum(grid, axis=0)
+    csum = np.sum(grid, axis=1)
+    subcmp_switches_vect = (2 * np.diag(grid)) / (rsum + csum)
+    barplot = ax.barh(
+        y=range(len(subcmp_switches_vect)),
+        width=100 * subcmp_switches_vect,
+        height=0.99,
+        color=barcolor,
+        edgecolor=edgecolor,
+    )
+
+    for bar, n in zip(ax.patches, 100 * np.diag(grid) / np.sum(grid)):
+        x = 5
+        y = bar.get_y() + bar.get_height() / 2
+        label = f"{n:.1f}%"
+        ax.text(x, y, label, fontsize="x-small", color="white", ha="left", va="center")
+
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    ax.tick_params(axis="both", which="both", left=False, labelleft=False)
+
+    return barplot
+
+
+def plot_subcompartment_switches(
     states1: pd.Series,
     states2: pd.Series,
     bin_size: int,
-    ax: plt.Axes,
-    cmap1: str = "Reds",
-    cmap2: str = "Greys",
-) -> None:
+    height: float,
+    width: float,
+    cmap: str = "Reds",
+    barplot_color: str = "royalblue",
+) -> plt.Figure:
     if len(set(states1.unique().tolist() + states2.unique().tolist())) > 2:
         ranks = {}
         for comp in get_compartment_ranks().keys():
@@ -366,59 +420,57 @@ def make_heatmap_trans(
     else:
         ranks = {"B": 0, "A": 1}
 
-    label1 = states1.name
-    label2 = states2.name
+    label1 = states1.name.removesuffix(".state")
+    label2 = states2.name.removesuffix(".state")
     assert label1 != label2
+
+    fig = plt.Figure(figsize=(height, width))
+
+    # Create a 100x100 grid with uniform ratios
+    # In the end the idea is to obtain a figure layout like the following
+    # |     |   |   |
+    # |  A  | B | C |
+    # |     |   |   |
+    #
+    # Where A is the actual heatmap, B is a horizontal barplot and C is the colorbar for A
+    gs = fig.add_gridspec(100, 100, width_ratios=[1] * 100, height_ratios=[1] * 100)
+
+    heatmap_ax = fig.add_subplot(gs[:, 0:80])
+    barplot_ax = fig.add_subplot(gs[10:90, 80:95], sharey=heatmap_ax)
+    cbar_ax = fig.add_subplot(gs[10:90, 96:100])
 
     grid = compute_subcomp_transition_matrix_trans(states1, states2, ranks)
     grid *= bin_size
 
-    rsum = np.sum(grid, axis=0)
-    csum = np.sum(grid, axis=1)
+    img = plot_heatmap(
+        grid,
+        ax=heatmap_ax,
+        cmap=cmap,
+        label_scale_factor=1.0e6,
+        title=f"Sub-compartment switching\n{label1} vs {label2}",
+        subcompartment_labels=list(ranks.keys()),
+        ylabel=label1,
+        xlabel=label2,
+    )
 
-    # Plot grid
-    filler = np.full_like(grid[0], -1.0)
-    grid1 = np.c_[grid, filler, filler]  # Add two transparent columns to the right
-    img1 = make_heatmap_helper(grid1, ax, cmap1, 1.0e6)
+    plot_barplot(grid, barplot_ax, barplot_color)
 
-    # Plot transition frequencies (normalized by rowsum + colsum)
-    transition_vect = (2 * np.diag(grid)) / (rsum + csum)
-    # Make all but the sencond to last column transparent
-    filler1 = np.full_like(grid, -1.0)
-    filler2 = np.full_like(transition_vect, -1.0)
-    grid2 = np.c_[filler1, transition_vect, filler2]
-    _ = make_heatmap_helper(grid2, ax, cmap2, percentage=True)
+    vmax = np.ceil(grid.max() / 1.0e6)
+    cbar = plt.colorbar(img, cax=cbar_ax, ticks=(0, grid.max()))
+    cbar.ax.set_yticklabels([0, int(vmax)])
+    cbar.set_label("Mbps", labelpad=-10)
 
-    # Plot transition frequencies (normalized by matrix sum)
-    transition_vect = np.diag(grid) / grid.sum()
-    # Make all but the last column transparent
-    filler1 = np.full_like(grid, -1.0)
-    filler2 = np.full_like(transition_vect, -1.0)
-    grid3 = np.c_[filler1, filler2, transition_vect]
-
-    img3 = make_heatmap_helper(grid3, ax, cmap2, percentage=True)
-
-    ax.set(title=f"Sub-compartment transitions (Mbp) - {label1} vs {label2}", xlabel=label2, ylabel=label1)
-
-    ax.set_xticks(range(len(ranks)), labels=list(ranks.keys()))
-    ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
-
-    divider = make_axes_locatable(ax)
-    cax1 = divider.append_axes("right", size="5%", pad=0.05)
-    cax2 = divider.append_axes("right", size="5%", pad=0.05)
-
-    plt.colorbar(img1, cax=cax1, ticks=[])
-    cbar2 = plt.colorbar(img3, cax=cax2, ticks=(0.0, grid3.max()))
-    cbar2.ax.set_yticklabels(["Low", "High"])
+    return fig
 
 
-def make_heatmap_cis(
+def plot_subcompartment_transitions(
     states: pd.Series,
     bin_size: int,
-    ax: plt.Axes,
+    height: float,
+    width: float,
     cmap1: str = "Reds",
     cmap2: str = "Greys",
-) -> None:
+) -> plt.Figure:
     if states.nunique() > 2:
         ranks = {}
         for comp in get_compartment_ranks().keys():
@@ -427,45 +479,56 @@ def make_heatmap_cis(
     else:
         ranks = {"B": 0, "A": 1}
 
-    label = states.name
+    fig, ax = plt.subplots(1, 1, figsize=(width, height))
+
+    label = states.name.removesuffix(".state")
     grid = compute_subcomp_transision_matrix_cis(states, ranks)
     grid *= bin_size
 
     rsum = np.sum(grid, axis=0)
     csum = np.sum(grid, axis=1)
 
-    # Plot diagonal only
-    grid1 = np.full_like(grid, -1.0)
-    np.fill_diagonal(grid1, grid.diagonal())
-    filler = np.full_like(grid[0], -1.0)
-    grid1 = np.c_[grid1, filler]  # Add one transparent column to the right
-    _ = make_heatmap_helper(grid1, ax, cmap2, 1.0e6)
-
     # Plot grid except diagonal
     filler = np.full_like(grid[0], -1.0)
-    grid2 = grid.copy()
-    np.fill_diagonal(grid2, -1.0)
-    grid2 = np.c_[grid2, filler]  # Add one transparent columns to the right
-    img2 = make_heatmap_helper(grid2, ax, cmap1, 1.0e6)
+    grid1 = grid.copy()
+    np.fill_diagonal(grid1, -1.0)
+    grid1 = np.c_[grid1, filler]  # Add one transparent columns to the right
+    vmax = grid1.max() * 1.1
+    img1 = plot_heatmap(grid1, ax, cmap=cmap1, label_scale_factor=1.0e6, vmin=0, vmax=vmax)
+
+    # Plot diagonal only
+    grid2 = np.full_like(grid, -1.0)
+    np.fill_diagonal(grid2, grid.diagonal())
+    filler = np.full_like(grid[0], -1.0)
+    grid2 = np.c_[grid2, filler]  # Add one transparent column to the right
+    _ = plot_heatmap(grid2, ax, cmap=cmap1, label_scale_factor=1.0e6, vmin=0, vmax=vmax)
 
     # Plot transition frequencies (normalized by row/col)
     transition_vect = (2 * np.diag(grid)) / (rsum + csum)
     filler = np.full_like(grid, -1.0)
     grid3 = np.c_[filler, transition_vect]
-    img3 = make_heatmap_helper(grid3, ax, cmap2, percentage=True)
-
-    ax.set(title=f"Sub-compartment transitions (Mbp) - {label}", xlabel=label, ylabel=label)
+    _ = plot_heatmap(
+        grid3,
+        ax,
+        cmap=cmap2,
+        percentage=True,
+        title=f"Sub-compartment transitions {label}",
+        xlabel=label,
+        ylabel=label,
+        subcompartment_labels=list(ranks.keys()),
+    )
 
     ax.set_xticks(range(len(ranks)), labels=list(ranks.keys()))
     ax.set_yticks(range(len(ranks)), labels=list(ranks.keys()))
 
     divider = make_axes_locatable(ax)
     cax1 = divider.append_axes("right", size="5%", pad=0.05)
-    cax2 = divider.append_axes("right", size="5%", pad=0.05)
 
-    plt.colorbar(img2, cax=cax1, ticks=[])
-    cbar2 = plt.colorbar(img3, cax=cax2, ticks=(0.0, grid3.max()))
-    cbar2.ax.set_yticklabels(["Low", "High"])
+    cbar = plt.colorbar(img1, cax=cax1, ticks=(0.0, grid1.max(), vmax))
+    cbar.ax.set_yticklabels((0, int(np.ceil(grid1.max() / 1.0e6)), int(np.ceil(grid.max() / 1.0e6))))
+    cbar.set_label("Mbps", labelpad=-10)
+
+    return fig
 
 
 def compute_transition_coefficients(df: pd.DataFrame) -> pd.DataFrame:
@@ -530,25 +593,24 @@ def make_heatmap_plots_subcmd(args: Dict) -> None:
 
     conditions = df.filter(regex=".state$").columns.tolist()
     for cond1, cond2 in itertools.combinations_with_replacement(conditions, 2):
-        fig, ax = plt.subplots(1, 1, figsize=(args["height"], args["width"]))
         if cond1 == cond2:
-            make_heatmap_cis(df[cond1], bin_size, ax)
+            fig = plot_subcompartment_transitions(df[cond1], bin_size, args["height"], args["width"])
             cond1 = cond1.removesuffix(".state")
             outstem = output_prefix.parent / f"{output_prefix.name}_{cond1}_subcomp_transition_heatmap"
         else:
-            make_heatmap_trans(df[cond1], df[cond2], bin_size, ax)
+            fig = plot_subcompartment_switches(df[cond1], df[cond2], bin_size, args["height"], args["width"])
             cond1 = cond1.removesuffix(".state")
             cond2 = cond2.removesuffix(".state")
-            outstem = output_prefix.parent / f"{output_prefix.name}_{cond1}_vs_{cond2}_subcomp_transition_heatmap"
+            outstem = output_prefix.parent / f"{output_prefix.name}_{cond1}_vs_{cond2}_subcomp_switching_heatmap"
 
         if (outstem.with_suffix(".png").exists() or outstem.with_suffix(".svg").exists()) and not args["force"]:
             raise RuntimeError(
                 f"Refusing to overwrite file: {outstem}.{{png,svg}}\n" "Pass --force to overwrite existing file(s)."
             )
 
-        # plt.tight_layout()
-        fig.savefig(outstem.with_suffix(".svg"))
-        fig.savefig(outstem.with_suffix(".png"), dpi=600)
+        plt.tight_layout()
+        fig.savefig(outstem.with_suffix(".svg"), bbox_inches="tight")
+        fig.savefig(outstem.with_suffix(".png"), bbox_inches="tight", dpi=600)
 
 
 def main():
