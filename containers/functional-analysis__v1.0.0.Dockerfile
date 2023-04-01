@@ -37,14 +37,13 @@ RUN install -Dm0755 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/gofigure.py" /tmp/gofi
 && install -Dm0755 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/scripts/"*.py /tmp/gofigure/ \
 && install -Dm0644 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/LICENSE" /tmp/gofigure/LICENSE
 
-FROM mambaorg/micromamba:1.4.0 AS base
+FROM mambaorg/micromamba:1.4.1 AS base
 
 ARG CONTAINER_VERSION
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-ARG DESEQ2_VERSION="1.38.*"
 
 RUN micromamba install -y                            \
                -c conda-forge                        \
