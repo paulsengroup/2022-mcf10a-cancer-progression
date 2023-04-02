@@ -39,23 +39,54 @@ RUN install -Dm0755 "/tmp/GO-Figure-v${GO_FIGURE_VERSION}/gofigure.py" /tmp/gofi
 
 FROM mambaorg/micromamba:1.4.1 AS base
 
-ARG CONTAINER_VERSION
-
-RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
-
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-RUN micromamba install -y                            \
-               -c conda-forge                        \
-               -c bioconda                           \
-               adjusttext                            \
-               bioframe                              \
-               gprofiler-official                    \
-               numpy                                 \
-               procps-ng                             \
-               scikit-learn                          \
-               scipy                                 \
-               seaborn                               \
+ARG CONTAINER_VERSION
+RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
+
+# We have to explicitly set these R_* env variables in order for the
+# container to work correctly when running using Apptainer
+ENV R_HOME=/opt/conda/lib/R
+ENV R_LIBS=/opt/conda/lib/R/lib
+ENV R_ENVIRON=/opt/conda/lib/R/etc/Renviron
+ENV R_HISTFILE=/tmp/.Rhistory
+
+ENV R_HOME_USER='$R_HOME'
+ENV R_LIBS_USER='$R_LIBS'
+ENV R_ENVIRON_USER='$R_ENVIRON'
+ENV R_PROFILE_USER=/opt/conda/lib/R/etc/.Rprofile
+
+RUN mkdir -p /opt/conda/lib/R/etc/ \
+&& touch /opt/conda/lib/R/etc/.Rprofile
+
+ARG CLUSTERPROFILER_VERSION="4.6.*"
+ARG ENRICHPLOT_VERSION="1.18.*"
+ARG ORG_HS_EG_DB="3.16.*"
+
+USER root
+RUN apt-get update \
+&& apt-get install -y less \
+&& rm -rf /var/lib/apt/lists/*
+USER mambauser
+
+RUN micromamba install -y                                              \
+               -c conda-forge                                          \
+               -c bioconda                                             \
+               adjusttext                                              \
+               bioframe                                                \
+               gprofiler-official                                      \
+               numpy                                                   \
+               procps-ng                                               \
+               r-argparse                                              \
+               r-fs                                                    \
+               r-optparse                                              \
+               r-stringr                                               \
+               scikit-learn                                            \
+               scipy                                                   \
+               seaborn                                                 \
+               "bioconductor-clusterprofiler=$CLUSTERPROFILER_VERSION" \
+               "bioconductor-enrichplot=$ENRICHPLOT_VERSION"           \
+               "bioconductor-org.hs.eg.db=$ORG_HS_EG_DB"               \
 && micromamba clean --all -y
 
 COPY --from=downloader --chown=nobody:nogroup /tmp/gofigure/*.py /opt/conda/bin/
@@ -84,6 +115,9 @@ FROM base as final
 
 RUN python3 -c 'import bioframe; import gprofiler'
 RUN gofigure.py --help
+RUN Rscript --no-save -e 'quit(status=!library("clusterProfiler", character.only=T, logical.return=T), save="no")'
+RUN Rscript --no-save -e 'quit(status=!library("enrichplot", character.only=T, logical.return=T), save="no")'
+RUN Rscript --no-save -e 'quit(status=!library("org.Hs.eg.db", character.only=T, logical.return=T), save="no")'
 
 COPY --from=dataprep --chown=nobody:nogroup /opt/conda/share/gofigure/data/* /opt/conda/share/gofigure/data/
 RUN ls -lah /opt/conda/share/gofigure/data/{ic,relations_full}.tsv
