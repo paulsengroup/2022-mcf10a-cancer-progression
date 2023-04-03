@@ -8,12 +8,12 @@ ARG GO_FIGURE_VERSION='1.0.1'
 ARG GO_FIGURE_URL="https://gitlab.com/evogenlab/GO-Figure/-/archive/v${GO_FIGURE_VERSION}/GO-Figure-v${GO_FIGURE_VERSION}.tar.gz"
 ARG GO_FIGURE_SHA256="d0169b62189800e7fae88ee475c8c19ec2034a5298e121f584ed53d54f54b942  GO-Figure-v${GO_FIGURE_VERSION}.tar.gz"
 
-ARG GO_RELEASE='2022-11-03'
+ARG GO_RELEASE='2023-03-06'
 ARG GO_OBO_URL="http://release.geneontology.org/${GO_RELEASE}/ontology/go.obo"
 ARG GOA_GAF_URL="http://release.geneontology.org/${GO_RELEASE}/annotations/goa_human.gaf.gz"
 
-ARG GO_OBO_SHA256='e351a37a24168f106fca574accad4d27f20622e2b718db698a7e38515f0dba09  go.obo'
-ARG GOA_GAF_SHA256='01fd1d5e1603f5714c62feefa2f853cf50ed2be63da60c803ac00b262b0490d8  goa_human.gaf.gz'
+ARG GO_OBO_SHA256='836257d17e9d2d496557c0175012eb59b7ec5e4dbc9c26b83f2c04f17997a216  go.obo'
+ARG GOA_GAF_SHA256='5391574db8b75425e68f96a97bf44180973a078185659c9d6c6b0693731d123d  goa_human.gaf.gz'
 
 RUN printf '%s\n' "$GO_FIGURE_SHA256" "$GO_OBO_SHA256" "$GOA_GAF_SHA256" > /tmp/checksum.sha256
 
@@ -61,7 +61,7 @@ RUN mkdir -p /opt/conda/lib/R/etc/ \
 
 ARG CLUSTERPROFILER_VERSION="4.6.*"
 ARG ENRICHPLOT_VERSION="1.18.*"
-ARG ORG_HS_EG_DB="3.16.*"
+ARG ORG_HS_EG_DB_VERSION="3.16.*"
 
 USER root
 RUN apt-get update \
@@ -86,7 +86,7 @@ RUN micromamba install -y                                              \
                seaborn                                                 \
                "bioconductor-clusterprofiler=$CLUSTERPROFILER_VERSION" \
                "bioconductor-enrichplot=$ENRICHPLOT_VERSION"           \
-               "bioconductor-org.hs.eg.db=$ORG_HS_EG_DB"               \
+               "bioconductor-org.hs.eg.db=$ORG_HS_EG_DB_VERSION"       \
 && micromamba clean --all -y
 
 COPY --from=downloader --chown=nobody:nogroup /tmp/gofigure/*.py /opt/conda/bin/
