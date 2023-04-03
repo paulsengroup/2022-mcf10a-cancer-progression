@@ -33,10 +33,10 @@ process preprocess_count_matrix {
 
     shell:
         '''
-        map_rnaseq_samples_to_controls.py \
-            --round                                              \
-            '!{gene_count_matrix}'                               \
-            '!{sample_mappings}'                                 \
+        map_rnaseq_samples_to_controls.py \\
+            --round                       \\
+            '!{gene_count_matrix}'        \\
+            '!{sample_mappings}'          \\
             .
 
         CONTRAST="$(head -n 1 *.contrast | tr -d '\\n')"
@@ -54,9 +54,9 @@ process run_deseq2 {
 
     shell:
         '''
-        diff_expression_analysis.r \
-            --count_matrix='!{count_matrix}'              \
-            --contrast=!{contrast}                        \
+        diff_expression_analysis.r           \\
+            --count_matrix='!{count_matrix}' \\
+            --contrast=!{contrast}           \\
             -o '!{label}_'
 
         rm -f Rplots.pdf
@@ -67,7 +67,7 @@ process run_deseq2 {
 }
 
 process run_elixir_gost {
-    publishDir "${params.output_dir}/", mode: 'copy'
+    publishDir "${params.output_dir}/go", mode: 'copy'
 
     input:
         path de_genes
@@ -92,16 +92,16 @@ process run_elixir_gost {
             lb="${lfc_lb[$i]}"
             ub="${lfc_ub[$i]}"
 
-            run_elixir_gost.py \
-                --pval-cutoff "$pv"                   \
-                --lfc-cutoffs "$lb" "$ub"             \
+            run_elixir_gost.py             \\
+                --pval-cutoff "$pv"        \\
+                --lfc-cutoffs "$lb" "$ub"  \\
                 < '!{de_genes}' > "!{outprefix}_${lb}_${ub}_${pv}.tsv"
         done
         '''
 }
 
 process run_go_figure {
-    publishDir "${params.output_dir}/plots", mode: 'copy'
+    publishDir "${params.output_dir}/go/plots", mode: 'copy'
 
     input:
         path functional_annotation
@@ -117,7 +117,12 @@ process run_go_figure {
         trap 'rm -f annotation.tsv' EXIT
         grep '^GO:' '!{functional_annotation}' | cut -f 2,4 > annotation.tsv
 
-        gofigure.py --input annotation.tsv --font_size=xx-small --description_limit=50 --max_label=20 --output '!{outprefix}'
+        gofigure.py                 \\
+            --input annotation.tsv  \\
+            --font_size=xx-small    \\
+            --description_limit=50  \\
+            --max_label=20          \\
+            --output '!{outprefix}'
 
         mv '!{outprefix}/'* .
         '''
