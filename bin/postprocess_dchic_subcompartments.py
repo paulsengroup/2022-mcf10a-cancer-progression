@@ -40,7 +40,7 @@ def compute_state_mode(df: pd.DataFrame) -> pd.Series:
     # values are set to nan
     mask = mode.isna().sum(axis="columns") != (num_conditions - 1)
 
-    mode.loc[mask, 0] = "None"
+    mode.loc[mask, 0] = pd.NA
     return mode[0]
 
 
@@ -50,7 +50,7 @@ def main():
     df = import_data(args["bedgraph"])
 
     df["state.mode"] = compute_state_mode(df)
-    df.to_csv(sys.stdout, sep="\t", index=False)
+    df.to_csv(sys.stdout, sep="\t", index=False, na_rep="nan")
 
 
 if __name__ == "__main__":

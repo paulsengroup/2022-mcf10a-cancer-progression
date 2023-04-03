@@ -14,6 +14,7 @@ from typing import List, Tuple, Union
 import bioframe as bf
 import matplotlib.pyplot as plt
 import natsort
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -51,7 +52,7 @@ def make_cli():
 
 
 def import_data(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
-    df = pd.read_table(path_to_bedgraph).rename(columns={"chr": "chrom"})
+    df = pd.read_table(path_to_bedgraph)
     df1 = df[["chrom", "start", "end", "padj"]].copy()
     df2 = df.filter(regex=".state$")
 
@@ -104,16 +105,30 @@ def compute_coverage(df: pd.DataFrame, filter: Union[str, None] = None) -> pd.Da
 
 
 def plot_coverage(df: pd.DataFrame, label: str, ax: plt.Axes, plot_legend: bool = False) -> None:
-    df.T.plot(kind="bar", stacked=True, ax=ax, legend=False, cmap="coolwarm")
+    df.columns = [col.removesuffix(".state") for col in df]
+    df1 = (df * 100).T
+    df1.plot(kind="bar", stacked=True, ax=ax, legend=False, cmap="coolwarm")
+
+    # Print percentages on top of barplot
+    for i, (_, row) in enumerate(df1.iterrows()):
+        end_pos = row.cumsum()
+        start_pos = np.append([0.0], end_pos[:-1])
+        positions = (start_pos + end_pos) / 2
+        for n, pos in zip(row, positions):
+            if np.isfinite(n) and n >= 0.01:
+                ax.text(i, pos, f"{n:.2f}%", va="center", ha="center")
 
     ax.set(
         title=f"Subcompartment coverage ({label})",
-        xlabel="Conditions",
         ylabel="Relative coverage",
     )
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
     if plot_legend:
         ax.legend(title=None)
+
+    ax.grid(axis="y", visible=True)
+    ax.set_axisbelow(True)
 
 
 def plot_compartment_size_distribution_by_condition(
