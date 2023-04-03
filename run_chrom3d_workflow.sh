@@ -15,6 +15,7 @@ mkdir -p "$wd"
 
 ./setup_workflow_workdir.sh "$PWD" "$wd"
 
+# TODO: Update to use v0.3.1
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
