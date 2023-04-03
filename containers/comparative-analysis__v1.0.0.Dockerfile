@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.0 AS base
+FROM mambaorg/micromamba:1.4.1 AS base
 
 ARG CONTAINER_VERSION
 
@@ -15,19 +15,26 @@ RUN micromamba install -y \
                -c bioconda \
                bioframe \
                matplotlib \
+               'networkx==3.*' \
                numpy \
                pandas \
                pigz \
                procps-ng \
                pyBigWig \
+               scipy \
+               seaborn \
 && micromamba clean --all -y
+
+ENV MKL_NUM_THREADS=1
+ENV NUMEXPR_NUM_THREADS=1
+ENV OMP_NUM_THREADS=1
 
 ENV PATH="/opt/conda/bin:$PATH"
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
 WORKDIR /data
 
-RUN python3 -c 'import bioframe, matplotlib, numpy, pandas, pyBigWig'
+RUN python3 -c 'import bioframe, matplotlib, networkx, numpy, pandas, pyBigWig, scipy, seaborn'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
