@@ -63,7 +63,7 @@ tar -xf "$workflow_archive" -C "$name/" --strip-components 1
 args=()
 if [[ $HOSTNAME == *.saga* ]]; then
   base_config="configs/base_saga.config"
-  args+=(--max_memory=400.G
+  args+=(--max_memory=400.GB
          --max_cpus=52
          --max_time=336.h
          --project="${SLURM_PROJECT_ID-changeme}")

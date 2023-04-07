@@ -21,7 +21,7 @@ RUN apt-get update \
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -38,6 +38,7 @@ RUN micromamba install -y \
         'cooler>=0.9' \
         'numpy>=1.4,<1.22' \
         'pandas>=0.24' \
+        procps-ng \
         'scipy>=1.1' \
         'tensorflow>=1.3,<2' \
 && micromamba clean --all -y

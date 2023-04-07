@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.3.1 AS base
+FROM mambaorg/micromamba:1.4.0 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -20,6 +20,7 @@ RUN micromamba install -y \
         bioframe \
         "cooltools=$COOLTOOLS_VER" \
         ucsc-bedgraphtobigwig \
+        procps-ng \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

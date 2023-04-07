@@ -21,6 +21,5 @@ mkdir -p "$wd"
   'workflows/robomics-call_tad_cliques-v0.3.0.tar.xz' \
    configs/call_tad_cliques_chrom3d.config
 
-exit 0  # TODO: removeme!
 
 ./run_workflow.sh "$wd" "$step"
