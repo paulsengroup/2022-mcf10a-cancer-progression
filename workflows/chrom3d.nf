@@ -55,7 +55,8 @@ workflow {
     run_chrom3d(chrom3d_input_ch,
                 params.N,
                 params.L,
-                params.r)
+                params.r,
+                params.y)
 }
 
 
@@ -167,6 +168,7 @@ process run_chrom3d {
                 -n '!{N}' \\
                 -l '!{L}' \\
                 -s '!{seed}' \\
+                -y '!{y}' \\
                 --nucleus '!{input_gtrack}'
         '''
 }
