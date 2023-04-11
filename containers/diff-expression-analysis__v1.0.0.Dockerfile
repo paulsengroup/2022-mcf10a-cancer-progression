@@ -50,8 +50,10 @@ ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
 WORKDIR /data
 
-RUN Rscript --no-save -e 'quit(status=!library("DESeq2", character.only=T, logical.return=T), save="no")'
+# See https://www.rdocumentation.org/packages/bigparallelr/versions/0.3.1/topics/assert_cores
+RUN echo 'try(bigparallelr::set_blas_ncores(1), silent = TRUE)' > /opt/conda/lib/R/etc/.Rprofile
 
+RUN Rscript --no-save -e 'quit(status=!library("DESeq2", character.only=T, logical.return=T), save="no")'
 RUN python3 -c 'import bioframe, rpy2'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
