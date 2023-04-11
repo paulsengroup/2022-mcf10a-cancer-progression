@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.1 AS base
+FROM mambaorg/micromamba:1.4.2 AS base
 
 ARG CONTAINER_VERSION
 
@@ -32,17 +32,15 @@ USER mambauser
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG DESEQ2_VERSION="1.38.*"
 
-RUN micromamba install -y                                              \
-               -c conda-forge                                          \
-               -c bioconda                                             \
-               "bioconductor-deseq2=$DESEQ2_VERSION"                   \
-               bioframe                                                \
-               procps-ng                                               \
-               r-argparse                                              \
-               r-fs                                                    \
-               r-optparse                                              \
-               r-pheatmap                                              \
-               r-stringr                                               \
+RUN micromamba install -y                            \
+               -c conda-forge                        \
+               -c bioconda                           \
+               "bioconductor-deseq2=$DESEQ2_VERSION" \
+               bioframe                              \
+               numpy                                 \
+               pandas                                \
+               procps-ng                             \
+               rpy2                                  \
 && micromamba clean --all -y
 
 WORKDIR /data
@@ -54,7 +52,7 @@ WORKDIR /data
 
 RUN Rscript --no-save -e 'quit(status=!library("DESeq2", character.only=T, logical.return=T), save="no")'
 
-RUN python3 -c 'import bioframe'
+RUN python3 -c 'import bioframe, rpy2'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
