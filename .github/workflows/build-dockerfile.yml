@@ -47,10 +47,12 @@ jobs:
           name="$(echo "$dockerfile_name" | sed -E 's/(.*)__.*/\1/')"
           version="$(echo "$dockerfile_name" | sed -E 's/.*__v(.*)/\1/')"
 
-          if git log --format=%B -n 1 | grep -qF '[ci push]'; then
+          push=${{ github.event_name != 'pull_request' }}
+          if test ${{ github.event_name }} == 'pull_request' && \
+             test ${{ github.event.pull_request.author_association }} == 'MEMBER' && \
+             git log --format=%B -n 1 | grep -qF '[ci push]';
+          then
             push=true
-          else
-            push=${{ github.event_name != 'pull_request' }}
           fi
 
           echo "dockerfile=${dockerfile[*]}" >> $GITHUB_OUTPUT
