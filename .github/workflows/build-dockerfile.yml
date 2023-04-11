@@ -23,10 +23,20 @@ jobs:
       dockerfile: ${{ steps.metadata.outputs.dockerfile }}
       name: ${{ steps.metadata.outputs.name }}
       version: ${{ steps.metadata.outputs.version }}
+      push: ${{ steps.metadata.outputs.push }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Checkout (PR)
+        uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Collect metadata
         id: metadata
@@ -37,9 +47,18 @@ jobs:
           name="$(echo "$dockerfile_name" | sed -E 's/(.*)__.*/\1/')"
           version="$(echo "$dockerfile_name" | sed -E 's/.*__v(.*)/\1/')"
 
+          push=${{ github.event_name != 'pull_request' }}
+          if test ${{ github.event_name }} == 'pull_request' && \
+             test ${{ github.event.pull_request.author_association }} == 'MEMBER' && \
+             git log --format=%B -n 1 | grep -qF '[ci push]';
+          then
+            push=true
+          fi
+
           echo "dockerfile=${dockerfile[*]}" >> $GITHUB_OUTPUT
           echo "name=$name" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
+          echo "push=$push" >> $GITHUB_OUTPUT
 
   build-dockerfile:
     name: Build ${{ needs.collect-metadata.outputs.name }} Dockerfile
@@ -91,7 +110,7 @@ jobs:
         id: docker-build
         uses: docker/build-push-action@v4
         with:
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ needs.collect-metadata.outputs.push }}
           cache-from: type=gha,scope=${{ needs.collect-metadata.outputs.dockerfile }}
           cache-to: type=gha,mode=min,scope=${{ needs.collect-metadata.outputs.dockerfile }}
           tags: ${{ steps.generate-tags.outputs.tags }}
