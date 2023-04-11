@@ -6,124 +6,34 @@
 nextflow.enable.dsl=2
 
 workflow {
-    preprocess_count_matrix(Channel.of(
-                                tuple("genes", file(params.gene_count_matrix)),
-                                tuple("transcripts", file(params.transcript_count_matrix))),
-                            file(params.control_to_sample_mappings))
-
-    run_deseq2(preprocess_count_matrix.out)
-
-    run_elixir_gost(run_deseq2.out.map { it[1] }
-                              .flatten(),
-                    params.elixir_gost_lfc_lb,
-                    params.elixir_gost_lfc_ub,
-                    params.elixir_gost_pval)
-
-    run_go_figure(run_elixir_gost.out.tsv.flatten())
+    run_deseq2(file(params.count_matrix, checkIfExists: true),
+               file(params.design_table, checkIfExists: true),
+               Channel.of(params.lfc_cutoffs).flatten(),
+               params.fdr_alpha)
 }
 
-
-process preprocess_count_matrix {
-    input:
-        tuple val(label), path(gene_count_matrix)
-        path sample_mappings
-
-    output:
-        tuple val(label), path("*.tsv"), env(CONTRAST)
-
-    shell:
-        '''
-        map_rnaseq_samples_to_controls.py \\
-            --round                       \\
-            '!{gene_count_matrix}'        \\
-            '!{sample_mappings}'          \\
-            .
-
-        CONTRAST="$(head -n 1 *.contrast | tr -d '\\n')"
-        '''
-}
 
 process run_deseq2 {
-    publishDir "${params.output_dir}/", mode: 'copy'
+    publishDir "${params.output_dir}/", mode: 'copy',
+                                        saveAs: { "lfc_${lfc_cutoff}/de_genes.tsv.gz" }
 
     input:
-        tuple val(label), path(count_matrix), val(contrast)
+        path count_matrix
+        path design_table
+        val lfc_cutoff
+        val fdr_alpha
 
     output:
-        tuple val(label), path("*.tsv"), path("plots/*.pdf")
+        path "*.tsv.gz"
 
     shell:
-        '''
-        diff_expression_analysis.r           \\
-            --count_matrix='!{count_matrix}' \\
-            --contrast=!{contrast}           \\
-            -o '!{label}_'
-
-        rm -f Rplots.pdf
-
-        mkdir plots
-        mv *.pdf plots/
-        '''
-}
-
-process run_elixir_gost {
-    publishDir "${params.output_dir}/go", mode: 'copy'
-
-    input:
-        path de_genes
-        val lfc_lb
-        val lfc_ub
-        val pval
-
-    output:
-        path "*.tsv", emit: tsv
-
-    shell:
-        outprefix="${de_genes.baseName}_gost"
         '''
         set -o pipefail
 
-        lfc_lb=($(echo '!{lfc_lb}' | tr ',' ' '))
-        lfc_ub=($(echo '!{lfc_ub}' | tr ',' ' '))
-        pval=($(echo '!{pval}' | tr ',' ' '))
-
-        for i in "${!lfc_lb[@]}"; do
-            pv="${pval[$i]}"
-            lb="${lfc_lb[$i]}"
-            ub="${lfc_ub[$i]}"
-
-            run_elixir_gost.py             \\
-                --pval-cutoff "$pv"        \\
-                --lfc-cutoffs "$lb" "$ub"  \\
-                < '!{de_genes}' > "!{outprefix}_${lb}_${ub}_${pv}.tsv"
-        done
-        '''
-}
-
-process run_go_figure {
-    publishDir "${params.output_dir}/go/plots", mode: 'copy'
-
-    input:
-        path functional_annotation
-
-    output:
-        path "*.png", emit: png
-
-    shell:
-        outprefix="${functional_annotation.baseName}"
-        '''
-        set -o pipefail
-
-        trap 'rm -f annotation.tsv' EXIT
-        grep '^GO:' '!{functional_annotation}' | cut -f 2,4 > annotation.tsv
-
-        gofigure.py                 \\
-            --input annotation.tsv  \\
-            --font_size=xx-small    \\
-            --description_limit=50  \\
-            --max_label=20          \\
-            --output '!{outprefix}'
-
-        mv '!{outprefix}/'* .
+        diff_expression_analysis.py      \\
+            '!{count_matrix}'            \\
+            '!{design_table}'            \\
+            --lfc-thresh='!{lfc_cutoff}' \\
+            --fdr-alpha='!{fdr_alpha}' | gzip -9 > de_genes.tsv.gz
         '''
 }
