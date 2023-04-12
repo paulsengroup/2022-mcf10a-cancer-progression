@@ -31,15 +31,19 @@ USER mambauser
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG DESEQ2_VERSION="1.38.*"
+ARG APEGLM_VERSION="1.20.*"
+ARG ASHR_VERSION="2.2_54"
 
 RUN micromamba install -y                            \
                -c conda-forge                        \
                -c bioconda                           \
+               "bioconductor-apeglm=$APEGLM_VERSION" \
                "bioconductor-deseq2=$DESEQ2_VERSION" \
                bioframe                              \
                numpy                                 \
                pandas                                \
                procps-ng                             \
+               "r-ashr=$ASHR_VERSION"                \
                rpy2                                  \
 && micromamba clean --all -y
 
