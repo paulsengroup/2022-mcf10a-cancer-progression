@@ -8,32 +8,30 @@ nextflow.enable.dsl=2
 workflow {
     run_deseq2(file(params.count_matrix, checkIfExists: true),
                file(params.design_table, checkIfExists: true),
-               Channel.of(params.lfc_cutoffs).flatten(),
-               params.fdr_alpha)
+               Channel.of(params.lfc_cutoffs).flatten())
 }
 
 
 process run_deseq2 {
-    publishDir "${params.output_dir}/", mode: 'copy',
-                                        saveAs: { "lfc_${lfc_cutoff}/de_genes.tsv.gz" }
+    publishDir "${params.output_dir}/", mode: 'copy'
 
     input:
         path count_matrix
         path design_table
         val lfc_cutoff
-        val fdr_alpha
 
     output:
-        path "*.tsv.gz"
+        path "lfc_${lfc_cutoff}/*.tsv.gz", emit: tsv
+        path "lfc_${lfc_cutoff}/*.rds", emit: res
+        path "lfc_${lfc_cutoff}/dds.rds", emit: dds
+        path "lfc_${lfc_cutoff}/r_sessioninfo.txt", emit: sessioninfo
 
     shell:
         '''
-        set -o pipefail
-
-        diff_expression_analysis.py      \\
-            '!{count_matrix}'            \\
-            '!{design_table}'            \\
-            --lfc-thresh='!{lfc_cutoff}' \\
-            --fdr-alpha='!{fdr_alpha}' | gzip -9 > de_genes.tsv.gz
+        run_deseq2.py           \\
+            '!{count_matrix}'   \\
+            '!{design_table}'   \\
+            'lfc_!{lfc_cutoff}' \\
+            --lfc-thresh='!{lfc_cutoff}'
         '''
 }

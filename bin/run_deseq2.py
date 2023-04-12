@@ -7,7 +7,6 @@
 import argparse
 import logging
 import pathlib
-import sys
 from collections import defaultdict
 from typing import Any, Dict, List, Tuple
 
@@ -28,12 +27,6 @@ def make_cli() -> argparse.ArgumentParser:
 
         raise RuntimeError("Not a positive float")
 
-    def probability(s) -> float:
-        if 0.0 <= (x := float(s)) <= 1.0:
-            return x
-
-        raise RuntimeError("Not a valid probability")
-
     cli.add_argument(
         "count-table",
         nargs="+",
@@ -52,17 +45,21 @@ def make_cli() -> argparse.ArgumentParser:
         " - contrast - Condition(s) to use as contrast",
     )
 
+    cli.add_argument("output-folder", type=pathlib.Path, help="Path to folder where output files will be stored.")
+
     cli.add_argument(
         "--lfc-thresh",
         type=non_negative_float,
         default=0.0,
         help="Log2FoldChange threshold (see DESeq2 docs for more details).",
     )
+
     cli.add_argument(
-        "--fdr-alpha",
-        type=probability,
-        default=0.01,
-        help="Alpha used to correct for multiple-hypothesis testing (see DESeq2 docs for more details).",
+        "--lfc-shrinkage-method",
+        type=str,
+        default="apeglm",
+        choices={"apeglm", "ashr", "normal"},
+        help="Log2FoldChange shrinkage method (see DESeq2 docs for more details).",
     )
 
     cli.add_argument(
@@ -72,7 +69,24 @@ def make_cli() -> argparse.ArgumentParser:
         help="Discard genes with less than --min-counts counts across replicates.",
     )
 
+    cli.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Force overwrite existing files.",
+    )
+
     return cli
+
+
+def handle_path_collisions(*paths: pathlib.Path) -> None:
+    collisions = [p for p in paths if p.exists()]
+
+    if len(collisions) != 0:
+        collisions = "\n - ".join((str(p) for p in collisions))
+        raise RuntimeError(
+            "Refusing to overwrite file(s):\n" f" - {collisions}\n" "Pass --force to overwrite existing file(s)."
+        )
 
 
 def import_count_table(path_to_tsvs: List[pathlib.Path], round_counts: bool = True) -> pd.DataFrame:
@@ -151,7 +165,7 @@ def filter_lowly_expressed_genes(counts: pd.DataFrame, design: pd.DataFrame, min
     return counts[~drop]
 
 
-def run_deseq2(counts: pd.DataFrame, design: pd.DataFrame) -> Any:
+def generate_deseq_dds(counts: pd.DataFrame, design: pd.DataFrame) -> Any:
     with (ro.default_converter + pandas2ri.converter).context():
         counts_rdf = ro.conversion.get_conversion().py2rpy(
             counts.reset_index().drop(columns="gene_name").set_index("gene_id")
@@ -159,8 +173,7 @@ def run_deseq2(counts: pd.DataFrame, design: pd.DataFrame) -> Any:
         design_rdf = ro.conversion.get_conversion().py2rpy(design[["condition", "seq_type"]])
         assert list(ro.r["colnames"](counts_rdf)) == list(ro.r["row.names"](design_rdf))
 
-        dds_r = deseq2.DESeqDataSetFromMatrix(countData=counts_rdf, colData=design_rdf, design=Formula("~condition"))
-        return deseq2.DESeq(dds_r, parallel=False)
+        return deseq2.DESeqDataSetFromMatrix(countData=counts_rdf, colData=design_rdf, design=Formula("~condition"))
 
 
 def deseq2_get_results(
@@ -168,31 +181,49 @@ def deseq2_get_results(
     contrast: str,
     condition: str,
     lfc_thresh: float,
-    alpha: float,
-    padjust_method: str = "BH",
-) -> pd.DataFrame:
+    lfc_shrinkage_method: str,
+) -> Tuple[pd.DataFrame, Any]:
     with (ro.default_converter + pandas2ri.converter).context():
-        contrast_r = ro.vectors.StrVector(["condition", condition, contrast])
-        results_r = deseq2.results(
-            object=dds_r,
-            contrast=contrast_r,
-            parallel=False,
+        results_r = deseq2.lfcShrink(
+            dds_r,
+            coef=f"condition_{condition}_vs_{contrast}",
             lfcThreshold=lfc_thresh,
-            alpha=alpha,
-            pAdjustMethod=padjust_method,
+            type=lfc_shrinkage_method,
+            parallel=False,
         )
-        results_r = ro.r["as.data.frame"](results_r)
 
-        df = ro.conversion.get_conversion().rpy2py(results_r)
-        df.insert(0, "contrast", contrast)
-        df.insert(1, "condition", condition)
-        df.index.name = "gene_id"
+        df = ro.conversion.get_conversion().rpy2py(ro.r["as.data.frame"](results_r))
 
-        return df
+    # Deal with case where lfc_thresh = 0
+    if "svalue" not in df:
+        df["svalue"] = df["padj"]
+
+    # See https://github.com/stephens999/ashr/issues/123
+    # and https://github.com/stephens999/ashr/issues/117
+    df["svalue"] = np.maximum(df["svalue"], 0)
+    df.insert(0, "contrast", contrast)
+    df.insert(1, "condition", condition)
+    df.index.name = "gene_id"
+
+    return df, results_r
+
+
+def relevel_dds(dds: Any, column: str, ref: str) -> Any:
+    relevel_dds_r = ro.r(
+        f"""
+        function(dds, column, ref) {{
+            dds${column} <- relevel(dds${column}, ref=ref)
+            return(dds)
+        }}
+        """
+    )
+    return relevel_dds_r(dds, column, ref)
 
 
 def main():
     args = vars(make_cli().parse_args())
+
+    outdir = args["output-folder"]
 
     counts, design = import_data(args["count-table"], args["design-table"])
     counts = filter_lowly_expressed_genes(counts, design, args["min_counts"])
@@ -200,16 +231,29 @@ def main():
     condition_to_control_mappings = get_condition_to_control_mappings(design)
     assert len(condition_to_control_mappings) != 0
 
-    print_header = True
-    dds_r = run_deseq2(counts, design)
+    dds_r = generate_deseq_dds(counts, design)
 
+    outdir.mkdir(parents=True, exist_ok=True)
     for condition, contrasts in condition_to_control_mappings.items():
         for contrast in contrasts:
             assert condition != contrast
             logging.info("Processing %s vs %s...", contrast, condition)
 
-            results = deseq2_get_results(
-                dds_r, contrast, condition, alpha=args["fdr_alpha"], lfc_thresh=args["lfc_thresh"]
+            output_prefix = outdir / f"{contrast}_vs_{condition}"
+            output_tsv = output_prefix.with_suffix(".tsv.gz")
+            output_rds = output_prefix.with_suffix(".res.rds")
+            if not args["force"]:
+                handle_path_collisions(output_tsv, output_rds)
+
+            dds_r = relevel_dds(dds_r, column="condition", ref=contrast)
+            dds_r = deseq2.DESeq(dds_r, parallel=False)
+
+            results, results_r = deseq2_get_results(
+                dds_r,
+                contrast,
+                condition,
+                lfc_thresh=args["lfc_thresh"],
+                lfc_shrinkage_method=args["lfc_shrinkage_method"],
             )
             results = results.merge(
                 counts.reset_index()[["gene_id", "gene_name"]].set_index("gene_id"),
@@ -220,8 +264,20 @@ def main():
 
             results.insert(0, "gene_name", results.pop("gene_name"))
 
-            results.to_csv(sys.stdout, sep="\t", index=True, header=print_header)
-            print_header = False
+            results.to_csv(output_tsv, sep="\t", index=True)
+            ro.r["saveRDS"](results_r, str(output_rds), compress="xz")
+
+    output_rds = outdir / "dds.rds"
+    if not args["force"]:
+        handle_path_collisions(output_rds)
+    ro.r["saveRDS"](dds_r, str(output_rds), compress="xz")
+
+    output_sessioninfo = outdir / "r_sessioninfo.txt"
+    if not args["force"]:
+        handle_path_collisions(output_sessioninfo)
+
+    with open(output_sessioninfo, "w") as f:
+        print(utils.sessionInfo(), file=f)
 
 
 def setup_logger(level=logging.INFO):
@@ -247,6 +303,8 @@ if __name__ == "__main__":
     setup_logger()
 
     base = importr("base")
+    utils = importr("utils")
+    stats = importr("stats")
     deseq2 = importr("DESeq2")
 
     main()
