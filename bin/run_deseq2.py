@@ -91,12 +91,15 @@ def handle_path_collisions(*paths: pathlib.Path) -> None:
 
 def import_count_table(path_to_tsvs: List[pathlib.Path], round_counts: bool = True) -> pd.DataFrame:
     df = None
+    # index_col are usually [tx, gene_name] or [gene_id, gene_name].
+    # Any name should work, as long as the first column contains some kind of unique ID
     for p in path_to_tsvs:
         if df is None:
-            df = pd.read_table(p).set_index(["gene_id", "gene_name"])
+            df = pd.read_table(p, index_col=[0, 1])
             continue
+
         df = df.merge(
-            pd.read_table(p).set_index(["gene_id", "gene_name"]),
+            pd.read_table(p, index_col=[0, 1]),
             left_index=True,
             right_index=True,
             how="outer",
@@ -167,9 +170,7 @@ def filter_lowly_expressed_genes(counts: pd.DataFrame, design: pd.DataFrame, min
 
 def generate_deseq_dds(counts: pd.DataFrame, design: pd.DataFrame) -> Any:
     with (ro.default_converter + pandas2ri.converter).context():
-        counts_rdf = ro.conversion.get_conversion().py2rpy(
-            counts.reset_index().drop(columns="gene_name").set_index("gene_id")
-        )
+        counts_rdf = ro.conversion.get_conversion().py2rpy(counts.droplevel(level=1, axis="index"))
         design_rdf = ro.conversion.get_conversion().py2rpy(design[["condition", "seq_type"]])
         assert list(ro.r["colnames"](counts_rdf)) == list(ro.r["row.names"](design_rdf))
 
@@ -203,7 +204,7 @@ def deseq2_get_results(
     df["svalue"] = np.maximum(df["svalue"], 0)
     df.insert(0, "contrast", contrast)
     df.insert(1, "condition", condition)
-    df.index.name = "gene_id"
+    df.index.name = "id"
 
     return df, results_r
 
@@ -227,6 +228,9 @@ def main():
 
     counts, design = import_data(args["count-table"], args["design-table"])
     counts = filter_lowly_expressed_genes(counts, design, args["min_counts"])
+
+    assert len(counts.index.names) == 2
+    index1, index2 = counts.index.names
 
     condition_to_control_mappings = get_condition_to_control_mappings(design)
     assert len(condition_to_control_mappings) != 0
@@ -255,14 +259,16 @@ def main():
                 lfc_thresh=args["lfc_thresh"],
                 lfc_shrinkage_method=args["lfc_shrinkage_method"],
             )
+
+            # Add back gene names to DF
             results = results.merge(
-                counts.reset_index()[["gene_id", "gene_name"]].set_index("gene_id"),
+                counts.index.to_frame().set_index(index1),
                 how="left",
                 left_index=True,
                 right_index=True,
             )
 
-            results.insert(0, "gene_name", results.pop("gene_name"))
+            results.insert(0, index2, results.pop(index2))
 
             results.to_csv(output_tsv, sep="\t", index=True)
             ro.r["saveRDS"](results_r, str(output_rds), compress="xz")
