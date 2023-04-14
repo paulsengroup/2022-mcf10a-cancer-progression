@@ -4,16 +4,13 @@
     "restriction_site": "^GATC,G^ANTC",
     "ligation_site": "GATCGATC,GANTGATC,GANTANTC,GATCANTC",
     "bin_size": "1000",
-
     "skip_dist_decay": true,
     "skip_tads": true,
     "skip_compartments": true,
     "skip_mcool": true,
     "skip_multiqc": true,
-
     "split_fastq": true,
     "fastq_chunks_size": 15000000,
-
     "process.withName:get_valid_interaction.memory": "10.GB",
     "process.withName:convert_to_pairs.cpus": 1,
     "process.withName:convert_to_pairs.memory": "1.GB"
