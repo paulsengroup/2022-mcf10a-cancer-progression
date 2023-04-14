@@ -1,0 +1,8 @@
+{
+    "input": "data/input/nfcore_chipseq_samplesheets/nfcore_chipseq_gh2ax_samplesheet.csv",
+    "outdir": "data/output/nfcore_chipseq/gh2ax",
+    "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
+    "gtf": "data/output/preprocessing/annotations/hg38_gencode_v43.gtf",
+    "macs_gsize": 2708135512,
+    "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 50)"
+}

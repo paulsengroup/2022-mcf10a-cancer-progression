@@ -1,0 +1,10 @@
+{
+    "input": "data/input/nfcore_rnaseq_samplesheet.csv",
+    "outdir": "data/output/nfcore_rnaseq/",
+    "fasta": "data/input/hg38/hg38.fa",
+    "gtf": "data/input/hg38/hg38.gtf",
+    "aligner": "star_salmon",
+    "pseudo_aligner": "salmon",
+    "extra_salmon_quant_args": "--seqBias --gcBias",
+    "gencode": true
+}
