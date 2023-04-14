@@ -12,7 +12,7 @@ set -u
 
 if [ $# -lt 3 ]; then
   1>&2 echo "Usage: $0 working-dir workflow-archive param_files..."
-  1>&2 echo "Example: $0 .nextflow-nfcore-chipseq-wd nfcore-chipseq-v2.0.0.tar.xz configs/nfcore_chipseq_*.json"
+  1>&2 echo "Example: $0 .nextflow-nfcore-chipseq-wd nfcore-chipseq-v2.0.0.tar.xz configs/nfcore/nfcore_chipseq_*.json"
   exit 1
 fi
 
