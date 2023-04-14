@@ -1,17 +1,16 @@
 {
-    "fasta": "data/output/preprocessing/assemblies/GRCh38_genome_assembly.fna",
+    "input": "data/input/nfcore_hic_samplesheet.csv",
+    "outdir": "data/scratch/nfcore_hic",
+    "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
     "chromosome_size": "data/output/preprocessing/chrom_sizes/GRCh38.chrom.sizes",
     "restriction_site": "^GATC,G^ANTC",
     "ligation_site": "GATCGATC,GANTGATC,GANTANTC,GATCANTC",
     "bin_size": "1000",
-    "skip_dist_decay": true,
-    "skip_tads": true,
-    "skip_compartments": true,
+    "skip_maps": true,
     "skip_mcool": true,
-    "skip_multiqc": true,
-    "split_fastq": true,
-    "fastq_chunks_size": 15000000,
-    "process.withName:get_valid_interaction.memory": "10.GB",
-    "process.withName:convert_to_pairs.cpus": 1,
-    "process.withName:convert_to_pairs.memory": "1.GB"
+    "skip_dist_decay": true,
+    "skip_compartments": true,
+    "skip_balancing": true,
+    "split_fastq": false,
+    "schema_ignore_params": "cluster-options,clusterOptions,genomes,project"
 }
