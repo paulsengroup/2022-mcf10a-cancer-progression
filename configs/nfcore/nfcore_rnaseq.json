@@ -7,5 +7,5 @@
     "pseudo_aligner": "salmon",
     "extra_salmon_quant_args": "--seqBias --gcBias",
     "gencode": true,
-    "schema_ignore_params": "clusterOptions,project"
+    "schema_ignore_params": "cluster-options,clusterOptions,genomes,project"
 }

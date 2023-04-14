@@ -6,5 +6,5 @@
     "macs_gsize": 2802903967,
     "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 80)",
     "narrow_peak": true,
-    "schema_ignore_params": "macs_gsize_comment_,clusterOptions,project"
+    "schema_ignore_params": "cluster-options,clusterOptions,genomes,macs_gsize_comment_,project"
 }
