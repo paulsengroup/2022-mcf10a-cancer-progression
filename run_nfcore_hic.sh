@@ -17,4 +17,4 @@ echo 1>&2 'Running nfcore/hic...'
 ./run_external_workflow.sh \
   "$wd" \
   'workflows/robomics-nfcore-hic-v2.0.0-patched.tar.xz' \
-  configs/nfcore_hic*.config
+  configs/nfcore/nfcore_hic*.json
