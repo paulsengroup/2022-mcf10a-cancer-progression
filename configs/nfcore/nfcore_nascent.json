@@ -4,5 +4,6 @@
     "assay_type": "PROseq",
     "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
     "gtf": "data/output/preprocessing/annotations/hg38_gencode_v43.gtf",
-    "process.withName:PINTS_CALLER.time": "24h"
+    "process.withName:PINTS_CALLER.time": "24h",
+    "schema_ignore_params": "clusterOptions,project"
 }

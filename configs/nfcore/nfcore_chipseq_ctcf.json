@@ -5,5 +5,6 @@
     "gtf": "data/output/preprocessing/annotations/hg38_gencode_v43.gtf",
     "macs_gsize": 2820945813,
     "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 100)",
-    "narrow_peak": true
+    "narrow_peak": true,
+    "schema_ignore_params": "macs_gsize_comment_,clusterOptions,project"
 }

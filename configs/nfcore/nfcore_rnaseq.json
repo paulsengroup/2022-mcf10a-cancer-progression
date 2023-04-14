@@ -6,5 +6,6 @@
     "aligner": "star_salmon",
     "pseudo_aligner": "salmon",
     "extra_salmon_quant_args": "--seqBias --gcBias",
-    "gencode": true
+    "gencode": true,
+    "schema_ignore_params": "clusterOptions,project"
 }

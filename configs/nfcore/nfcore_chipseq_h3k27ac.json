@@ -4,5 +4,6 @@
     "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
     "gtf": "data/output/preprocessing/annotations/hg38_gencode_v43.gtf",
     "macs_gsize": 2765359936,
-    "macs_gsize_comment": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 75)"
+    "macs_gsize_comment": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 75)",
+    "schema_ignore_params": "macs_gsize_comment_,clusterOptions,project"
 }
