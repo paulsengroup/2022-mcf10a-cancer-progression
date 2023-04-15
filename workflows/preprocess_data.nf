@@ -153,7 +153,7 @@ process split_fastq_pair {
         val chunk_size
 
     output:
-        path "*.fastq.zst"
+        path "*.fastq.gz"
 
     shell:
     '''
@@ -162,6 +162,6 @@ process split_fastq_pair {
         -1 '!{m1}'         \\
         -2 '!{m2}'         \\
         --out-dir .        \\
-        -e ".zst"
+        -e ".gz"
     '''
 }
