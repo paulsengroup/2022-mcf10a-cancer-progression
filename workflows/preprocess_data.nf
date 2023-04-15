@@ -19,9 +19,6 @@ workflow {
     rename_chromosomes(genome_assemblies,
                        generate_chrom_sizes.out.bed)
 
-    run_bowtie2_index(rename_chromosomes.out.fa)
-    archive_bowtie2_index(run_bowtie2_index.out.idx)
-
     process_microarray_data(generate_chrom_sizes.out.chrom_sizes,
                             file(params.microarray_cnvs),
                             file(params.microarray_probe_dbs),
@@ -37,6 +34,12 @@ workflow {
             params.hg38_gtf_out
         )
     )
+
+    split_fastq_pair(
+        Channel.fromFilePairs(params.hic_fastq_pattern,
+                              checkIfExists: true,
+                              flat: true),
+        params.fastq_chunk_size)
 }
 
 process generate_chrom_sizes {
@@ -62,7 +65,7 @@ process generate_chrom_sizes {
 
          # Extract chromosome sizes from assembly report
          gzip -dc "!{assembly_report}" |
-         awk -F $'\t' 'BEGIN { OFS=FS } $2 == "assembled-molecule" { print "chr"$1,0,$9,$7 }' |
+         awk -F $'\\t' 'BEGIN { OFS=FS } $2 == "assembled-molecule" { print "chr"$1,0,$9,$7 }' |
          grep -v 'chrMT' | sort -V > "!{out_bed}"
 
          # Convert chromosome sizes from bed to chrom.sizes format
@@ -70,44 +73,6 @@ process generate_chrom_sizes {
         '''
 }
 
-process run_bowtie2_index {
-    label 'process_high'
-
-    input:
-        path fa
-
-    output:
-        path "*.bt2", emit: idx
-
-    shell:
-        '''
-        fa='!{fa}'
-        outprefix="${fa%.*}"
-
-        bowtie2-build --threads !{task.cpus} \
-                      "$fa"                  \
-                      "$outprefix"
-        '''
-}
-
-process archive_bowtie2_index {
-    publishDir "${params.output_dir}/bowtie2_idx/", mode: 'copy'
-
-    label 'process_medium'
-    label 'process_short'
-
-    input:
-        path idx_files
-
-    output:
-        path "*.tar.zst", emit: tar
-
-    shell:
-        outname = "${idx_files[0].simpleName}.tar.zst"
-        '''
-        tar -chf - *.bt2 | zstd -T!{task.cpus} --adapt -o '!{outname}'
-        '''
-}
 
 process rename_chromosomes {
     publishDir "${params.output_dir}/assemblies", mode: 'copy'
@@ -145,11 +110,11 @@ process process_microarray_data {
         outname="${bed.simpleName}.bed.gz"
         '''
         set -o pipefail
-        convert_microarray_cnvs_to_bed.py \
-            '!{bed}' \
-            --chrom-sizes '!{chrom_sizes}' \
-            --probe-ids !{probe_dbs} \
-            --liftover-chain '!{liftover_chain}' \
+        convert_microarray_cnvs_to_bed.py \\
+            '!{bed}' \\
+            --chrom-sizes '!{chrom_sizes}' \\
+            --probe-ids !{probe_dbs} \\
+            --liftover-chain '!{liftover_chain}' \\
             --fill-gaps |
             gzip -9c > '!{outname}'
         '''
@@ -173,4 +138,28 @@ process decompress_data {
         '''
         zcat '!{src}' > '!{out}'
         '''
+}
+
+process split_fastq_pair {
+    publishDir "${params.output_dir}/fastq", mode: 'copy'
+    label 'process_long'
+
+    cpus 3
+
+    input:
+        tuple val(key),
+              path(m1),
+              path(m2)
+        val chunk_size
+
+    output:
+        path "*.fastq.zst"
+
+    shell:
+    '''
+    seqkit split2 -s '!{chunk_size}' \\
+        -1 '!{m1}' \\
+        -2 '!{m2}' \\
+        -e ".zst"
+    '''
 }
