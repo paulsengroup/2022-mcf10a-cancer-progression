@@ -11,6 +11,6 @@
     "skip_dist_decay": true,
     "skip_compartments": true,
     "skip_balancing": true,
-    "split_fastq": false,
+    "split_fastq": true,
     "schema_ignore_params": "cluster-options,clusterOptions,genomes,project"
 }
