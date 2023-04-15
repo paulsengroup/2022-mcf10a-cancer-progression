@@ -157,9 +157,11 @@ process split_fastq_pair {
 
     shell:
     '''
-    seqkit split2 -s '!{chunk_size}' \\
-        -1 '!{m1}' \\
-        -2 '!{m2}' \\
+    seqkit split2          \\
+        -s '!{chunk_size}' \\
+        -1 '!{m1}'         \\
+        -2 '!{m2}'         \\
+        --out-dir .        \\
         -e ".zst"
     '''
 }
