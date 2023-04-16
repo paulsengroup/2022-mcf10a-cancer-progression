@@ -18,4 +18,4 @@ mkdir -p "$wd"
 ./run_external_workflow.sh \
   "$wd" \
   'workflows/nfcore-chipseq-v2.0.0.tar.xz' \
-   configs/nfcore_chipseq*.config
+  configs/nfcore/nfcore_chipseq*.json
