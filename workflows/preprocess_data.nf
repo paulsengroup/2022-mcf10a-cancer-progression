@@ -34,12 +34,6 @@ workflow {
             params.hg38_gtf_out
         )
     )
-
-    split_fastq_pair(
-        Channel.fromFilePairs(params.hic_fastq_pattern,
-                              checkIfExists: true,
-                              flat: true),
-        params.fastq_chunk_size)
 }
 
 process generate_chrom_sizes {
@@ -138,30 +132,4 @@ process decompress_data {
         '''
         zcat '!{src}' > '!{out}'
         '''
-}
-
-process split_fastq_pair {
-    publishDir "${params.output_dir}/fastq", mode: 'copy'
-    label 'process_long'
-
-    cpus 3
-
-    input:
-        tuple val(key),
-              path(m1),
-              path(m2)
-        val chunk_size
-
-    output:
-        path "*.fastq.gz"
-
-    shell:
-    '''
-    seqkit split2          \\
-        -s '!{chunk_size}' \\
-        -1 '!{m1}'         \\
-        -2 '!{m2}'         \\
-        --out-dir .        \\
-        -e ".gz"
-    '''
 }
