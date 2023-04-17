@@ -21,7 +21,7 @@ RUN apt-get update \
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-FROM mambaorg/micromamba:1.4.0 AS base
+FROM mambaorg/micromamba:1.4.2 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
