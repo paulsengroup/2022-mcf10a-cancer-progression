@@ -15,12 +15,11 @@ mkdir -p "$wd"
 
 ./setup_workflow_workdir.sh "$PWD" "$wd"
 
-# TODO: Update to use v0.3.1
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.3.0.tar.xz' \
-   configs/call_tad_cliques_chrom3d.config
+  'workflows/robomics-call_tad_cliques-v0.3.1.tar.xz' \
+   configs/call_tad_cliques_chrom3d.json
 
 
 ./run_workflow.sh "$wd" "$step"
