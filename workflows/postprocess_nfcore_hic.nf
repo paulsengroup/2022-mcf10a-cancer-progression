@@ -52,9 +52,6 @@ workflow {
 
     // multiqc(input_dirs)  TODO: update me!
 
-    generate_blacklist(file(params.assembly_gaps),
-                       file(params.cytoband))
-
     cooler_merge(coolers_by_condition)
 
     Channel.empty()
@@ -66,7 +63,7 @@ workflow {
 
     cooler_zoomify(coolers)
     cooler_balance(cooler_zoomify.out.mcool,
-                   generate_blacklist.out.bed)
+                   file(params.blacklist, checkIfExists: true))
 
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
@@ -117,45 +114,13 @@ process generate_blacklist {
         '''
         set -o pipefail
 
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
             <(zcat '!{cytoband}' | grep 'acen$') |
             grep '^chr[XY0-9]\\+[[:space:]]' |
             cut -f 1-3 |
             sort -k1,1V -k2,2n |
             bedtools merge -i stdin |
             cut -f1-3 > blacklist.bed
-        '''
-}
-
-
-process cooler_cload {
-    input:
-        tuple val(sample),
-              val(condition),
-              path(pairs)
-
-        val chrom_sizes
-        val assembly
-        val resolution
-
-    output:
-        tuple val(sample),
-              val(condition),
-              path("*.cool"),
-        emit: cool
-
-    shell:
-        outname = "${pairs.simpleName}.cool"
-        '''
-        chrom_sizes="$(mktemp chrom.sizes.XXXXXX)"
-
-        grep '^chr[XY0-9]\\+[[:space:]]' '!{chrom_sizes}' > "$chrom_sizes"
-
-        cooler cload \\
-            "$chrom_sizes:!{resolution}" \\
-            '!{pairs}'                   \\
-            '!{outname}'                 \\
-            --assembly='!{assembly}'
         '''
 }
 

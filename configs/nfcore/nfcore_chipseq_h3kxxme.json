@@ -1,8 +1,8 @@
 {
     "input": "data/input/nfcore_chipseq_samplesheets/nfcore_chipseq_h3kxxme_samplesheet.csv",
     "outdir": "data/output/nfcore_chipseq/h3kxxme",
-    "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
-    "gtf": "data/output/preprocessing/annotations/hg38_gencode_v43.gtf",
+    "fasta": "data/input/hg38/hg38.fa",
+    "gtf": "data/input/hg38/hg38_gencode_v43.gtf",
     "aligner": "chromap",
     "macs_gsize": 2636580800,
     "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 40)",

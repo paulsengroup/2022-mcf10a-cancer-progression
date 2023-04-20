@@ -1,8 +1,8 @@
 {
     "input": "data/input/nfcore_hic_samplesheet.csv",
     "outdir": "data/scratch/nfcore_hic",
-    "fasta": "data/output/preprocessing/assemblies/hg38_genome_assembly.fna",
-    "chromosome_size": "data/output/preprocessing/chrom_sizes/GRCh38.chrom.sizes",
+    "fasta": "data/input/hg38/hg38.fa",
+    "chromosome_size": "data/input/hg38/hg38.filtered.chrom.sizes",
     "restriction_site": "^GATC,G^ANTC",
     "ligation_site": "GATCGATC,GANTGATC,GANTANTC,GATCANTC",
     "bin_size": "1000000",
