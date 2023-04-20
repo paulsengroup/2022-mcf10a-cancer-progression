@@ -34,19 +34,23 @@ workflow {
     input_stats = input_dirs.flatten().map {
                                     tuple(sample_names[it.toString()],
                                           file("${it}/hicpro/stats/", type: "dir", checkIfExists: true),
-                                          file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))
+                                          file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))ckl
                                       }
 
+<<<<<<< Updated upstream
     coolers_by_condition = input_coolers.map { tuple(it[0], it[2]) }
                                         .groupTuple(by: 0, size: 2)
                                         .map { tuple(it[0], it[1].flatten()) }
+=======
+    cooler_cload(input_valid_pairs,
+                 file(params.chrom_sizes),
+                 params.grch38_assembly_name_short,
+                 params.cooler_base_resolution)
+>>>>>>> Stashed changes
 
     coolers_by_sample = input_coolers.map { tuple(it[1], it[2].flatten()) }
 
     multiqc(input_dirs)
-
-    generate_blacklist(file(params.assembly_gaps),
-                       file(params.cytoband))
 
     cooler_merge(coolers_by_condition)
 
@@ -54,7 +58,7 @@ workflow {
 
     cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool))
     cooler_balance(cooler_zoomify.out.mcool,
-                   generate_blacklist.out.bed)
+                   file(params.blacklist, checkIfExists: true))
 
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
@@ -89,28 +93,6 @@ process multiqc {
         multiqc .
 
         tar -cf - multiqc_data/ | gzip -9 > multiqc_data.tar.gz
-        '''
-}
-
-process generate_blacklist {
-    input:
-        path assembly_gaps
-        path cytoband
-
-    output:
-        path "*.bed", emit: bed
-
-    shell:
-        '''
-        set -o pipefail
-
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
-            <(zcat '!{cytoband}' | grep 'acen$') |
-            grep '^chr[XY0-9]\\+[[:space:]]' |
-            cut -f 1-3 |
-            sort -k1,1V -k2,2n |
-            bedtools merge -i stdin |
-            cut -f1-3 > blacklist.bed
         '''
 }
 

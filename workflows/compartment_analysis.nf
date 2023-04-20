@@ -20,7 +20,6 @@ workflow {
         resolutions.first()
     )
 
-    generate_blacklist.out.bed.set { blacklist }
     extract_chrom_sizes_from_cooler.out.chrom_sizes.set { chrom_sizes }
 
     filter_fna(
@@ -44,7 +43,7 @@ workflow {
     preproc_coolers_for_dchic(
         coolers,
         chrom_sizes,
-        blacklist
+        file(params.blacklist, checkIfExists: true)
     )
 
     preproc_coolers_for_dchic.out.bins
@@ -97,28 +96,6 @@ workflow {
     plot_subcompartment_coverage(
         postprocess_dchic_output.out.subcompartments
     )
-}
-
-process generate_blacklist {
-    input:
-        path assembly_gaps
-        path cytoband
-
-    output:
-        path "*.bed", emit: bed
-
-    shell:
-        '''
-        set -o pipefail
-
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
-            <(zcat '!{cytoband}' | grep 'acen$') |
-            grep '^chr[XY0-9]\\+[[:space:]]' |
-            cut -f 1-3 |
-            sort -k1,1V -k2,2n |
-            bedtools merge -i stdin |
-            cut -f1-3 > blacklist.bed
-        '''
 }
 
 process filter_fna {

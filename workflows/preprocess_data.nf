@@ -6,67 +6,75 @@
 nextflow.enable.dsl=2
 
 workflow {
-    grch38_bname = "${params.grch38_assembly_name_short}"
+    filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
+                       params.hg38_chrom_sizes_out)
 
-    bnames = channel.of(grch38_bname)
-
-    assembly_reports = channel.of(file(params.grch38_assembly_report))
-    genome_assemblies = channel.of(file(params.grch38_genome_assembly))
-
-    generate_chrom_sizes(bnames,
-                         assembly_reports)
-
-    rename_chromosomes(genome_assemblies,
-                       generate_chrom_sizes.out.bed)
-
-    run_bowtie2_index(rename_chromosomes.out.fa)
+    run_bowtie2_index(file(params.hg38_assembly_in, checkIfExists: true))
     archive_bowtie2_index(run_bowtie2_index.out.idx)
 
-    process_microarray_data(generate_chrom_sizes.out.chrom_sizes,
-                            file(params.microarray_cnvs),
-                            file(params.microarray_probe_dbs),
-                            file(params.hg17_to_hg38_liftover_chain))
+    process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
+                            file(params.microarray_cnvs, checkIfExists: true),
+                            file(params.microarray_probe_dbs, checkIfExists: true),
+                            file(params.hg17_to_hg38_liftover_chain, checkIfExists: true))
+
+    generate_blacklist(
+        file(params.hg38_assembly_gaps, checkIfExists: true),
+        file(params.hg38_cytoband, checkIfExists: true),
+        params.hg38_blacklist
+    )
 
     decompress_data(
-        Channel.of(
-            file(params.hg38_assembly_in, checkIfExists: true),
-            file(params.hg38_gtf_in, checkIfExists: true)
-        ),
-        Channel.of(
-            params.hg38_assembly_out,
-            params.hg38_gtf_out
-        )
+        Channel.fromPath([params.hg38_assembly_in, params.hg38_gtf_in], checkIfExists: true),
+        Channel.of(params.hg38_assembly_out, params.hg38_gtf_out)
     )
 }
 
-process generate_chrom_sizes {
-    publishDir "${params.output_dir}/chrom_sizes", mode: 'copy'
+process filter_chrom_sizes {
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { "${chrom_sizes_out}" }
 
-    label 'process_short'
+    label 'process_very_short'
 
     input:
-        val assembly_name
-        path assembly_report
+        path chrom_sizes_in
+        val chrom_sizes_out
 
     output:
-        path "${assembly_name}.bed", emit: bed
-        path "${assembly_name}.chrom.sizes", emit: chrom_sizes
+        path "*.chrom.sizes", emit: chrom_sizes
 
     shell:
-        out_bed = "${assembly_name}.bed"
-        out = "${assembly_name}.chrom.sizes"
+        out=file(chrom_sizes_out).getName()
         '''
-        set -e
-        set -u
+        grep '^chr[[:digit:]XY]\\+[[:space:]]' '!{chrom_sizes_in}' > '!{out}'
+        '''
+}
+
+process generate_blacklist {
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { "${dest}" }
+
+    label 'process_very_short'
+
+    input:
+        path assembly_gaps
+        path cytoband
+        val dest
+
+    output:
+        path "*.bed.gz", emit: bed
+
+    shell:
+        '''
         set -o pipefail
 
-         # Extract chromosome sizes from assembly report
-         gzip -dc "!{assembly_report}" |
-         awk -F $'\t' 'BEGIN { OFS=FS } $2 == "assembled-molecule" { print "chr"$1,0,$9,$7 }' |
-         grep -v 'chrMT' | sort -V > "!{out_bed}"
-
-         # Convert chromosome sizes from bed to chrom.sizes format
-         cut -f 1,3 "!{out_bed}" | sort -V > "!{out}"
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
+            <(zcat '!{cytoband}' | grep 'acen$') |
+            grep '^chr[XY0-9]\\+[[:space:]]' |
+            cut -f 1-3 |
+            sort -k1,1V -k2,2n |
+            bedtools merge -i stdin |
+            cut -f1-3 |
+            gzip -9 > blacklist.bed.gz
         '''
 }
 
@@ -109,24 +117,6 @@ process archive_bowtie2_index {
         '''
 }
 
-process rename_chromosomes {
-    publishDir "${params.output_dir}/assemblies", mode: 'copy'
-
-    label 'process_short'
-
-    input:
-        path fa
-        path chrom_sizes_bed
-
-    output:
-        path "${fa.baseName}", emit: fa
-
-    shell:
-        out="${fa.baseName}"
-        '''
-        gzip -dc '!{fa}' | rename_chromosomes_fa.py '!{chrom_sizes_bed}' > '!{out}'
-        '''
-}
 
 process process_microarray_data {
     publishDir "${params.output_dir}/microarray", mode: 'copy'
@@ -156,8 +146,8 @@ process process_microarray_data {
 }
 
 process decompress_data {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${dest}" }
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { "${dest}" }
 
     label 'process_short'
 

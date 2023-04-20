@@ -20,7 +20,7 @@ mkdir -p "$destdir"
 cd "$destdir" || exit 1
 for src in ../HiC*/*.mcool ../*merged/*.mcool; do
   dest="$(basename "$src")"
-  dest="GRCh38_${dest#HiC_}"
+  dest="hg38_${dest#HiC_}"
   ln -sf "$src" "$dest"
 done
 
@@ -30,6 +30,6 @@ mkdir -p "$destdir"
 cd "$destdir" || exit 1
 for src in ../HiC*/*.hic ../*merged/*.hic; do
   dest="$(basename "$src")"
-  dest="GRCh38_${dest#HiC_}"
+  dest="hg38_${dest#HiC_}"
   ln -sf "$src" "$dest"
 done
