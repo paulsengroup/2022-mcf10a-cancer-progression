@@ -17,6 +17,12 @@ workflow {
                             file(params.microarray_probe_dbs, checkIfExists: true),
                             file(params.hg17_to_hg38_liftover_chain, checkIfExists: true))
 
+    generate_blacklist(
+        file(params.hg38_assembly_gaps, checkIfExists: true),
+        file(params.hg38_cytoband, checkIfExists: true),
+        params.hg38_blacklist
+    )
+
     decompress_data(
         Channel.fromPath([params.hg38_assembly_in, params.hg38_gtf_in], checkIfExists: true),
         Channel.of(params.hg38_assembly_out, params.hg38_gtf_out)
@@ -40,6 +46,35 @@ process filter_chrom_sizes {
         out=file(chrom_sizes_out).getName()
         '''
         grep '^chr[[:digit:]XY]\\+[[:space:]]' '!{chrom_sizes_in}' > '!{out}'
+        '''
+}
+
+process generate_blacklist {
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { "${dest}" }
+
+    label 'process_very_short'
+
+    input:
+        path assembly_gaps
+        path cytoband
+        val dest
+
+    output:
+        path "*.bed.gz", emit: bed
+
+    shell:
+        '''
+        set -o pipefail
+
+        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
+            <(zcat '!{cytoband}' | grep 'acen$') |
+            grep '^chr[XY0-9]\\+[[:space:]]' |
+            cut -f 1-3 |
+            sort -k1,1V -k2,2n |
+            bedtools merge -i stdin |
+            cut -f1-3 |
+            gzip -9 > blacklist.bed.gz
         '''
 }
 

@@ -23,8 +23,7 @@ workflow {
            .set { lads }
 
     generate_blacklist(translocations,
-                       file(params.gaps),
-                       file(params.cytoband))
+                       file(params.blacklist, checkIfExists: true))
 
     domains\
         .join(cliques, failOnDuplicate: true, failOnMismatch: true)
@@ -65,8 +64,7 @@ process generate_blacklist {
     input:
         tuple val(label),
               path(translocations)
-        path assembly_gaps
-        path cytoband
+        path blacklist
 
     output:
         tuple val(label),
@@ -77,8 +75,7 @@ process generate_blacklist {
         '''
         set -o pipefail
 
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
-            <(zcat '!{cytoband}' | grep 'acen$') \\
+        cat <(zcat '!{blacklist}') \\
             <(zcat '!{translocations}') |
             grep '^chr[XY0-9]\\+[[:space:]]' |
             cut -f 1-3 |
