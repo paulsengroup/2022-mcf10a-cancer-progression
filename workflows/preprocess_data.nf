@@ -7,9 +7,9 @@ nextflow.enable.dsl=2
 
 workflow {
     filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
-                       file(params.hg38_chrom_sizes_out, checkIfExists: true))
+                       params.hg38_chrom_sizes_out)
 
-    run_bowtie2_index(rename_chromosomes.out.fa)
+    run_bowtie2_index(file(params.hg38_assembly_in, checkIfExists: true))
     archive_bowtie2_index(run_bowtie2_index.out.idx)
 
     process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
@@ -19,7 +19,7 @@ workflow {
 
     decompress_data(
         Channel.fromPath([params.hg38_assembly_in, params.hg38_gtf_in], checkIfExists: true),
-        Channel.fromPath([params.hg38_assembly_out, params.hg38_gtf_out], checkIfExists: false)
+        Channel.of(params.hg38_assembly_out, params.hg38_gtf_out)
     )
 }
 
