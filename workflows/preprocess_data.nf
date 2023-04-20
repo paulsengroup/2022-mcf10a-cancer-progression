@@ -9,9 +9,6 @@ workflow {
     filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
                        params.hg38_chrom_sizes_out)
 
-    run_bowtie2_index(file(params.hg38_assembly_in, checkIfExists: true))
-    archive_bowtie2_index(run_bowtie2_index.out.idx)
-
     process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
                             file(params.microarray_cnvs, checkIfExists: true),
                             file(params.microarray_probe_dbs, checkIfExists: true),

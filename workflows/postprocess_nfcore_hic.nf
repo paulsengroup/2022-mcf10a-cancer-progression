@@ -18,7 +18,8 @@ def collect_files(prefix, sample_id, suffix, type = "file") {
 
 
 workflow {
-    sample_sheet.splitCsv(sep: ",", header: true)
+    Channel.fromPath(params.nfcore_samplesheet)
+        .splitCsv(sep: ",", header: true)
         .map { it.sample }
         .unique()
         .set { sample_ids }
@@ -26,7 +27,7 @@ workflow {
     input_dir = file(params.input_dir, type: "dir", checkIfExists: true)
 
     sample_ids
-        .map { collect_files("${input_dir}/hicpro/mapping", it, ".bwt2pairs.bam") }
+        .map { collect_files("${input_dir}/hicpro/mapping", it, "bwt2pairs.bam") }
         .set { input_bwt2pairs }
 
     sample_ids
@@ -37,10 +38,10 @@ workflow {
         .map { collect_files("${input_dir}/hicpro/stats", it, "/", "dir") }
         .set { input_stats }
 
-    cooler_cload(input_validpairs,
+    cooler_cload(input_valid_pairs,
                  file(params.chrom_sizes),
                  params.assembly_name,
-                 params.cooler_base_resolution)
+                 params.resolutions.first())
 
     cooler_cload.out.cool.set { coolers_by_sample }
 
@@ -59,7 +60,8 @@ workflow {
              coolers_by_condition.map { tuple(it[0], it[2] ) }) // [condition_id, cooler]
         .set { coolers }
 
-    cooler_to_hic(coolers)
+    cooler_to_hic(coolers,
+                  params.resolutions.join(" "))
 
     cooler_zoomify(coolers)
     cooler_balance(cooler_zoomify.out.mcool,
@@ -68,7 +70,7 @@ workflow {
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
 
-    compress_validpairs(input_validpairs)
+    compress_validpairs(input_valid_pairs)
 
     compress_stats(input_stats)
 
@@ -76,7 +78,7 @@ workflow {
     // regardless of the order in which items are emitted by compress_stats()
     // because plot_stats is globbing file names, thus sorting files by their
     // sample number
-    plot_stats(compress_stats.out.tar.map { it[1] }.collect(),
+    plot_stats(compress_stats.out.tar.map { it[2] }.collect(),
                params.plot_pretty_labels)
 }
 
@@ -102,25 +104,36 @@ process archive_multiqc {
         '''
 }
 
-process generate_blacklist {
+process cooler_cload {
     input:
-        path assembly_gaps
-        path cytoband
+        tuple val(sample),
+              val(condition),
+              path(pairs)
+
+        val chrom_sizes
+        val assembly
+        val resolution
 
     output:
-        path "*.bed", emit: bed
+        tuple val(sample),
+              val(condition),
+              path("*.cool"),
+        emit: cool
 
     shell:
+        outname = "${pairs.simpleName}.cool"
         '''
-        set -o pipefail
+        chrom_sizes="$(mktemp chrom.sizes.XXXXXX)"
 
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \
-            <(zcat '!{cytoband}' | grep 'acen$') |
-            grep '^chr[XY0-9]\\+[[:space:]]' |
-            cut -f 1-3 |
-            sort -k1,1V -k2,2n |
-            bedtools merge -i stdin |
-            cut -f1-3 > blacklist.bed
+        grep '^chr[XY0-9]\\+[[:space:]]' '!{chrom_sizes}' > "$chrom_sizes"
+
+        cooler cload pairs \\
+            "$chrom_sizes:!{resolution}" \\
+            -                            \\
+            '!{outname}'                 \\
+            --chrom1 2 --pos1 3          \\
+            --chrom2 5 --pos2 6          \\
+            --assembly='!{assembly}' < '!{pairs}'
         '''
 }
 
@@ -153,6 +166,8 @@ process cooler_to_hic {
         tuple val(abel),
               path(cool)
 
+        val resolutions
+
     output:
         tuple val(label),
               path("*.hic"),
@@ -175,9 +190,7 @@ process cooler_to_hic {
             '!{out}'                                    \\
             --nproc '!{task.cpus}'                      \\
             -Xmx '!{memory_gb}g'                        \\
-            --resolutions 1000 2000 5000 10000 20000    \\
-                          50000 100000 200000 500000    \\
-                          1000000 2000000 5000000 10000000
+            --resolutions '!{resolutions}'
         '''
 }
 
@@ -245,12 +258,14 @@ process compress_bwt2pairs {
     label 'process_high'
 
     input:
-        tuple val(label),
+        tuple val(sample),
+              val(condition),
               path(bams)
         path reference_fna
 
     output:
-        tuple val(label),
+        tuple val(sample),
+              val(condition),
               path("*.cram"),
         emit: cram
 
@@ -263,7 +278,7 @@ process compress_bwt2pairs {
         samtools view --reference '!{reference_fna}'      \\
                       --output-fmt cram,archive,use_lzma  \\
                       -@!{task.cpus}                      \\
-                      -o '!{label}.bwt2pairs.cram'
+                      -o '!{sample}.bwt2pairs.cram'
         '''
 }
 
@@ -276,10 +291,12 @@ process compress_validpairs {
 
     input:
         tuple val(label),
+              val(condition),
               path(validpairs)
 
     output:
         tuple val(label),
+              val(condition),
               path("*.xz"),
         emit: xz
 
@@ -296,19 +313,23 @@ process compress_stats {
     label 'process_short'
 
     input:
-        tuple val(label), path(stats_dir), path(valid_pairs_stats)
+        tuple val(sample),
+              val(condition),
+              path(stats_dir)
 
     output:
-        tuple val(label), path("*.xz"), emit: tar
+        tuple val(sample),
+              val(condition),
+              path("*.xz"), emit: tar
 
     shell:
-        outprefix="${label}_stats"
+        outprefix="${sample}_stats"
         '''
         set -o pipefail
 
         mkdir '!{outprefix}'
 
-        rsync -aPLv '!{stats_dir}/'* '!{valid_pairs_stats}' '!{outprefix}/'
+        rsync -aPLv '!{stats_dir}/'* '!{outprefix}/'
 
         tar -chf - '!{outprefix}' |
             xz -T!{task.cpus} -9 --extreme > '!{outprefix}.tar.xz'
