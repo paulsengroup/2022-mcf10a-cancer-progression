@@ -28,14 +28,38 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ubuntu:22.04 as hic2cool-ng
-
-COPY containers/assets/hic2cool-ng-193d067.tar.xz /tmp/
+FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230406 AS hic2cool-ng
 
 RUN apt-get update \
-&& apt-get install -y xz-utils \
-&& cd /tmp \
-&& tar -xf hic2cool-ng-*.tar.xz
+&& apt-get install -y \
+    libtbb2-dev \
+    python3-pip \
+&& pip install 'conan==2.0.*' \
+&& CC=clang CXX=clang++ conan profile detect --force
+
+COPY containers/assets/hic2cool-ng-b6ee2c4.tar.xz /tmp/
+
+
+RUN cd /tmp \
+&& tar -xf hic2cool-ng-*.tar.xz \
+&& cd hic2cool-ng*/       \
+&& conan install .        \
+    --build=missing       \
+    --build=cascade       \
+    -pr default           \
+    -s build_type=Release \
+    -s compiler.cppstd=20 \
+    --output-folder=build
+
+RUN cd /tmp/hic2cool-ng*/ \
+&& cmake -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_PREFIX_PATH="$PWD/build" \
+         -DCMAKE_INSTALL_PREFIX=/tmp/hic2cool-ng \
+         -S . \
+         -B build/ \
+&& cmake --build build -j $(nproc) \
+&& cmake --install build
+
 
 FROM ubuntu:22.04 AS base
 
@@ -67,6 +91,7 @@ RUN apt-get update \
 
 COPY --from=downloader  --chown=root:root /tmp/juicer_tools*.jar              /usr/local/share/java/juicer_tools/
 COPY --from=downloader  --chown=root:root /tmp/hic_tools*.jar                 /usr/local/share/java/hic_tools/
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng/bin/hic2cool-ng    /usr/local/bin/hic2cool-ng
 COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng*/utils/cool2hic.py /usr/local/bin/cool2hic-ng
 
 COPY --from=downloader  --chown=root:root /tmp/juicer_tools.LICENSE           /usr/local/share/licenses/juicer_tools/LICENSE
@@ -86,6 +111,7 @@ WORKDIR /data
 
 RUN cooler --help
 RUN hic2cool --help
+RUN hic2cool-ng --help
 RUN cool2hic-ng --help
 RUN juicer_tools --help
 RUN hic_tools --help

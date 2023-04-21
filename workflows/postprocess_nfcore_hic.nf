@@ -57,7 +57,7 @@ workflow {
 
     Channel.empty()
         .mix(coolers_by_sample.map { tuple(it[0], it[2]) },     // [sample_id, cooler]
-             coolers_by_condition.map { tuple(it[0], it[2] ) }) // [condition_id, cooler]
+             coolers_merge.out.cool.map { tuple(it[0], it[2] ) }) // [condition_id, cooler]
         .set { coolers }
 
     cooler_to_hic(coolers,
