@@ -45,19 +45,18 @@ workflow {
 
     cooler_cload.out.cool.set { coolers_by_sample }
 
+
     // Group coolers by condition
     coolers_by_sample
         .groupTuple(by: 1, size: 2)
         // [condition_id, [sample_ids], [coolers]]
         .set { coolers_by_condition }
 
-    // multiqc(input_dirs)  TODO: update me!
-
     cooler_merge(coolers_by_condition)
 
     Channel.empty()
-        .mix(coolers_by_sample.map { tuple(it[0], it[2]) },     // [sample_id, cooler]
-             coolers_merge.out.cool.map { tuple(it[0], it[2] ) }) // [condition_id, cooler]
+        .mix(coolers_by_sample.map { tuple(it[0], it[2]) },      // [sample_id, cooler]
+             cooler_merge.out.cool.map { tuple(it[0], it[2]) })  // [condition_id, cooler]
         .set { coolers }
 
     cooler_to_hic(coolers,
@@ -69,10 +68,9 @@ workflow {
 
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
-
     compress_validpairs(input_valid_pairs)
-
     compress_stats(input_stats)
+    compress_multiqc(file("${input_dir}/multiqc", checkIfExists: true, type: "dir"))
 
     // NOTE label and sample mappings is guaranteed to be correct
     // regardless of the order in which items are emitted by compress_stats()
@@ -139,8 +137,8 @@ process cooler_cload {
 
 process cooler_merge {
     input:
-        tuple val(condition),
-              val(samples),
+        tuple val(samples),
+              val(condition),
               path(coolers)
 
     output:
@@ -163,7 +161,7 @@ process cooler_to_hic {
     label 'process_medium'
 
     input:
-        tuple val(abel),
+        tuple val(label),
               path(cool)
 
         val resolutions
@@ -308,7 +306,7 @@ process compress_validpairs {
 
 process compress_stats {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "stats/stats.tar.xz" }
+                                       saveAs: { "stats/${it}" }
 
     label 'process_short'
 
@@ -320,19 +318,44 @@ process compress_stats {
     output:
         tuple val(sample),
               val(condition),
-              path("*.xz"), emit: tar
+              path("*.tar.xz"), emit: tar
 
     shell:
         outprefix="${sample}_stats"
         '''
         set -o pipefail
 
-        mkdir '!{outprefix}'
-
-        rsync -aPLv '!{stats_dir}/'* '!{outprefix}/'
+        if [[ '!{stats_dir}' != '!{outprefix}' ]]; then
+            ln -s '!{stats_dir}/' '!{outprefix}'
+        fi
 
         tar -chf - '!{outprefix}' |
             xz -T!{task.cpus} -9 --extreme > '!{outprefix}.tar.xz'
+        '''
+}
+
+process compress_multiqc {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "multiqc.tar.xz" }
+
+    label 'process_short'
+
+    input:
+        path multiqc_dir
+
+    output:
+        path "*.tar.xz", emit: tar
+
+    shell:
+        '''
+        set -o pipefail
+
+        if [[ '!{multiqc_dir}' != multiqc ]]; then
+            ln -s '!{multiqc_dir}/' 'multiqc'
+        fi
+
+        tar -chf - multiqc/ |
+            xz -T!{task.cpus} -9 --extreme > multiqc.tar.xz
         '''
 }
 
