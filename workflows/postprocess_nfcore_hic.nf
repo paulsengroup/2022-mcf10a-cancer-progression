@@ -190,7 +190,7 @@ process cooler_to_hic {
             '!{out}'                                    \\
             --nproc '!{task.cpus}'                      \\
             -Xmx '!{memory_gb}g'                        \\
-            --resolutions '!{resolutions}'
+            --resolutions !{resolutions}
         '''
 }
 
