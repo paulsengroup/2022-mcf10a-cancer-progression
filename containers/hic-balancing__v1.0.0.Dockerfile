@@ -28,18 +28,14 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230204 AS builder
+FROM ubuntu:22.04 as hic2cool-ng
 
-COPY containers/assets/hic2cool-ng-d6dab27.tar.xz /tmp/
+COPY containers/assets/hic2cool-ng-193d067.tar.xz /tmp/
 
 RUN apt-get update \
-&& apt-get install -y libtbb2-dev
-RUN cd /tmp \
-&& tar -xf hic2cool-ng-*.tar.xz \
-&& cmake -DCMAKE_BUILD_TYPE=Release \
-         -S /tmp/hic2cool-ng*/ \
-         -B /tmp/build \
-&& cmake --build /tmp/build -j "$(nproc)"
+&& apt-get install -y xz-utils \
+&& cd /tmp \
+&& tar -xf hic2cool-ng-*.tar.xz
 
 FROM ubuntu:22.04 AS base
 
@@ -59,7 +55,7 @@ RUN apt-get update \
                       python3-pip \
                       zstd \
 && pip install --upgrade pip setuptools \
-&& pip install 'bioframe>=0.3.3' \
+&& pip install 'bioframe>=0.4' \
                 git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
@@ -69,14 +65,13 @@ RUN apt-get update \
                      python3-pip \
 && rm -rf /var/lib/apt/lists/*
 
-COPY --from=downloader --chown=root:root /tmp/juicer_tools*.jar /usr/local/share/java/juicer_tools/
-COPY --from=downloader --chown=root:root /tmp/hic_tools*.jar /usr/local/share/java/hic_tools/
-COPY --from=builder --chown=root:root /tmp/build/src/hic2cool-ng /usr/local/bin/hic2cool-ng
-COPY --from=builder --chown=root:root /tmp/hic2cool-ng*/utils/cool2hic.py /usr/local/bin/cool2hic-ng
+COPY --from=downloader  --chown=root:root /tmp/juicer_tools*.jar              /usr/local/share/java/juicer_tools/
+COPY --from=downloader  --chown=root:root /tmp/hic_tools*.jar                 /usr/local/share/java/hic_tools/
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng*/utils/cool2hic.py /usr/local/bin/cool2hic-ng
 
-COPY --from=downloader --chown=root:root /tmp/juicer_tools.LICENSE /usr/local/share/licenses/juicer_tools/LICENSE
-COPY --from=downloader --chown=root:root /tmp/hic_tools.LICENSE /usr/local/share/licenses/hic_tools/LICENSE
-COPY --from=builder --chown=root:root /tmp/hic2cool-ng*/LICENSE /usr/local/share/hic2cool-ng/LICENSE
+COPY --from=downloader  --chown=root:root /tmp/juicer_tools.LICENSE           /usr/local/share/licenses/juicer_tools/LICENSE
+COPY --from=downloader  --chown=root:root /tmp/hic_tools.LICENSE              /usr/local/share/licenses/hic_tools/LICENSE
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng*/LICENSE           /usr/local/share/hic2cool-ng/LICENSE
 
 RUN printf '%s\nexec /usr/bin/java -Xms512m -Xmx16g -jar %s "$@"\n' \
       '#!/bin/sh' \
@@ -91,7 +86,6 @@ WORKDIR /data
 
 RUN cooler --help
 RUN hic2cool --help
-RUN hic2cool-ng --help
 RUN cool2hic-ng --help
 RUN juicer_tools --help
 RUN hic_tools --help
