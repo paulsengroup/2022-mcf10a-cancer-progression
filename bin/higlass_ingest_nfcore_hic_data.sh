@@ -19,31 +19,31 @@ higlass_dir="$data_dir/higlass/"
 "$(dirname "$0")/higlass_start_instance.sh"
 
 function uuidgen {
-    "$(dirname "$0")/higlass_uuid_generator.py" "$1"
+  "$(dirname "$0")/higlass_uuid_generator.py" "$1"
 }
 
 export uuidgen
 
-for mcool in "$data_dir/output/nfcore_hic/mcools/GRCh38_0"??_*.mcool; do
-    mcool_name="$(basename "$mcool" .mcool)"
-    sudo -E higlass-manage ingest \
-        --project-name "hic_by_sample" \
-        --name "$mcool_name" \
-        --uid "$(uuidgen "$(basename "$mcool")")" \
-        --hg-name "$name" \
-        --no-upload \
-        --assembly hg38 \
-        "${mcool#"$data_dir/"}"
+for mcool in "$data_dir/output/nfcore_hic/mcools/hg38_0"??_*.mcool; do
+  mcool_name="$(basename "$mcool" .mcool)"
+  sudo -E higlass-manage ingest \
+    --project-name "hic_by_sample" \
+    --name "$mcool_name" \
+    --uid "$(uuidgen "$(basename "$mcool")")" \
+    --hg-name "$name" \
+    --no-upload \
+    --assembly hg38 \
+    "${mcool#"$data_dir/"}"
 done
 
 for mcool in "$data_dir/output/nfcore_hic/mcools/"*_merged.mcool; do
-    mcool_name="$(basename "$mcool" .mcool)"
-    sudo -E higlass-manage ingest \
-        --project-name "hic_by_condition" \
-        --name "$mcool_name" \
-        --uid "$(uuidgen "$(basename "$mcool")")" \
-        --hg-name "$name" \
-        --no-upload \
-        --assembly hg38 \
-        "${mcool#"$data_dir/"}"
+  mcool_name="$(basename "$mcool" .mcool)"
+  sudo -E higlass-manage ingest \
+    --project-name "hic_by_condition" \
+    --name "$mcool_name" \
+    --uid "$(uuidgen "$(basename "$mcool")")" \
+    --hg-name "$name" \
+    --no-upload \
+    --assembly hg38 \
+    "${mcool#"$data_dir/"}"
 done

@@ -8,7 +8,6 @@ set -e
 set -o pipefail
 set -u
 
-
 wd=".nextflow-nfcore-rnaseq-wd"
 mkdir -p "$wd"
 
@@ -18,4 +17,4 @@ mkdir -p "$wd"
 ./run_external_workflow.sh \
   "$wd" \
   'workflows/nfcore-rnaseq-v3.11.1.tar.xz' \
-   configs/nfcore_rnaseq*.config
+  configs/nfcore/nfcore_rnaseq*.json
