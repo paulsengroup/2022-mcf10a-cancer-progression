@@ -9,9 +9,6 @@ workflow {
     filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
                        params.hg38_chrom_sizes_out)
 
-    run_bowtie2_index(file(params.hg38_assembly_in, checkIfExists: true))
-    archive_bowtie2_index(run_bowtie2_index.out.idx)
-
     process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
                             file(params.microarray_cnvs, checkIfExists: true),
                             file(params.microarray_probe_dbs, checkIfExists: true),
@@ -78,44 +75,6 @@ process generate_blacklist {
         '''
 }
 
-process run_bowtie2_index {
-    label 'process_high'
-
-    input:
-        path fa
-
-    output:
-        path "*.bt2", emit: idx
-
-    shell:
-        '''
-        fa='!{fa}'
-        outprefix="${fa%.*}"
-
-        bowtie2-build --threads !{task.cpus} \
-                      "$fa"                  \
-                      "$outprefix"
-        '''
-}
-
-process archive_bowtie2_index {
-    publishDir "${params.output_dir}/bowtie2_idx/", mode: 'copy'
-
-    label 'process_medium'
-    label 'process_short'
-
-    input:
-        path idx_files
-
-    output:
-        path "*.tar.zst", emit: tar
-
-    shell:
-        outname = "${idx_files[0].simpleName}.tar.zst"
-        '''
-        tar -chf - *.bt2 | zstd -T!{task.cpus} --adapt -o '!{outname}'
-        '''
-}
 
 
 process process_microarray_data {
@@ -135,11 +94,11 @@ process process_microarray_data {
         outname="${bed.simpleName}.bed.gz"
         '''
         set -o pipefail
-        convert_microarray_cnvs_to_bed.py \
-            '!{bed}' \
-            --chrom-sizes '!{chrom_sizes}' \
-            --probe-ids !{probe_dbs} \
-            --liftover-chain '!{liftover_chain}' \
+        convert_microarray_cnvs_to_bed.py \\
+            '!{bed}' \\
+            --chrom-sizes '!{chrom_sizes}' \\
+            --probe-ids !{probe_dbs} \\
+            --liftover-chain '!{liftover_chain}' \\
             --fill-gaps |
             gzip -9c > '!{outname}'
         '''

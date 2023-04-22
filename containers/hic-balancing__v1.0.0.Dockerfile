@@ -28,18 +28,38 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-gcc-12:20230204 AS builder
-
-COPY containers/assets/hic2cool-ng-d6dab27.tar.xz /tmp/
+FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230406 AS hic2cool-ng
 
 RUN apt-get update \
-&& apt-get install -y libtbb2-dev
+&& apt-get install -y \
+    libtbb2-dev \
+    python3-pip \
+&& pip install 'conan==2.0.*' \
+&& CC=clang CXX=clang++ conan profile detect --force
+
+COPY containers/assets/hic2cool-ng-b6ee2c4.tar.xz /tmp/
+
+
 RUN cd /tmp \
 && tar -xf hic2cool-ng-*.tar.xz \
+&& cd hic2cool-ng*/       \
+&& conan install .        \
+    --build=missing       \
+    --build=cascade       \
+    -pr default           \
+    -s build_type=Release \
+    -s compiler.cppstd=20 \
+    --output-folder=build
+
+RUN cd /tmp/hic2cool-ng*/ \
 && cmake -DCMAKE_BUILD_TYPE=Release \
-         -S /tmp/hic2cool-ng*/ \
-         -B /tmp/build \
-&& cmake --build /tmp/build -j "$(nproc)"
+         -DCMAKE_PREFIX_PATH="$PWD/build" \
+         -DCMAKE_INSTALL_PREFIX=/tmp/hic2cool-ng \
+         -S . \
+         -B build/ \
+&& cmake --build build -j $(nproc) \
+&& cmake --install build
+
 
 FROM ubuntu:22.04 AS base
 
@@ -59,7 +79,7 @@ RUN apt-get update \
                       python3-pip \
                       zstd \
 && pip install --upgrade pip setuptools \
-&& pip install 'bioframe>=0.3.3' \
+&& pip install 'bioframe>=0.4' \
                 git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
@@ -69,14 +89,14 @@ RUN apt-get update \
                      python3-pip \
 && rm -rf /var/lib/apt/lists/*
 
-COPY --from=downloader --chown=root:root /tmp/juicer_tools*.jar /usr/local/share/java/juicer_tools/
-COPY --from=downloader --chown=root:root /tmp/hic_tools*.jar /usr/local/share/java/hic_tools/
-COPY --from=builder --chown=root:root /tmp/build/src/hic2cool-ng /usr/local/bin/hic2cool-ng
-COPY --from=builder --chown=root:root /tmp/hic2cool-ng*/utils/cool2hic.py /usr/local/bin/cool2hic-ng
+COPY --from=downloader  --chown=root:root /tmp/juicer_tools*.jar              /usr/local/share/java/juicer_tools/
+COPY --from=downloader  --chown=root:root /tmp/hic_tools*.jar                 /usr/local/share/java/hic_tools/
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng/bin/hic2cool-ng    /usr/local/bin/hic2cool-ng
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng*/utils/cool2hic.py /usr/local/bin/cool2hic-ng
 
-COPY --from=downloader --chown=root:root /tmp/juicer_tools.LICENSE /usr/local/share/licenses/juicer_tools/LICENSE
-COPY --from=downloader --chown=root:root /tmp/hic_tools.LICENSE /usr/local/share/licenses/hic_tools/LICENSE
-COPY --from=builder --chown=root:root /tmp/hic2cool-ng*/LICENSE /usr/local/share/hic2cool-ng/LICENSE
+COPY --from=downloader  --chown=root:root /tmp/juicer_tools.LICENSE           /usr/local/share/licenses/juicer_tools/LICENSE
+COPY --from=downloader  --chown=root:root /tmp/hic_tools.LICENSE              /usr/local/share/licenses/hic_tools/LICENSE
+COPY --from=hic2cool-ng --chown=root:root /tmp/hic2cool-ng*/LICENSE           /usr/local/share/hic2cool-ng/LICENSE
 
 RUN printf '%s\nexec /usr/bin/java -Xms512m -Xmx16g -jar %s "$@"\n' \
       '#!/bin/sh' \
