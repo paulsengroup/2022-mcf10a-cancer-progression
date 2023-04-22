@@ -6,7 +6,7 @@ https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?mode=raw&is_datatable=true&acc=GP
 https://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.chrom.sizes	33c11f8b76812ebb6504257f4dc51b4358230a6bb52b88048fa172aceb3d91fb	input/hg38/hg38.chrom.sizes	none
 https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.fa.gz	ae25ebe0b855e54e823f0b055c0b5e032e7a531dc0b47a440ddae7d2da26c20c	input/hg38/hg38.fa.gz	none
 ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_43/gencode.v43.annotation.gtf.gz	0235ad8420f6801a409661171396b564743aaf1ceb92c6ca4850becf60fe62c0	input/hg38/hg38_gencode_v43.gtf.gz	none
-0916204dc5efe4c03aee9949820235a0459cf6cbe15917e5f739b3abcf4cc87c	0916204dc5efe4c03aee9949820235a0459cf6cbe15917e5f739b3abcf4cc87c	input/hg38/hg38_chrom_alias.txt	none
+https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.chromAlias.txt	0916204dc5efe4c03aee9949820235a0459cf6cbe15917e5f739b3abcf4cc87c	input/hg38/hg38_chrom_alias.txt	none
 https://www.dropbox.com/s/glt0z98vz39jwlk/MCF10CA1a_LMNB1_UnionRep_peaks.bed?dl=1	dd5d2d5394b366e24c21c7d7eaf1165b150deb8d65a173c2a5e4cd5730bc9560	input/lads/hg38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	compress
 https://www.dropbox.com/s/5nyrlo2365bxtlu/MCF10AT1_LMNB1_UnionRep_peaks.bed?dl=1	721a8a3c9a0b1fdd88059f052d7fe2e37f018596a0b5262302b56da99840ac71	input/lads/hg38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	compress
 https://www.dropbox.com/s/3wefqyk5vwk0myx/MCF10A_LMNB1_UnionRep_peaks.bed?dl=1	553b2cbe699c51e48bfbcb3b3dd51f10940e9cee10f8ada12705928075b2977a	input/lads/hg38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	compress
