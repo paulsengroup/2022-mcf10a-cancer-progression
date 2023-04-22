@@ -5,77 +5,83 @@
 
 nextflow.enable.dsl=2
 
+
+def collect_files(prefix, sample_id, suffix, type = "file") {
+    def files = file("${prefix}/${sample_id}*${suffix}",
+                     type: type,
+                     checkIfExists: true)
+
+    def condition_id = sample_id.replaceAll(/_REP\d+$/, "")
+
+    return tuple(sample_id, condition_id, files)
+}
+
+
 workflow {
-    input_dirs = Channel.fromPath(params.nfcore_stage_dirs, type: 'dir')
+    Channel.fromPath(params.nfcore_samplesheet)
+        .splitCsv(sep: ",", header: true)
+        .map { it.sample }
+        .unique()
+        .set { sample_ids }
 
-    sample_names = [:]
-    conditions = [:]
+    input_dir = file(params.input_dir, type: "dir", checkIfExists: true)
 
-    input_dirs.subscribe onNext: {
+    sample_ids
+        .map { collect_files("${input_dir}/hicpro/mapping", it, "bwt2pairs.bam") }
+        .set { input_bwt2pairs }
 
-        sample_names[it.toString()] = file(it).getName()
-        conditions[it.toString()] = file(it).getName().replaceAll(/HiC_\d+_(.*)$/, '$1')
-    }
-    input_dirs_ = input_dirs.collect()
+    sample_ids
+        .map { collect_files("${input_dir}/hicpro/valid_pairs", it, ".allValidPairs") }
+        .set { input_valid_pairs }
 
-    input_coolers = input_dirs.flatten().map {
-                                        tuple(conditions[it.toString()],
-                                              sample_names[it.toString()],
-                                              file("${it}/contact_maps/raw/cool/*.cool", type: "file", checkIfExists: true))
-                                     }
-    input_bwt2pairs = input_dirs.flatten().map {
-                                        tuple(sample_names[it.toString()],
-                                              file("${it}/hicpro/mapping/*bwt2pairs.bam", type: "file", checkIfExists: true))
-                                     }
-    input_validpairs = input_dirs.flatten().map {
-                                        tuple(sample_names[it.toString()],
-                                              file("${it}/hicpro/valid_pairs/*.allValidPairs", type: "file", checkIfExists: true))
-                                      }
-    input_stats = input_dirs.flatten().map {
-                                    tuple(sample_names[it.toString()],
-                                          file("${it}/hicpro/stats/", type: "dir", checkIfExists: true),
-                                          file("${it}/hicpro/valid_pairs/stats/*.mergestat", type: "file", checkIfExists: true))ckl
-                                      }
+    sample_ids
+        .map { collect_files("${input_dir}/hicpro/stats", it, "/", "dir") }
+        .set { input_stats }
 
-<<<<<<< Updated upstream
-    coolers_by_condition = input_coolers.map { tuple(it[0], it[2]) }
-                                        .groupTuple(by: 0, size: 2)
-                                        .map { tuple(it[0], it[1].flatten()) }
-=======
     cooler_cload(input_valid_pairs,
                  file(params.chrom_sizes),
-                 params.grch38_assembly_name_short,
-                 params.cooler_base_resolution)
->>>>>>> Stashed changes
+                 params.assembly_name,
+                 params.resolutions.first())
 
-    coolers_by_sample = input_coolers.map { tuple(it[1], it[2].flatten()) }
+    cooler_cload.out.cool.set { coolers_by_sample }
 
-    multiqc(input_dirs)
+
+    // Group coolers by condition
+    coolers_by_sample
+        .groupTuple(by: 1, size: 2)
+        // [condition_id, [sample_ids], [coolers]]
+        .set { coolers_by_condition }
 
     cooler_merge(coolers_by_condition)
 
-    cooler_to_hic(coolers_by_sample.mix(cooler_merge.out.cool))
+    Channel.empty()
+        .mix(coolers_by_sample.map { tuple(it[0], it[2]) },      // [sample_id, cooler]
+             cooler_merge.out.cool.map { tuple(it[0], it[2]) })  // [condition_id, cooler]
+        .set { coolers }
 
-    cooler_zoomify(coolers_by_sample.mix(cooler_merge.out.cool))
+    cooler_to_hic(coolers,
+                  params.resolutions.join(" "))
+
+    cooler_zoomify(coolers)
     cooler_balance(cooler_zoomify.out.mcool,
                    file(params.blacklist, checkIfExists: true))
 
     compress_bwt2pairs(input_bwt2pairs,
                        file(params.fasta))
-
-    compress_validpairs(input_validpairs)
-
+    compress_validpairs(input_valid_pairs)
     compress_stats(input_stats)
+    compress_multiqc(file("${input_dir}/multiqc", checkIfExists: true, type: "dir"))
 
     // NOTE label and sample mappings is guaranteed to be correct
     // regardless of the order in which items are emitted by compress_stats()
     // because plot_stats is globbing file names, thus sorting files by their
     // sample number
-    plot_stats(compress_stats.out.tar.map { it[1] }.collect(),
+    plot_stats(compress_stats.out.tar.map { it[2] }.collect(),
                params.plot_pretty_labels)
 }
 
-process multiqc {
+
+process archive_multiqc {
     publishDir "${params.output_dir}", mode: 'copy',
                                        saveAs: {
                                         label = file(folder).getName()
@@ -96,30 +102,74 @@ process multiqc {
         '''
 }
 
-process cooler_merge {
+process cooler_cload {
     input:
-        tuple val(label), path(cool)
+        tuple val(sample),
+              val(condition),
+              path(pairs)
+
+        val chrom_sizes
+        val assembly
+        val resolution
 
     output:
-        tuple val("${label}_merged"), path("*.cool"), emit: cool
+        tuple val(sample),
+              val(condition),
+              path("*.cool"),
+        emit: cool
 
     shell:
+        outname = "${pairs.simpleName}.cool"
         '''
-        cooler merge '!{label}_merged.cool' *.cool
+        chrom_sizes="$(mktemp chrom.sizes.XXXXXX)"
+
+        grep '^chr[XY0-9]\\+[[:space:]]' '!{chrom_sizes}' > "$chrom_sizes"
+
+        cooler cload pairs \\
+            "$chrom_sizes:!{resolution}" \\
+            -                            \\
+            '!{outname}'                 \\
+            --chrom1 2 --pos1 3          \\
+            --chrom2 5 --pos2 6          \\
+            --assembly='!{assembly}' < '!{pairs}'
+        '''
+}
+
+process cooler_merge {
+    input:
+        tuple val(samples),
+              val(condition),
+              path(coolers)
+
+    output:
+        tuple val("${condition}_merged"),
+              val(samples),
+              path("*.cool"),
+        emit: cool
+
+    shell:
+        outname = "${condition}_merged.cool"
+        '''
+        cooler merge '!{outname}' *.cool
         '''
 }
 
 process cooler_to_hic {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${label}.hic" }
+                                       saveAs: { "hic/${label}.hic" }
 
     label 'process_medium'
 
     input:
-        tuple val(label), path(cool)
+        tuple val(label),
+              path(cool)
+
+        val resolutions
 
     output:
-        path "*.hic", emit: hic
+        tuple val(label),
+              path("*.hic"),
+        emit: hic
 
     shell:
         memory_gb=task.memory.toGiga()
@@ -127,17 +177,18 @@ process cooler_to_hic {
         '''
         trap 'rm -rf tmp/' EXIT
 
-        cool2hic-ng \
-            --hic-tools-jar /usr/local/share/java/hic_tools/hic_tools*.jar \
-            --juicer-tools-jar /usr/local/share/java/juicer_tools/juicer_tools*.jar \
-            --tmpdir=tmp/ \
-            '!{cool}' \
-            '!{out}' \
-            --nproc '!{task.cpus}' \
-            -Xmx '!{memory_gb}g' \
-            --resolutions 1000 2000 5000 10000 20000 \
-                          50000 100000 200000 500000 \
-                          1000000 2000000 5000000 10000000
+        hic_tools_jar=(/usr/local/share/java/hic_tools/hic_tools*.jar)
+        juicer_tools_jar=(/usr/local/share/java/juicer_tools/juicer_tools*.jar)
+
+        cool2hic-ng \\
+            --hic-tools-jar "${hic_tools_jar[*]}"       \\
+            --juicer-tools-jar "${juicer_tools_jar[*]}" \\
+            --tmpdir=tmp/                               \\
+            '!{cool}'                                   \\
+            '!{out}'                                    \\
+            --nproc '!{task.cpus}'                      \\
+            -Xmx '!{memory_gb}g'                        \\
+            --resolutions !{resolutions}
         '''
 }
 
@@ -146,61 +197,75 @@ process cooler_zoomify {
     label 'process_long'
 
     input:
-        tuple val(label), path(cool)
+        tuple val(label),
+              path(cool)
 
     output:
-        tuple val(label), path("*.mcool"), emit: mcool
+        tuple val(label),
+              path("*.mcool"),
+        emit: mcool
 
     shell:
         '''
-        cooler zoomify -p !{task.cpus}                  \
-                       -r N                             \
+        cooler zoomify -p !{task.cpus} \\
+                       -r N            \\
                        '!{cool}'
         '''
 }
 
 process cooler_balance {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${label}.mcool" }
+                                       saveAs: { "mcools/${label}.mcool" }
 
     label 'process_medium'
     label 'process_long'
 
     input:
-        tuple val(label), path(mcool)
+        tuple val(label),
+              path(mcool)
         path blacklist
 
     output:
-        tuple val(label), path("*.mcool.new"), emit: mcool
+        tuple val(label),
+              path("*.mcool.new"),
+        emit: mcool
 
     shell:
         memory_gb=task.memory.toGiga()
         '''
+        hic_tools_jar=(/usr/local/share/java/hic_tools/hic_tools*.jar)
+        juicer_tools_jar=(/usr/local/share/java/juicer_tools/juicer_tools*.jar)
+
         cp '!{mcool}' '!{mcool}.new'
-        cooler_balance.py \
-            --hic-tools-jar /usr/local/share/java/hic_tools/hic_tools*.jar \
-            --juicer-tools-jar /usr/local/share/java/juicer_tools/juicer_tools*.jar \
-            --nproc !{task.cpus} \
-            --blacklist '!{blacklist}' \
-            -Xmx !{memory_gb}g \
-            '!{mcool}' \
+        cooler_balance.py \\
+            --hic-tools-jar "${hic_tools_jar[*]}"       \\
+            --juicer-tools-jar "${juicer_tools_jar[*]}" \\
+            --nproc !{task.cpus}                        \\
+            --blacklist '!{blacklist}'                  \\
+            -Xmx !{memory_gb}g                          \\
+            '!{mcool}'                                  \\
             '!{mcool}.new'
         '''
 }
 
 process compress_bwt2pairs {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }
+                                       saveAs: { "alignments/${it}" }
 
     label 'process_long'
     label 'process_high'
 
     input:
-        tuple val(label), path(bams)
+        tuple val(sample),
+              val(condition),
+              path(bams)
         path reference_fna
 
     output:
-        tuple val(label), path("*.cram"), emit: cram
+        tuple val(sample),
+              val(condition),
+              path("*.cram"),
+        emit: cram
 
     shell:
         '''
@@ -208,25 +273,30 @@ process compress_bwt2pairs {
 
         samtools merge -c -r -u -@!{task.cpus} -o - *.bam |
         samtools sort -u -@!{task.cpus}                   |
-        samtools view --reference '!{reference_fna}'      \
-                      --output-fmt cram,archive,use_lzma  \
-                      -@!{task.cpus}                      \
-                      -o '!{label}.bwt2pairs.cram'
+        samtools view --reference '!{reference_fna}'      \\
+                      --output-fmt cram,archive,use_lzma  \\
+                      -@!{task.cpus}                      \\
+                      -o '!{sample}.bwt2pairs.cram'
         '''
 }
 
 process compress_validpairs {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/${it}" }
+                                       saveAs: { "pairs/${it}" }
 
     label 'process_long'
     label 'process_high'
 
     input:
-        tuple val(label), path(validpairs)
+        tuple val(label),
+              val(condition),
+              path(validpairs)
 
     output:
-        tuple val(label), path("*.xz"), emit: xz
+        tuple val(label),
+              val(condition),
+              path("*.xz"),
+        emit: xz
 
     shell:
         '''
@@ -236,27 +306,56 @@ process compress_validpairs {
 
 process compress_stats {
     publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "${label}/stats.tar.xz" }
+                                       saveAs: { "stats/${it}" }
 
     label 'process_short'
 
     input:
-        tuple val(label), path(stats_dir), path(valid_pairs_stats)
+        tuple val(sample),
+              val(condition),
+              path(stats_dir)
 
     output:
-        tuple val(label), path("*.xz"), emit: tar
+        tuple val(sample),
+              val(condition),
+              path("*.tar.xz"), emit: tar
 
     shell:
-        outprefix="${label}_stats"
+        outprefix="${sample}_stats"
         '''
         set -o pipefail
 
-        mkdir '!{outprefix}'
-
-        rsync -aPLv '!{stats_dir}/'* '!{valid_pairs_stats}' '!{outprefix}/'
+        if [[ '!{stats_dir}' != '!{outprefix}' ]]; then
+            ln -s '!{stats_dir}/' '!{outprefix}'
+        fi
 
         tar -chf - '!{outprefix}' |
             xz -T!{task.cpus} -9 --extreme > '!{outprefix}.tar.xz'
+        '''
+}
+
+process compress_multiqc {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "multiqc.tar.xz" }
+
+    label 'process_short'
+
+    input:
+        path multiqc_dir
+
+    output:
+        path "*.tar.xz", emit: tar
+
+    shell:
+        '''
+        set -o pipefail
+
+        if [[ '!{multiqc_dir}' != multiqc ]]; then
+            ln -s '!{multiqc_dir}/' 'multiqc'
+        fi
+
+        tar -chf - multiqc/ |
+            xz -T!{task.cpus} -9 --extreme > multiqc.tar.xz
         '''
 }
 
