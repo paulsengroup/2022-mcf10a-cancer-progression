@@ -46,6 +46,14 @@ workflow {
             .join(annotate_domains_with_subcompartments.out.cliques.groupTuple())
             .map { tuple(it[0], it.drop(1).flatten().sort()) }
     )
+
+    overlap_subcomps_with_expression_lvls(
+        subcomp_bgs,
+        file(params.expression_table_tpm, checkIfExists: true),
+        file(params.gtf, checkIfExists: true),
+        file(params.rnaseq_design_table, checkIfExists: true),
+        params.condition_labels.join(',')
+    )
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
@@ -161,5 +169,32 @@ process cluster_domains_by_subcompartment {
 
         mkdir '!{resolution}/plots'
         mv '!{resolution}/'*.{png,svg} '!{resolution}/plots/'
+        '''
+}
+
+process overlap_subcomps_with_expression_lvls {
+    publishDir "${params.output_dir}/subcomps_vs_rnaseq/plots/", mode: 'copy'
+
+    input:
+        tuple val(resolution),
+              path(subcomps)
+        path expression_table
+        path gtf
+        path sample_name_mappings
+        val labels
+
+    output:
+        path "${resolution}/*.png", emit: png
+        path "${resolution}/*.svg", emit: svg
+
+    shell:
+        '''
+        overlap_subcomps_with_expression.py \\
+            '!{subcomps}' \\
+            '!{expression_table}' \\
+            '!{gtf}' \\
+            '!{resolution}/subcomps_vs_expression' \\
+            --labels='!{labels}' \\
+            --sample-name-mappings-tsv=<(tail -n +2 '!{sample_name_mappings}')
         '''
 }
