@@ -28,7 +28,7 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230406 AS hic2cool-ng
+FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230424 AS hic2cool-ng
 
 RUN apt-get update \
 && apt-get install -y \
