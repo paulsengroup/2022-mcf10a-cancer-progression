@@ -274,7 +274,10 @@ process compress_bwt2pairs {
         samtools merge -c -r -u -@!{task.cpus} -o - *.bam |
         samtools sort -u -@!{task.cpus}                   |
         samtools view --reference '!{reference_fna}'      \\
-                      --output-fmt cram,archive,use_lzma  \\
+                      --output-fmt cram=1                 \\
+                      --output-fmt archive=1              \\
+                      --output-fmt use_lzma=1             \\
+                      --output-fmt embed_ref=1            \\
                       -@!{task.cpus}                      \\
                       -o '!{sample}.bwt2pairs.cram'
         '''
