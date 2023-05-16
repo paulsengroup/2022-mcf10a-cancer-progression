@@ -1,0 +1,88 @@
+diff --git cooler/balance.py cooler/balance.py
+index defd88d..0f6d223 100644
+--- cooler/balance.py
++++ cooler/balance.py
+@@ -134,6 +134,7 @@ def _balance_cisonly(
+     chrom_offsets = clr._load_dset("indexes/chrom_offset")
+     bin1_offsets = clr._load_dset("indexes/bin1_offset")
+     scales = np.ones(len(chrom_ids))
++    variances = np.full_like(scales, np.nan)
+     n_bins = len(bias)
+ 
+     for cid, lo, hi in zip(chrom_ids, chrom_offsets[:-1], chrom_offsets[1:]):
+@@ -142,6 +143,7 @@ def _balance_cisonly(
+         plo, phi = bin1_offsets[lo], bin1_offsets[hi]
+         spans = list(partition(plo, phi, chunksize))
+         scale = 1.0
++        var = np.nan
+         for _ in range(max_iters):
+             marg = (
+                 split(clr, spans=spans, map=map, use_lock=use_lock)  # noqa
+@@ -181,10 +183,11 @@ def _balance_cisonly(
+         b = bias[lo:hi]
+         b[b == 0] = np.nan
+         scales[cid] = scale
++        variances[cid] = var
+         if rescale_marginals:
+             bias[lo:hi] /= np.sqrt(scale)
+ 
+-    return bias, scales, var
++    return bias, scales, variances
+ 
+ 
+ def _balance_transonly(
+@@ -337,7 +340,7 @@ def balance_cooler(
+ 
+     """
+     # Divide the number of elements into non-overlapping chunks
+-    nnz = clr.info["nnz"]
++    nnz = int(clr.info["nnz"])
+     if chunksize is None:
+         chunksize = nnz
+         spans = [(0, nnz)]
+@@ -353,7 +356,7 @@ def balance_cooler(
+         base_filters.append(partial(_zero_diags, ignore_diags))
+ 
+     # Initialize the bias weights
+-    n_bins = clr.info["nbins"]
++    n_bins = int(clr.info["nbins"])
+     if x0 is not None:
+         bias = x0
+         bias[np.isnan(bias)] = 0
+diff --git cooler/cli/cload.py cooler/cli/cload.py
+index bdccc0d..3b1134a 100644
+--- cooler/cli/cload.py
++++ cooler/cli/cload.py
+@@ -547,7 +547,7 @@ def pairs(bins, pairs_path, cool_path, metadata, assembly, chunksize,
+         f_in = sys.stdin
+         _, f_in = get_header(f_in)
+     elif int(_pandas_version[0]) > 0:
+-        if int(_pandas_version[1]) < 2:
++        if int(_pandas_version[0]) < 2:
+             f_in = get_handle(pairs_path, mode='r', compression='infer')[0]
+         else:
+             f_in = get_handle(pairs_path, mode='r', compression='infer').handle
+diff --git cooler/cli/show.py cooler/cli/show.py
+index ca3627d..68a0242 100644
+--- cooler/cli/show.py
++++ cooler/cli/show.py
+@@ -100,7 +100,7 @@ def interactive(ax, c, row_chrom, col_chrom, field, balanced, scale):  # pragma:
+         im.set_extent(extent)
+         ax.figure.canvas.draw_idle()
+ 
+-    binsize = c.info["bin-size"]
++    binsize = int(c.info["bin-size"])
+     row_chrom_len = c.chromsizes[row_chrom]
+     col_chrom_len = c.chromsizes[col_chrom]
+     plotstate = {"placeholders": [], "prev_extent": get_extent(plt.gca())}
+diff --git cooler/parallel.py cooler/parallel.py
+index daa4f61..de9ef6e 100644
+--- cooler/parallel.py
++++ cooler/parallel.py
+@@ -268,5 +268,5 @@ class chunkgetter:
+ 
+ def split(clr, map=map, chunksize=10_000_000, spans=None, **kwargs):
+     if spans is None:
+-        spans = partition(0, clr.info["nnz"], chunksize)
++        spans = partition(0, int(clr.info["nnz"]), chunksize)
+     return MultiplexDataPipe(chunkgetter(clr, **kwargs), spans, map)

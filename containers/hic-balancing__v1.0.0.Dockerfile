@@ -28,27 +28,24 @@ RUN cd /tmp \
 && chmod 644 *.jar *LICENSE
 
 
-FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230406 AS hic2cool-ng
+FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230501 AS hic2cool-ng
 
 RUN apt-get update \
-&& apt-get install -y \
-    libtbb2-dev \
-    python3-pip \
-&& pip install 'conan==2.0.*' \
-&& CC=clang CXX=clang++ conan profile detect --force
+&& apt-get install -y libtbb2-dev
 
-COPY containers/assets/hic2cool-ng-b6ee2c4.tar.xz /tmp/
+COPY containers/assets/hic2cool-ng-6e27c65.tar.xz /tmp/
 
 
 RUN cd /tmp \
-&& tar -xf hic2cool-ng-*.tar.xz \
-&& cd hic2cool-ng*/       \
-&& conan install .        \
-    --build=missing       \
-    --build=cascade       \
-    -pr default           \
-    -s build_type=Release \
-    -s compiler.cppstd=20 \
+&& tar -xf hic2cool-ng-*.tar.xz         \
+&& cd hic2cool-ng*/                     \
+&& conan install .                      \
+    --build=missing                     \
+    --build=cascade                     \
+    -pr:b="$CONAN_DEFAULT_PROFILE_PATH" \
+    -pr:h="$CONAN_DEFAULT_PROFILE_PATH" \
+    -s build_type=Release               \
+    -s compiler.cppstd=20               \
     --output-folder=build
 
 RUN cd /tmp/hic2cool-ng*/ \
@@ -67,6 +64,11 @@ ARG CONTAINER_TITLE
 ARG CONTAINER_VERSION
 ARG PIP_NO_CACHE_DIR=0
 
+# https://github.com/open2c/cooler/pull/313
+# https://github.com/open2c/cooler/pull/323
+# https://github.com/open2c/cooler/pull/324
+COPY containers/patches/cooler.patch /tmp/
+
 RUN apt-get update \
 && apt-get install -y git \
                       libcurl4 \
@@ -78,16 +80,21 @@ RUN apt-get update \
                       python3 \
                       python3-pip \
                       zstd \
+&& git clone https://github.com/open2c/cooler.git /tmp/cooler \
+&& cd /tmp/cooler \
+&& git checkout v0.9.1 \
+&& patch -p0 < /tmp/cooler.patch \
 && pip install --upgrade pip setuptools \
 && pip install 'bioframe>=0.4' \
-                git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
+                /tmp/cooler \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
 && pip uninstall -y pip setuptools \
 && apt-get remove -y git \
                      libcurl4-openssl-dev \
                      python3-pip \
-&& rm -rf /var/lib/apt/lists/*
+&& rm -rf /var/lib/apt/lists/* \
+          /tmp/cooler*
 
 COPY --from=downloader  --chown=root:root /tmp/juicer_tools*.jar              /usr/local/share/java/juicer_tools/
 COPY --from=downloader  --chown=root:root /tmp/hic_tools*.jar                 /usr/local/share/java/hic_tools/
