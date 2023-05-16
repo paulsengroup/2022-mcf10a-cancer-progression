@@ -64,6 +64,9 @@ ARG CONTAINER_TITLE
 ARG CONTAINER_VERSION
 ARG PIP_NO_CACHE_DIR=0
 
+# https://github.com/open2c/cooler/pull/313
+COPY containers/assets/cooler-balance-cis-bugfix.tar.xz /tmp/
+
 RUN apt-get update \
 && apt-get install -y git \
                       libcurl4 \
@@ -77,14 +80,15 @@ RUN apt-get update \
                       zstd \
 && pip install --upgrade pip setuptools \
 && pip install 'bioframe>=0.4' \
-                git+https://github.com/robomics/cooler.git@balance-cis-bugfix \
+                /tmp/cooler-balance-cis-bugfix.tar.xz \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \
 && pip uninstall -y pip setuptools \
 && apt-get remove -y git \
                      libcurl4-openssl-dev \
                      python3-pip \
-&& rm -rf /var/lib/apt/lists/*
+&& rm -rf /var/lib/apt/lists/* \
+          /tmp/cooler-balance-cis-bugfix.tar.xz
 
 COPY --from=downloader  --chown=root:root /tmp/juicer_tools*.jar              /usr/local/share/java/juicer_tools/
 COPY --from=downloader  --chown=root:root /tmp/hic_tools*.jar                 /usr/local/share/java/hic_tools/
