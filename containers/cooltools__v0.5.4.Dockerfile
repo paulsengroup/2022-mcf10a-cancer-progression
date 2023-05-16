@@ -17,10 +17,11 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
-        bioframe \
+        'bioframe>=0.4.1' \
         "cooltools=$COOLTOOLS_VER" \
-        ucsc-bedgraphtobigwig \
+        'pandas<2' \
         procps-ng \
+        ucsc-bedgraphtobigwig \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"

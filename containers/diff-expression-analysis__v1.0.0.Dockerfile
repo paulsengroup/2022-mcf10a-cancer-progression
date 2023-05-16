@@ -39,7 +39,7 @@ RUN micromamba install -y                            \
                -c bioconda                           \
                "bioconductor-apeglm=$APEGLM_VERSION" \
                "bioconductor-deseq2=$DESEQ2_VERSION" \
-               bioframe                              \
+               'bioframe>=0.4.1'                     \
                numpy                                 \
                pandas                                \
                procps-ng                             \

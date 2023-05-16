@@ -40,7 +40,7 @@ RUN micromamba install -y \
         h5py \
         matplotlib \
         numpy \
-        pandas \
+        'pandas<2' \
         procps-ng \
         seaborn \
         statsmodels \

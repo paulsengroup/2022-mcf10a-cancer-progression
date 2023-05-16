@@ -17,12 +17,12 @@ RUN micromamba install -y \
         -c bioconda \
         python=3.10 \
         r=4.2 \
-        bioframe \
+        'bioframe>=0.4.1' \
         'cooler>=0.9' \
         matplotlib \
         natsort \
         numpy \
-        pandas \
+        'pandas<2' \
         procps-ng \
         pyBigWig \
         r-alluvial \

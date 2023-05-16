@@ -13,7 +13,7 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 RUN micromamba install -y \
                -c conda-forge \
                -c bioconda \
-               bioframe \
+               'bioframe>=0.4.1' \
                matplotlib \
                'networkx==3.*' \
                numpy \
