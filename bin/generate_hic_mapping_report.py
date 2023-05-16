@@ -105,30 +105,24 @@ def make_plot_contact_type(
         warnings.simplefilter("ignore")
         df1["filtered"] = df["valid_interaction"] - df["valid_interaction_rmdup"]
 
-    if relative:
-        df1 = df1.divide(df["valid_interaction"], axis="rows")
-    else:
-        df1 = df1 / 1.0e6
-
-    table = False
-    if not relative:
-        table = df1.copy()
-        table["total"] = df1.sum(axis="columns")
-        table = table.round(2).T
-
-    fig, ax = plt.subplots(1, 1)
-    df1.plot(kind="bar", stacked=True, ax=ax, legend=False, table=table)
+    table = df1.copy()
+    table["total"] = df1.sum(axis="columns")
+    table = table.round(2).T
 
     if relative:
         title = "HiC relative interactions"
         ylabel = "Relative interactions"
-        xlabel = "Samples"
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+        df1 = df1.divide(df["valid_interaction"], axis="rows")
     else:
         title = "HiC interactions"
         ylabel = "Interactions (millions)"
-        xlabel = ""
-        ax.get_xaxis().set_ticks([])
+        df1 = df1 / 1.0e6
+
+    fig, ax = plt.subplots(1, 1)
+    df1.plot(kind="bar", stacked=True, ax=ax, legend=False, table=table)
+
+    xlabel = ""
+    ax.get_xaxis().set_ticks([])
 
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
     ax.legend(loc="lower right", title=None)

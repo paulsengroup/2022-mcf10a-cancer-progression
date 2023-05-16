@@ -11,7 +11,8 @@ def collect_files(prefix, sample_id, suffix, type = "file") {
                      type: type,
                      checkIfExists: true)
 
-    def condition_id = sample_id.replaceAll(/_REP\d+$/, "")
+    // Example: hg38_001_MCF10A_WT_REP1 -> hg38_MCF10A_WT
+    def condition_id = sample_id.replaceAll(/(.*)_\d{3}_(.*)_REP\d/, '$1_$2')
 
     return tuple(sample_id, condition_id, files)
 }
