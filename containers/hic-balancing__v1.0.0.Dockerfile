@@ -85,7 +85,7 @@ RUN apt-get update \
 && git checkout v0.9.1 \
 && patch -p0 < /tmp/cooler.patch \
 && pip install --upgrade pip setuptools \
-&& pip install 'bioframe>=0.4' \
+&& pip install 'bioframe>=0.4.1' \
                 /tmp/cooler \
                'hic2cool>=0.8.3' \
                'hic-straw>=1.3.1' \

@@ -37,7 +37,7 @@ RUN micromamba install -y \
         -c bioconda \
         'cooler>=0.9' \
         'numpy>=1.4,<1.22' \
-        'pandas>=0.24' \
+        'pandas>=0.24,<2' \
         procps-ng \
         'scipy>=1.1' \
         'tensorflow>=1.3,<2' \

@@ -18,7 +18,9 @@ RUN micromamba install -y \
         -c bioconda \
         "python=3.9" \
         "cleanlab>=1,<2" \
+        'cooler=0.8.11' \
         "hicexplorer=$HICEXPLORER_VER" \
+        'pandas<2' \
         procps-ng \
 && micromamba clean --all -y
 
