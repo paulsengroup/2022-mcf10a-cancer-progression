@@ -31,24 +31,21 @@ RUN cd /tmp \
 FROM ghcr.io/paulsengroup/ci-docker-images/ubuntu-22.04-cxx-clang-15:20230501 AS hic2cool-ng
 
 RUN apt-get update \
-&& apt-get install -y \
-    libtbb2-dev \
-    python3-pip \
-&& pip install 'conan==2.0.*' \
-&& CC=clang CXX=clang++ conan profile detect --force
+&& apt-get install -y libtbb2-dev
 
-COPY containers/assets/hic2cool-ng-b6ee2c4.tar.xz /tmp/
+COPY containers/assets/hic2cool-ng-6e27c65.tar.xz /tmp/
 
 
 RUN cd /tmp \
-&& tar -xf hic2cool-ng-*.tar.xz \
-&& cd hic2cool-ng*/       \
-&& conan install .        \
-    --build=missing       \
-    --build=cascade       \
-    -pr default           \
-    -s build_type=Release \
-    -s compiler.cppstd=20 \
+&& tar -xf hic2cool-ng-*.tar.xz         \
+&& cd hic2cool-ng*/                     \
+&& conan install .                      \
+    --build=missing                     \
+    --build=cascade                     \
+    -pr:b="$CONAN_DEFAULT_PROFILE_PATH" \
+    -pr:h="$CONAN_DEFAULT_PROFILE_PATH" \
+    -s build_type=Release               \
+    -s compiler.cppstd=20               \
     --output-folder=build
 
 RUN cd /tmp/hic2cool-ng*/ \
