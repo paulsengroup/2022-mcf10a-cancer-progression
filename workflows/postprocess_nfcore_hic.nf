@@ -25,19 +25,14 @@ workflow {
         .unique()
         .set { sample_ids }
 
-    input_dir = file(params.input_dir, type: "dir", checkIfExists: true)
+    input_dir = file(params.input_dir, type: 'dir', checkIfExists: true)
 
     sample_ids
-        .map { collect_files("${input_dir}/hicpro/mapping", it, "bwt2pairs.bam") }
-        .set { input_bwt2pairs }
-
-    sample_ids
-        .map { collect_files("${input_dir}/hicpro/valid_pairs", it, ".allValidPairs") }
+        .map { collect_files("${input_dir}/pairs/", it, '.allValidPairs.xz') }
         .set { input_valid_pairs }
 
-    sample_ids
-        .map { collect_files("${input_dir}/hicpro/stats", it, "/", "dir") }
-        .set { input_stats }
+    Channel.fromPath("${input_dir}/stats/*.tar.xz", checkIfExists: true, type: 'file')
+        .set { stat_tars }
 
     cooler_cload(input_valid_pairs,
                  file(params.chrom_sizes),
@@ -45,7 +40,6 @@ workflow {
                  params.resolutions.first())
 
     cooler_cload.out.cool.set { coolers_by_sample }
-
 
     // Group coolers by condition
     coolers_by_sample
@@ -67,43 +61,18 @@ workflow {
     cooler_balance(cooler_zoomify.out.mcool,
                    file(params.blacklist, checkIfExists: true))
 
-    compress_bwt2pairs(input_bwt2pairs,
-                       file(params.fasta))
-    compress_validpairs(input_valid_pairs)
-    compress_stats(input_stats)
-    compress_multiqc(file("${input_dir}/multiqc", checkIfExists: true, type: "dir"))
-
     // NOTE label and sample mappings is guaranteed to be correct
     // regardless of the order in which items are emitted by compress_stats()
     // because plot_stats is globbing file names, thus sorting files by their
     // sample number
-    plot_stats(compress_stats.out.tar.map { it[2] }.collect(),
+    plot_stats(stat_tars.collect(),
                params.plot_pretty_labels)
 }
 
 
-process archive_multiqc {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: {
-                                        label = file(folder).getName()
-                                        "${label}/${it}"
-                                        }
-    input:
-        path folder
-
-    output:
-        path "*.html", emit: html
-        path "*.tar.gz", emit: tar
-
-    shell:
-        '''
-        multiqc .
-
-        tar -cf - multiqc_data/ | gzip -9 > multiqc_data.tar.gz
-        '''
-}
-
 process cooler_cload {
+    tag "$sample"
+
     input:
         tuple val(sample),
               val(condition),
@@ -126,17 +95,20 @@ process cooler_cload {
 
         grep '^chr[XY0-9]\\+[[:space:]]' '!{chrom_sizes}' > "$chrom_sizes"
 
+        xz -dcf '!{pairs}' |
         cooler cload pairs \\
             "$chrom_sizes:!{resolution}" \\
             -                            \\
             '!{outname}'                 \\
             --chrom1 2 --pos1 3          \\
             --chrom2 5 --pos2 6          \\
-            --assembly='!{assembly}' < '!{pairs}'
+            --assembly='!{assembly}'
         '''
 }
 
 process cooler_merge {
+    tag "$condition"
+
     input:
         tuple val(samples),
               val(condition),
@@ -160,6 +132,7 @@ process cooler_to_hic {
                                        saveAs: { "hic/${label}.hic" }
 
     label 'process_medium'
+    tag "$label"
 
     input:
         tuple val(label),
@@ -196,6 +169,7 @@ process cooler_to_hic {
 process cooler_zoomify {
     label 'process_medium'
     label 'process_long'
+    tag "$label"
 
     input:
         tuple val(label),
@@ -220,6 +194,7 @@ process cooler_balance {
 
     label 'process_medium'
     label 'process_long'
+    tag "$label"
 
     input:
         tuple val(label),
@@ -249,120 +224,6 @@ process cooler_balance {
         '''
 }
 
-process compress_bwt2pairs {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "alignments/${it}" }
-
-    label 'process_long'
-    label 'process_high'
-
-    input:
-        tuple val(sample),
-              val(condition),
-              path(bams)
-        path reference_fna
-
-    output:
-        tuple val(sample),
-              val(condition),
-              path("*.cram"),
-        emit: cram
-
-    shell:
-        '''
-        set -o pipefail
-
-        samtools merge -c -r -u -@!{task.cpus} -o - *.bam |
-        samtools sort -u -@!{task.cpus}                   |
-        samtools view --reference '!{reference_fna}'      \\
-                      --output-fmt cram=1                 \\
-                      --output-fmt archive=1              \\
-                      --output-fmt use_lzma=1             \\
-                      --output-fmt embed_ref=1            \\
-                      -@!{task.cpus}                      \\
-                      -o '!{sample}.bwt2pairs.cram'
-        '''
-}
-
-process compress_validpairs {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "pairs/${it}" }
-
-    label 'process_long'
-    label 'process_high'
-
-    input:
-        tuple val(label),
-              val(condition),
-              path(validpairs)
-
-    output:
-        tuple val(label),
-              val(condition),
-              path("*.xz"),
-        emit: xz
-
-    shell:
-        '''
-        xz -T!{task.cpus} -9 --extreme -k -f '!{validpairs}'
-        '''
-}
-
-process compress_stats {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "stats/${it}" }
-
-    label 'process_short'
-
-    input:
-        tuple val(sample),
-              val(condition),
-              path(stats_dir)
-
-    output:
-        tuple val(sample),
-              val(condition),
-              path("*.tar.xz"), emit: tar
-
-    shell:
-        outprefix="${sample}_stats"
-        '''
-        set -o pipefail
-
-        if [[ '!{stats_dir}' != '!{outprefix}' ]]; then
-            ln -s '!{stats_dir}/' '!{outprefix}'
-        fi
-
-        tar -chf - '!{outprefix}' |
-            xz -T!{task.cpus} -9 --extreme > '!{outprefix}.tar.xz'
-        '''
-}
-
-process compress_multiqc {
-    publishDir "${params.output_dir}", mode: 'copy',
-                                       saveAs: { "multiqc.tar.xz" }
-
-    label 'process_short'
-
-    input:
-        path multiqc_dir
-
-    output:
-        path "*.tar.xz", emit: tar
-
-    shell:
-        '''
-        set -o pipefail
-
-        if [[ '!{multiqc_dir}' != multiqc ]]; then
-            ln -s '!{multiqc_dir}/' 'multiqc'
-        fi
-
-        tar -chf - multiqc/ |
-            xz -T!{task.cpus} -9 --extreme > multiqc.tar.xz
-        '''
-}
-
 process plot_stats {
     publishDir "${params.output_dir}", mode: 'copy'
 
@@ -379,9 +240,9 @@ process plot_stats {
 
     shell:
         '''
-        generate_hic_mapping_report.py \
-            *.tar.xz \
-            hic_mapping_report \
+        generate_hic_mapping_report.py \\
+            *.tar.xz \\
+            hic_mapping_report \\
             --sample-labels '!{pretty_labels}'
 
         mkdir plots

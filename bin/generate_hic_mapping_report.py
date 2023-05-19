@@ -107,7 +107,7 @@ def make_plot_contact_type(
 
     table = df1.copy()
     table["total"] = df1.sum(axis="columns")
-    table = table.round(2).T
+    table = table.divide(1.0e6).round(2).T
 
     if relative:
         title = "HiC relative interactions"
