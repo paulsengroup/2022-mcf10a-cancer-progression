@@ -12,7 +12,7 @@ import pickle
 import sys
 from typing import List, Tuple, Union
 
-import hdbscan
+import hdbscan.flat
 import pandas as pd
 
 
@@ -53,7 +53,7 @@ def make_cli():
     cli.add_argument(
         "--min-samples",
         type=count_or_fraction,
-        default=5,
+        default=1,
         help="Minimum samples.\n"
         "Values in range [0, 1) are interpreted as fractions of the total number of datapoints.\n"
         "See HDBSCAN* documentation for more details.",
@@ -66,10 +66,10 @@ def make_cli():
         help="See HDBSCAN* documentation for more details.",
     )
     cli.add_argument(
-        "--cluster-selection-epsilon",
-        type=float,
-        default=0.05,
-        help="See HDBSCAN* documentation for more details.",
+        "--num-clusters",
+        type=int,
+        default=9,
+        help="See HDBSCAN* documentation for more details (more specifically the docs for HDBSCAN.flat).",
     )
     cli.add_argument(
         "--distance-metric",
@@ -125,18 +125,19 @@ def import_tsv(path_to_tsvs: List[pathlib.Path], labels: Union[List[str], None])
 
 
 def run_clustering(
-    df: pd.DataFrame, dist_metric, min_cluster_size, min_samples, cluster_selection_method, cluster_selection_epsilon
-) -> Tuple[pd.DataFrame, hdbscan.HDBSCAN]:
+    df: pd.DataFrame, dist_metric, min_cluster_size, min_samples, cluster_selection_method, num_clusters
+) -> Tuple[pd.DataFrame, hdbscan.flat.HDBSCAN]:
     cols = df.filter(regex=r"[AB]\d\.state").columns.tolist()
     m = df[cols].to_numpy()
     m = m / m.sum(axis=1)[:, None]
 
-    clusterer = hdbscan.HDBSCAN(
+    clusterer = hdbscan.flat.HDBSCAN_flat(
+        m,
+        n_clusters=num_clusters,
         metric=dist_metric,
         min_cluster_size=min_cluster_size,
         min_samples=min_samples,
         cluster_selection_method=cluster_selection_method,
-        cluster_selection_epsilon=cluster_selection_epsilon,
     )
     clusterer.fit_predict(m)
 
@@ -179,7 +180,7 @@ def main():
     args = vars(make_cli().parse_args())
 
     cluster_selection_method = args["cluster_selection_method"]
-    cluster_selection_epsilon = args["cluster_selection_epsilon"]
+    num_clusters = args["num_clusters"]
 
     out_prefix = args["output_prefix"]
 
@@ -196,7 +197,7 @@ def main():
         min_cluster_size=min_cluster_size,
         min_samples=min_samples,
         cluster_selection_method=cluster_selection_method,
-        cluster_selection_epsilon=cluster_selection_epsilon,
+        num_clusters=num_clusters,
     )
 
     outname = out_prefix.with_suffix(".clusters.tsv.gz")

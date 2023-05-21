@@ -38,7 +38,7 @@ def make_cli() -> argparse.ArgumentParser:
         nargs="+",
         type=str,
         choices={"scatter", "line", "outliers"},
-        default="line",
+        default=["line"],
         help="Type(s) of plot to generate.",
     )
     cli.add_argument(
@@ -115,7 +115,7 @@ def get_cluster_colors(clusters: pd.Series, pvalues: pd.Series, palette: Dict) -
 
 
 def plot_scatter(df: pd.DataFrame, suptitle: str, cmap="deep") -> plt.Figure:
-    cols = df.filter(regex=r"[AB\d]\.state").columns.tolist()
+    cols = df.filter(regex=r"[AB\d]{2}\.state").columns.tolist()
 
     color_palette = get_color_palette_dict(num_colors=df["cluster"].max() + 1, cmap=cmap)
     cluster_colors = get_cluster_colors(df["cluster"], df["cluster_pval"], color_palette)
@@ -156,7 +156,7 @@ def rank_clusters(df: pd.DataFrame) -> List[int]:
 
 
 def plot_distribution(df: pd.DataFrame, suptitle: str, highlight_label: Union[str, None], cmap="deep") -> plt.Figure:
-    cols = df.filter(regex=r"[AB\d]\.state").columns.tolist() + ["label"]
+    cols = df.filter(regex=r"[AB\d]{2}\.state").columns.tolist() + ["label"]
 
     num_clusters = df["cluster"].max() + 1
     color_palette = get_color_palette_list(num_colors=num_clusters, cmap=cmap)
