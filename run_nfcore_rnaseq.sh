@@ -16,5 +16,5 @@ mkdir -p "$wd"
 1>&2 echo 'Running nfcore/rnaseq...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/nfcore-rnaseq-v3.11.1.tar.xz' \
+  'workflows/nfcore-rnaseq-v3.11.2.tar.xz' \
   configs/nfcore/nfcore_rnaseq*.json

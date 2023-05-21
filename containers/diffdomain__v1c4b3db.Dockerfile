@@ -19,7 +19,7 @@ RUN apt-get update \
 && find diffdomain -type f -exec chmod uga+r {} + \
 && find diffdomain -type d -exec chmod uga+rx {} +
 
-FROM mambaorg/micromamba:1.4.2 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -40,7 +40,7 @@ RUN micromamba install -y \
         h5py \
         matplotlib \
         numpy \
-        pandas \
+        'pandas<2' \
         procps-ng \
         seaborn \
         statsmodels \
@@ -74,7 +74,7 @@ RUN classification.py --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-diffdomains}"

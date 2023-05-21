@@ -6,8 +6,8 @@
 nextflow.enable.dsl=2
 
 workflow {
-    filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
-                       params.hg38_chrom_sizes_out)
+    sort_and_filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
+                                params.hg38_chrom_sizes_out)
 
     process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
                             file(params.microarray_cnvs, checkIfExists: true),
@@ -26,7 +26,7 @@ workflow {
     )
 }
 
-process filter_chrom_sizes {
+process sort_and_filter_chrom_sizes {
     publishDir params.output_dir, mode: 'copy',
                                   saveAs: { "${chrom_sizes_out}" }
 
@@ -42,7 +42,8 @@ process filter_chrom_sizes {
     shell:
         out=file(chrom_sizes_out).getName()
         '''
-        grep '^chr[[:digit:]XY]\\+[[:space:]]' '!{chrom_sizes_in}' > '!{out}'
+        grep '^chr[[:digit:]XY]\\+[[:space:]]' '!{chrom_sizes_in}' |
+           sort -V > '!{out}'
         '''
 }
 

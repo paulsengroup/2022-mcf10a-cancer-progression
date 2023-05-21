@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.2 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -18,7 +18,9 @@ RUN micromamba install -y \
         -c bioconda \
         "python=3.9" \
         "cleanlab>=1,<2" \
+        'cooler=0.8.11' \
         "hicexplorer=$HICEXPLORER_VER" \
+        'pandas<2' \
         procps-ng \
 && micromamba clean --all -y
 
@@ -32,7 +34,7 @@ RUN hicConvertFormat --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-hicexplorer}"

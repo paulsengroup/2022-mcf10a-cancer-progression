@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.2 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG CONTAINER_VERSION
 
@@ -39,7 +39,7 @@ RUN micromamba install -y                            \
                -c bioconda                           \
                "bioconductor-apeglm=$APEGLM_VERSION" \
                "bioconductor-deseq2=$DESEQ2_VERSION" \
-               bioframe                              \
+               'bioframe>=0.4.1'                     \
                numpy                                 \
                pandas                                \
                procps-ng                             \
@@ -62,7 +62,7 @@ RUN python3 -c 'import bioframe, rpy2'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-diff-expression-analysis}"

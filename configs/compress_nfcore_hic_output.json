@@ -1,0 +1,5 @@
+{
+    "nfcore_hic_outdir": "data/scratch/nfcore_hic",
+    "outdir": "data/output/nfcore_hic",
+    "fasta": "data/input/hg38/hg38.fa"
+}

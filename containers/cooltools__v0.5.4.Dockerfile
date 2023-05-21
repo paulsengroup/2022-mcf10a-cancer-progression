@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.2 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -17,10 +17,11 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
-        bioframe \
+        'bioframe>=0.4.1' \
         "cooltools=$COOLTOOLS_VER" \
-        ucsc-bedgraphtobigwig \
+        'pandas<2' \
         procps-ng \
+        ucsc-bedgraphtobigwig \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"
@@ -35,7 +36,7 @@ RUN python3 -c "import cooler; import cooltools"
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-cooltools}"
