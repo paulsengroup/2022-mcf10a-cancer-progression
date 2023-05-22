@@ -15,11 +15,13 @@ from collections import Counter
 from typing import Iterable, List, Tuple, Union
 
 import bioframe as bf
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.stats as ss
+import seaborn as sns
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LogNorm
 
@@ -73,7 +75,7 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--plot-type", type=str, choices={"heatmap", "correlation"}, default="correlation", help="Plot type."
+        "--plot-type", type=str, choices={"boxplot", "heatmap", "correlation"}, default="correlation", help="Plot type."
     )
 
     cli.add_argument(
@@ -100,15 +102,15 @@ def make_cli():
     cli.add_argument(
         "--lfc",
         type=non_negative_float,
-        default=0.5,
-        help="LFC cutoff. Only used when --plot-type=heatmap",
+        default=0.0,
+        help="LFC cutoff. Ignored when --plot-type=correlation.",
     )
 
     cli.add_argument(
         "--padj",
         type=probability,
         default=0.01,
-        help="LFC cutoff. Only used when --plot-type=heatmap",
+        help="LFC cutoff. Ignored when --plot-type=correlation.",
     )
 
     cli.add_argument(
@@ -218,6 +220,14 @@ def overlap_sucompartments_with_tss(subcomps: pd.DataFrame, de_table: pd.DataFra
         .set_index("gene_id")
     )
     return de_table.merge(df, left_index=True, right_index=True)
+
+
+def filter_by_gene_type(df: pd.DataFrame, *gene_types) -> pd.DataFrame:
+    return df[df["gene_type"].str.lower().isin([s.lower() for s in gene_types])]
+
+
+def compute_subcompartment_delta(df: pd.DataFrame, contrast: str, condition: str) -> npt.NDArray:
+    return (df[condition].map(get_subcompartment_ranks()) - df[contrast].map(get_subcompartment_ranks())).to_numpy()
 
 
 def plot_heatmap(df: pd.DataFrame, ax: plt.Axes, lfc_type: str, lfc_cutoff: float) -> npt.NDArray:
@@ -337,8 +347,8 @@ def plot_correlation_helper(x, pccs, pvals, nobs, fig, ax1):
 
 
 def plot_correlation(df: pd.DataFrame, contrast: str, condition: str, gene_types: List[str]) -> plt.Figure:
-    df = df[df["gene_type"].str.lower().isin([s.lower() for s in gene_types])].copy()
-    df["delta"] = df[condition].map(get_subcompartment_ranks()) - df[contrast].map(get_subcompartment_ranks())
+    df = filter_by_gene_type(df, *gene_types).copy()
+    df["delta"] = compute_subcompartment_delta(df, contrast, condition)
 
     (fig, (ax11, ax21)) = plt.subplots(2, 1, figsize=(2 * 6.4, 6.4 * 1.5))
 
@@ -351,6 +361,28 @@ def plot_correlation(df: pd.DataFrame, contrast: str, condition: str, gene_types
 
     ax21.set(ylabel="PCC", xlabel="delta cutoff")
     fig.suptitle(f"{contrast} vs {condition}: " + ";".join(gene_types))
+
+    return fig
+
+
+def plot_boxplot(
+    df: pd.DataFrame, contrast: str, condition: str, gene_types: List[str], lfc_cutoff: float, padj_cutoff: float
+) -> plt.Figure:
+    df = filter_by_gene_type(df, *gene_types).copy()
+    df = df[(df["log2FoldChange"].abs() >= lfc_cutoff) & (df["padj"] < padj_cutoff)]
+
+    df["delta"] = compute_subcompartment_delta(df, contrast, condition)
+    max_delta = df["delta"].abs().max()
+
+    colors = {}
+    for i, n in zip(range(-max_delta, max_delta + 1), np.linspace(0.0, 1.0, max_delta * 2 + 1)):
+        colors[i] = mpl.colormaps["bwr"](n)
+
+    fig, ax = plt.subplots(1, 1)
+    sns.boxplot(df[df["log2FoldChange"] < 0], x="delta", y="log2FoldChange", palette=colors, ax=ax)
+    sns.boxplot(df[df["log2FoldChange"] >= 0], x="delta", y="log2FoldChange", palette=colors, ax=ax)
+
+    fig.suptitle(f"{contrast} vs {condition} (padj={padj_cutoff:.2f}; lfc={lfc_cutoff:.2f}): " + ";".join(gene_types))
 
     return fig
 
@@ -381,14 +413,20 @@ def main():
     condition = args["condition"]
     assert contrast != condition
 
+    output_prefix = args["output-prefix"]
+    output_prefix.parent.mkdir(parents=True, exist_ok=True)
+
+    out_table = output_prefix.with_suffix(".tsv.gz")
+    if not args["force"]:
+        handle_path_collisions(out_table)
+
     df = overlap_sucompartments_with_tss(
         import_subcomps(args["bedgraph"], contrast, condition),
         import_de_gene_table(args["de-table"], contrast, condition),
         import_gtf(args["gtf"]),
     )
 
-    output_prefix = args["output-prefix"]
-    output_prefix.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_table, sep="\t", index=False)
 
     if args["plot_type"] == "correlation":
         logging.info("Plotting correlation...")
@@ -397,6 +435,10 @@ def main():
     elif args["plot_type"] == "heatmap":
         logging.info("Plotting heatmap...")
         fig = plot_heatmaps(df, contrast, condition, args["gene_types"], args["lfc"], args["padj"])
+        save_plot_to_file(fig, output_prefix, args["force"])
+    elif args["plot_type"] == "boxplot":
+        logging.info("Plotting boxplot...")
+        fig = plot_boxplot(df, contrast, condition, args["gene_types"], args["lfc"], args["padj"])
         save_plot_to_file(fig, output_prefix, args["force"])
 
 
