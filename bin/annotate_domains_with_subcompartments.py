@@ -140,16 +140,21 @@ def import_cliques(path_to_cliques: Union[pathlib.Path, None]) -> Union[pd.DataF
 
 
 def import_domains(path_to_domains: pathlib.Path) -> pd.DataFrame:
-    return pd.read_table(path_to_domains, names=bf.SCHEMAS["bed6"][0:4]).rename(columns={"name": "id"}).set_index("id")
+    return (
+        pd.read_table(path_to_domains, names=bf.SCHEMAS["bed6"][0:4], usecols=list(range(0, 4)))
+        .rename(columns={"name": "id"})
+        .set_index("id")
+    )
 
 
 def overlap_domains_with_subcomps(subcomps: pd.DataFrame, domains: pd.DataFrame) -> pd.DataFrame:
+    index_name = domains.index.name
     return (
-        bf.overlap(domains.drop_duplicates(), subcomps, suffixes=("", "_"))
+        bf.overlap(domains.reset_index(), subcomps, suffixes=("", "_"))
         .drop(columns=["chrom_", "start_", "end_"])
         .rename(columns=lambda c: c.rstrip("_"))
         .convert_dtypes()
-    )
+    ).set_index(index_name)
 
 
 def compute_state_distribution(df: pd.DataFrame) -> collections.Counter:
@@ -251,7 +256,9 @@ def main():
     args = vars(make_cli().parse_args())
 
     domain_files = args["domains"]
-    clique_files = args.get("cliques", [None] * len(domain_files))
+    clique_files = args["cliques"]
+    if clique_files is None:
+        clique_files = [None] * len(domain_files)
 
     aggregate_subcompartments = args["aggregate_subcompartments"]
 
