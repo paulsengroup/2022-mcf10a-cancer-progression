@@ -171,6 +171,7 @@ process extract_chrom_sizes_from_cooler {
 
 process preproc_coolers_for_dchic {
     label 'process_medium'
+    tag "${cooler.fileName}::/resolutions/${resolution}"
 
     input:
         tuple val(resolution),
@@ -231,6 +232,7 @@ process stage_dchic_inputs {
     label 'error_retry'
     label 'process_medium'
     label 'process_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -283,6 +285,7 @@ process stage_dchic_inputs {
 
 process run_dchic_cis {
     label 'error_retry'
+    tag "$resolution"
 
     cpus 10
     memory { memory * task.cpus * task.attempt }
@@ -342,6 +345,7 @@ process run_dchic_select {
     label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -394,6 +398,7 @@ process run_dchic_analyze {
     label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -446,6 +451,7 @@ process run_dchic_fithic {
     label 'error_retry'
     label 'process_long'
     label 'process_medium'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -506,6 +512,7 @@ process run_dchic_dloop {
     label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -557,6 +564,7 @@ process run_dchic_dloop {
 process run_dchic_subcomp {
     label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -608,6 +616,7 @@ process run_dchic_subcomp {
 process run_dchic_enrich {
     label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -663,6 +672,7 @@ process run_dchic_enrich {
 process run_dchic_viz {
     label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -713,6 +723,7 @@ process run_dchic_viz {
 
 process postprocess_dchic_output {
     publishDir params.output_dir, mode: 'copy'
+    tag "$resolution"
 
     label 'process_high'
 
@@ -785,6 +796,7 @@ process generate_subcompartment_transition_report {
 
     label 'process_low'
     label 'process_very_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -836,6 +848,7 @@ process plot_subcompartment_coverage {
 
     label 'process_low'
     label 'process_very_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
