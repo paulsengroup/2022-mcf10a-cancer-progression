@@ -10,11 +10,6 @@ workflow {
     def resolutions = params.resolutions.sort()
     def dchic_cis_mem = [resolutions, params.dchic_cis_gbs_per_cpu].transpose()
 
-    generate_blacklist(
-        file(params.assembly_gaps, checkIfExists: true),
-        file(params.cytoband, checkIfExists: true)
-    )
-
     extract_chrom_sizes_from_cooler(
         mcools.first(),
         resolutions.first()
