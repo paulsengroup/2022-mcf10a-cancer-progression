@@ -229,7 +229,6 @@ process preproc_coolers_for_dchic {
 
 
 process stage_dchic_inputs {
-    label 'error_retry'
     label 'process_medium'
     label 'process_short'
     tag "$resolution"
@@ -284,7 +283,6 @@ process stage_dchic_inputs {
 }
 
 process run_dchic_cis {
-    label 'error_retry'
     tag "$resolution"
 
     cpus 10
@@ -342,7 +340,6 @@ process run_dchic_cis {
 }
 
 process run_dchic_select {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
     tag "$resolution"
@@ -395,7 +392,6 @@ process run_dchic_select {
 }
 
 process run_dchic_analyze {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
     tag "$resolution"
@@ -448,7 +444,6 @@ process run_dchic_analyze {
 }
 
 process run_dchic_fithic {
-    label 'error_retry'
     label 'process_long'
     label 'process_medium'
     tag "$resolution"
@@ -509,7 +504,6 @@ process run_dchic_fithic {
 }
 
 process run_dchic_dloop {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
     tag "$resolution"
@@ -562,7 +556,6 @@ process run_dchic_dloop {
 }
 
 process run_dchic_subcomp {
-    label 'error_retry'
     label 'process_low'
     tag "$resolution"
 
@@ -614,7 +607,6 @@ process run_dchic_subcomp {
 }
 
 process run_dchic_enrich {
-    label 'error_retry'
     label 'process_low'
     tag "$resolution"
 
@@ -670,7 +662,6 @@ process run_dchic_enrich {
 }
 
 process run_dchic_viz {
-    label 'error_retry'
     label 'process_low'
     tag "$resolution"
 
