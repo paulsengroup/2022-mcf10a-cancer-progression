@@ -30,7 +30,7 @@ RUN apt-get update \
 && chmod 755 dchic/dchicf.r
 
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:1.4.4 AS base
 
 ARG CONTAINER_VERSION
 
