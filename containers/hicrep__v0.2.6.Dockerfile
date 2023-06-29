@@ -15,13 +15,13 @@ RUN apt-get update \
 && apt-get install -y -q --no-install-recommends \
                       cython3 \
                       gcc \
+                      procps \
                       python3 \
                       python3-dev \
                       python3-pip \
 && pip install "hicrep==$HICREP_VER" \
 && apt-get remove -y -q cython3 \
                          gcc \
-                         procps \
                          python3-dev \
                          python3-pip \
 && apt-get autoremove -y \
