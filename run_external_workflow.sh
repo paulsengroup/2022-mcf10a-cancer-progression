@@ -61,7 +61,7 @@ tar -xf "$workflow_archive" -C "$name/" --strip-components 1
 
 
 args=()
-if [[ $HOSTNAME == *.saga* ]]; then
+if [[ "$(hostname -d)" == saga ]]; then
   base_config="configs/base_saga.config"
   args+=(--max_memory=400.GB
          --max_cpus=52
