@@ -27,6 +27,8 @@ export uuidgen
 for beddb in "$data_dir/output/tad_analysis/clodius/hg38_0"??_*.beddb; do
   beddb_name="$(basename "$beddb" _domains.bed.beddb)"
   sudo -E higlass-manage ingest \
+    --filetype bed2ddb \
+    --datatype 2d-rectangle-domains \
     --project-name "tad_by_sample" \
     --name "$beddb_name" \
     --uid "$(uuidgen "$(basename "$beddb")")" \
@@ -39,6 +41,8 @@ done
 for beddb in "$data_dir/output/tad_analysis/clodius/hg38_"*merged*.beddb; do
   beddb_name="$(basename "$beddb" _domains.bed.beddb)"
   sudo -E higlass-manage ingest \
+    --filetype bed2ddb \
+    --datatype 2d-rectangle-domains \
     --project-name "tad_by_condition" \
     --name "$beddb_name" \
     --uid "$(uuidgen "$(basename "$beddb")")" \

@@ -42,8 +42,10 @@ normalization="$(basename "$(dirname "$(dirname "$bed")")")"
 out_name="$wd/$(basename "$bed" .bed.gz)_${normalization}_${resolution}.beddb"
 
 echo "Processing \"$bed\"..."
-clodius aggregate bedfile \
+clodius aggregate bedpe \
   --chromsizes-filename="$chrom_sizes" \
+  --chr1-col 1 --from1-col 2 --to1-col 3 \
+  --chr2-col 1 --from2-col 2 --to2-col 3 \
   -o "$out_name" "$bed" > /dev/null
 EOF
 
