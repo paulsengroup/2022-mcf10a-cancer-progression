@@ -72,7 +72,7 @@ RUN python3 -c 'import pandas; print(pandas.__version__)'
 
 LABEL org.opencontainers.image.authors='Saleh Oshaghi <mohao@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-Chrom3D}"

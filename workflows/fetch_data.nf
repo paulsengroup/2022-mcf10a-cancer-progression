@@ -1,5 +1,5 @@
 #!/usr/bin/env nextflow
-// Copyright (C) 2022 Roberto Rossini <roberros@uio.no>
+// Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
 //
 // SPDX-License-Identifier: MIT
 
@@ -17,11 +17,12 @@ workflow {
                                row.sha256,
                                out_dir,
                                out_name,
-                               row.compress)
+                               row.action)
                 }
            .set { downloads }
 
-    process_files(downloads)
+    process_files(downloads,
+                  params.max_sleep)
 
     // Collect checksums and sort them by file path
     process_files.out.checksum
@@ -35,11 +36,16 @@ workflow {
 process process_files {
     publishDir "${params.data_dir}", mode: 'copy',
                                      saveAs: { "${out_dir}/${out_name}" }
-    label 'process_short'
     label 'error_retry'
 
     input:
-        tuple val(url), val(checksum), val(out_dir), val(out_name), val(compress)
+        tuple val(url),
+              val(checksum),
+              val(out_dir),
+              val(out_name),
+              val(action)
+
+        val max_sleep
 
     output:
         path "*.tmp", emit: file
@@ -47,7 +53,7 @@ process process_files {
 
     shell:
         dest="${out_name}.tmp"
-        final_dest="${out_dir}/${out_name}".replaceAll(/\/\//, "/")  // relpace //
+        final_dest="${out_dir}/${out_name}".replaceAll(/\/\//, "/")  // relpace "//""
         '''
         set -o pipefail
 
@@ -58,7 +64,7 @@ process process_files {
         trap 'rm -f "$tmp_file"' EXIT
 
         # Workaround connection reset by peer errors
-        python3 -c 'import time, random, sys; s=random.uniform(1,120); print(f"Sleeping for {s}s...", file=sys.stderr); time.sleep(s)'
+        python3 -c 'import time, random, sys; s=random.uniform(1,!{max_sleep}); print(f"Sleeping for {s}s...", file=sys.stderr); time.sleep(s)'
 
         # I am using curl instead of letting Nextflow handle remote files
         # because the latter sometime truncates files
@@ -69,8 +75,11 @@ process process_files {
         fi
 
         # Rename and compress files when appropriate
-        if [[ '!{compress}' == TRUE ]]; then
+        if [[ '!{action}' == 'compress' ]]; then
             pigz -p !{task.cpus} -9c "$tmp_file" > '!{dest}'
+            hash="$(sha256sum '!{dest}' | cut -d' ' -f 1)"
+        elif [[ '!{action}' == 'decompress' ]]; then
+            zcat "$tmp_file" > '!{dest}'
             hash="$(sha256sum '!{dest}' | cut -d' ' -f 1)"
         else
             mv "$tmp_file" '!{dest}'

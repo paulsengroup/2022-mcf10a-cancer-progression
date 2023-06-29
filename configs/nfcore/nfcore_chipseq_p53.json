@@ -1,0 +1,11 @@
+{
+    "input": "data/input/nfcore_chipseq_samplesheets/nfcore_chipseq_p53_samplesheet.csv",
+    "outdir": "data/output/nfcore_chipseq/p53",
+    "fasta": "data/input/hg38/hg38.fa",
+    "gtf": "data/input/hg38/hg38_gencode_v43.gtf",
+    "aligner": "chromap",
+    "macs_gsize": 2802903967,
+    "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 80)",
+    "narrow_peak": true,
+    "schema_ignore_params": "cluster-options,clusterOptions,genomes,macs_gsize_comment_,project"
+}

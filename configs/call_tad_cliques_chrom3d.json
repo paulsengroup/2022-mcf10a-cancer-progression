@@ -1,0 +1,7 @@
+{
+    "sample_sheet": "data/input/call_tad_cliques_samplesheets/call_tad_cliques_chrom3d_samplesheet.tsv",
+    "cytoband": "data/input/hg38/hg38_cytoband.txt.gz",
+    "assembly_gaps": "data/input/hg38/hg38_assembly_gaps.txt.gz",
+    "clique_size_thresh": 0,
+    "outdir": "data/output/chrom3d/cliques/"
+}

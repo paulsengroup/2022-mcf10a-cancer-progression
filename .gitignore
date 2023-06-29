@@ -13,7 +13,7 @@ scratch/
 venv/
 work/
 
-*.bak
+*.bak*
 .RData
 .nextflow.log*
 stage_data*.sh

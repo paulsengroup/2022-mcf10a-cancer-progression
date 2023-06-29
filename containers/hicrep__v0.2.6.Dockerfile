@@ -15,13 +15,13 @@ RUN apt-get update \
 && apt-get install -y -q --no-install-recommends \
                       cython3 \
                       gcc \
+                      procps \
                       python3 \
                       python3-dev \
                       python3-pip \
 && pip install "hicrep==$HICREP_VER" \
 && apt-get remove -y -q cython3 \
                          gcc \
-                         procps \
                          python3-dev \
                          python3-pip \
 && apt-get autoremove -y \
@@ -34,7 +34,7 @@ RUN hicrep --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-hicrep}"

@@ -1,0 +1,18 @@
+{
+    "input": "data/input/nfcore_hic_samplesheet.csv",
+    "outdir": "data/scratch/nfcore_hic",
+    "fasta": "data/input/hg38/hg38.fa",
+    "chromosome_size": "data/input/hg38/hg38.filtered.chrom.sizes",
+    "restriction_site": "^GATC,G^ANTC",
+    "ligation_site": "GATCGATC,GANTGATC,GANTANTC,GATCANTC",
+    "bin_size": "1000000",
+    "bin_size_comment_": "Workflow does not respect --skip_maps and skip_mcool params, so we specify a high resolution, so that generating .mcool files doesn't take too long.",
+    "skip_maps": true,
+    "skip_dist_decay": true,
+    "skip_tads": true,
+    "skip_compartments": true,
+    "skip_balancing": true,
+    "skip_mcool": true,
+    "split_fastq": false,
+    "schema_ignore_params": "bin_size_comment_,cluster-options,clusterOptions,genomes,project"
+}

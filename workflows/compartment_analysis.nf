@@ -10,17 +10,11 @@ workflow {
     def resolutions = params.resolutions.sort()
     def dchic_cis_mem = [resolutions, params.dchic_cis_gbs_per_cpu].transpose()
 
-    generate_blacklist(
-        file(params.assembly_gaps, checkIfExists: true),
-        file(params.cytoband, checkIfExists: true)
-    )
-
     extract_chrom_sizes_from_cooler(
         mcools.first(),
         resolutions.first()
     )
 
-    generate_blacklist.out.bed.set { blacklist }
     extract_chrom_sizes_from_cooler.out.chrom_sizes.set { chrom_sizes }
 
     filter_fna(
@@ -44,7 +38,7 @@ workflow {
     preproc_coolers_for_dchic(
         coolers,
         chrom_sizes,
-        blacklist
+        file(params.blacklist, checkIfExists: true)
     )
 
     preproc_coolers_for_dchic.out.bins
@@ -97,28 +91,6 @@ workflow {
     plot_subcompartment_coverage(
         postprocess_dchic_output.out.subcompartments
     )
-}
-
-process generate_blacklist {
-    input:
-        path assembly_gaps
-        path cytoband
-
-    output:
-        path "*.bed", emit: bed
-
-    shell:
-        '''
-        set -o pipefail
-
-        cat <(zcat '!{assembly_gaps}' | cut -f 2-) \\
-            <(zcat '!{cytoband}' | grep 'acen$') |
-            grep '^chr[XY0-9]\\+[[:space:]]' |
-            cut -f 1-3 |
-            sort -k1,1V -k2,2n |
-            bedtools merge -i stdin |
-            cut -f1-3 > blacklist.bed
-        '''
 }
 
 process filter_fna {
@@ -199,6 +171,7 @@ process extract_chrom_sizes_from_cooler {
 
 process preproc_coolers_for_dchic {
     label 'process_medium'
+    tag "${cooler.fileName}::/resolutions/${resolution}"
 
     input:
         tuple val(resolution),
@@ -256,9 +229,9 @@ process preproc_coolers_for_dchic {
 
 
 process stage_dchic_inputs {
-    label 'error_retry'
     label 'process_medium'
     label 'process_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -310,7 +283,7 @@ process stage_dchic_inputs {
 }
 
 process run_dchic_cis {
-    label 'error_retry'
+    tag "$resolution"
 
     cpus 10
     memory { memory * task.cpus * task.attempt }
@@ -367,9 +340,9 @@ process run_dchic_cis {
 }
 
 process run_dchic_select {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -419,9 +392,9 @@ process run_dchic_select {
 }
 
 process run_dchic_analyze {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -471,9 +444,9 @@ process run_dchic_analyze {
 }
 
 process run_dchic_fithic {
-    label 'error_retry'
     label 'process_long'
     label 'process_medium'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -531,9 +504,9 @@ process run_dchic_fithic {
 }
 
 process run_dchic_dloop {
-    label 'error_retry'
     label 'process_long'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -583,8 +556,8 @@ process run_dchic_dloop {
 }
 
 process run_dchic_subcomp {
-    label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -634,8 +607,8 @@ process run_dchic_subcomp {
 }
 
 process run_dchic_enrich {
-    label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -689,8 +662,8 @@ process run_dchic_enrich {
 }
 
 process run_dchic_viz {
-    label 'error_retry'
     label 'process_low'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -741,6 +714,7 @@ process run_dchic_viz {
 
 process postprocess_dchic_output {
     publishDir params.output_dir, mode: 'copy'
+    tag "$resolution"
 
     label 'process_high'
 
@@ -813,6 +787,7 @@ process generate_subcompartment_transition_report {
 
     label 'process_low'
     label 'process_very_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
@@ -864,6 +839,7 @@ process plot_subcompartment_coverage {
 
     label 'process_low'
     label 'process_very_short'
+    tag "$resolution"
 
     input:
         tuple val(resolution),
