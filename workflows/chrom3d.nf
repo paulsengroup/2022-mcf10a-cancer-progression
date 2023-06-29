@@ -146,8 +146,8 @@ process run_chrom3d {
               val(seed)
         val N
         val L
-        val y
         val radius
+        val y
 
     output:
         tuple val(label),
