@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:1.4.5 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
