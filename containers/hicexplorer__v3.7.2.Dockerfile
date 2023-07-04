@@ -20,8 +20,10 @@ RUN micromamba install -y \
         "cleanlab>=1,<2" \
         'cooler=0.8.11' \
         "hicexplorer=$HICEXPLORER_VER" \
+        'numpy>=1.20,<1.24' \
         'pandas<2' \
         procps-ng \
+        'scikit-learn>1,<1.3' \
 && micromamba clean --all -y
 
 ENV PATH="/opt/conda/bin:$PATH"
