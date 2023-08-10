@@ -20,6 +20,7 @@ RUN micromamba install -y \
         'bioframe>=0.4.1' \
         'cooler>=0.9' \
         matplotlib \
+        matplotlib-venn \
         natsort \
         numpy \
         'pandas<2' \
