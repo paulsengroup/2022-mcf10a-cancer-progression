@@ -26,13 +26,25 @@ workflow {
         file(params.blacklist, checkIfExists: true))
 
     hicexplorer_find_tads(apply_normalization_to_coolers.out.cool)
-    hicexplorer_find_tads.out.tads
-                         .groupTuple(by: [1, 2])
+    hicexplorer_find_tads.out.tads  // normalization, resolution, tads
+                         .map { tuple(it[1], it[2], it[4]) }
+                         .groupTuple(by: [0, 1])
                          .set { tads }
+
+    hicexplorer_find_tads.out.tads  // normalization, resolution, scores
+                         .map { tuple(it[1], it[2], it[5]) }
+                         .groupTuple(by: [0, 1])
+                         .set { insulation }
 
     generate_chrom_sizes(
         mcools.first(),
         resolutions.first()
+    )
+
+    generate_blacklist(
+        Channel.fromPath(params.mcools).collect(),
+        Channel.of(normalization_methods)
+            .combine(Channel.of(resolutions))
     )
 
     insulation_to_bigwig(
@@ -41,7 +53,7 @@ workflow {
     )
 
     aggregate_insulation_scores(
-        tads,
+        insulation.join(generate_blacklist.out.bed, by: [0, 1]),
         params.repl_labels,
         params.cond_labels
     )
@@ -53,11 +65,9 @@ workflow {
     )
 
     generate_insulation_report(
-        aggregate_insulation_scores.out.bedgraph,
-        tads.map { it[5] }.collect(), // domains
-        file(params.blacklist),
-        params.repl_pretty_labels,
-        params.cond_pretty_labels
+        aggregate_insulation_scores.out.bedgraph
+            .join(generate_blacklist.out.bed, by: [0, 1]),
+        tads.map { it[2] }.collect() // domains
     )
 }
 
@@ -82,7 +92,43 @@ process generate_chrom_sizes {
         '''
 }
 
+process generate_blacklist {
+
+    tag "${normalization}_${resolution}"
+
+    input:
+        path coolers
+        tuple val(normalization),
+              val(resolution)
+
+    output:
+        tuple val(normalization),
+              val(resolution),
+              path("*.bed.gz"),
+        emit: bed
+
+    shell:
+        outname="${normalization}_${resolution}_blacklist.bed.gz"
+        '''
+        set -o pipefail
+
+        uris=()
+        for clr in !{coolers}; do
+            if [ '!{resolution}' -ne 0 ]; then
+                clr="$clr::/resolutions/!{resolution}"
+            fi
+            uris+=("$clr")
+        done
+
+        generate_blacklist_from_coolers.py ${uris[*]} |
+            gzip -9 > '!{outname}'
+
+        '''
+}
+
 process apply_normalization_to_coolers {
+    tag "${cooler}_${normalization}_${resolution}"
+
     input:
         tuple val(type),
               val(normalization),
@@ -119,6 +165,7 @@ process hicexplorer_find_tads {
                                              it = it.toString().replaceAll("_${normalization}_${resolution}_", "_")
                                             "${normalization}/${resolution}/${it}"
                                        }
+    tag "${cooler}_${normalization}_${resolution}"
 
     label 'process_medium'
 
@@ -135,7 +182,9 @@ process hicexplorer_find_tads {
               path("*boundaries.bed.gz"),
               path("*domains.bed.gz"),
               path("*score.bedgraph.gz"),
-              path("*tad_score.bm.gz"), emit: tads
+              path("*tad_score.bm.gz"),
+              path("*tad_interactions.bedgraph.gz"),
+        emit: tads
 
     shell:
         outprefix="${cooler.baseName}"
@@ -147,6 +196,10 @@ process hicexplorer_find_tads {
                     --matrix '!{cooler}'       \\
                     --outPrefix '!{outprefix}' \\
                     --correctForMultipleTesting fdr
+
+        annotate_tads_with_interactions.py '!{cooler}' \\
+            *domains.bed.gz |
+            gzip -9 > '!{outprefix}_tad_interactions.bedgraph.gz'
 
         # Compress text files
         printf '%s\\n' *.bed *.bedgraph *.bm |
@@ -160,6 +213,7 @@ process insulation_to_bigwig {
                                              it = it.toString().replaceAll("_${normalization}_${resolution}_", "_")
                                             "${normalization}/${resolution}/${it}"
                                        }
+    tag "${normalization}_${resolution}"
 
     label 'process_very_short'
 
@@ -170,7 +224,8 @@ process insulation_to_bigwig {
               path(boundaries),
               path(domains),
               path(insulation_score),
-              path(tad_score)
+              path(tad_score),
+              path(interactions)
         path chrom_sizes
 
     output:
@@ -179,6 +234,8 @@ process insulation_to_bigwig {
     shell:
         outprefix="${insulation_score.simpleName}"
         '''
+        set -o pipefail
+
         zcat '!{insulation_score}' |
         sort -k1,1 -k2,2n > scores.bedgraph
 
@@ -189,39 +246,40 @@ process insulation_to_bigwig {
 process aggregate_insulation_scores {
     publishDir "${params.output_dir}", mode: 'copy',
                                        saveAs: { "${normalization}/${resolution}/${it}" }
+    tag "${normalization}_${resolution}"
 
     label 'process_short'
 
     input:
-        tuple val(type),
-              val(normalization),
+        tuple val(normalization),
               val(resolution),
-              path(boundaries),
-              path(domains),
-              path(insulation_score),
-              path(tad_score)
+              path(insulation_scores),
+              path(blacklist)
 
         val labels_replicates
         val labels_conditions
 
     output:
-        tuple val(type),
-              val(normalization),
+        tuple val(normalization),
               val(resolution),
               path("*.bedgraph.gz"), emit: bedgraph
 
     shell:
         suffix="_${normalization}_${resolution}"
         '''
-        aggregate_insulation_scores.py \\
-            *WT*merged!{suffix}_domains.bed.gz \\
-            --labels='!{labels_replicates}' |
-             gzip -9 > 'insulation_scores_replicates.bedgraph.gz'
+        set -o pipefail
 
         aggregate_insulation_scores.py \\
-            *WT*merged!{suffix}_domains.bed.gz \\
-            --labels='!{labels_conditions}' |
-             gzip -9 > 'insulation_scores_conditions.bedgraph.gz'
+            hg38_???_*!{suffix}_score.bedgraph.gz \\
+            --labels='!{labels_replicates}' \\
+            --blacklist='!{blacklist}' |
+            gzip -9 > 'insulation_scores_replicates.bedgraph.gz'
+
+        aggregate_insulation_scores.py \\
+            *{WT,T1,C1}_*merged!{suffix}_score.bedgraph.gz \\
+            --labels='!{labels_conditions}' \\
+            --blacklist='!{blacklist}' |
+            gzip -9 > 'insulation_scores_conditions.bedgraph.gz'
         '''
 }
 
@@ -233,13 +291,10 @@ process generate_tad_report {
     label 'process_short'
 
     input:
-        tuple val(type),
-              val(normalization),
+        tuple val(normalization),
               val(resolution),
-              path(boundaries),
               path(domains),
-              path(insulation_scores),
-              path(tad_score)
+              path(interactions)
 
         val labels_replicates
         val labels_conditions
@@ -274,37 +329,34 @@ process generate_insulation_report {
     label 'process_short'
 
     input:
-        tuple val(type),
-              val(normalization),
+        tuple val(normalization),
               val(resolution),
-              path(insulation)
+              path(insulation),
+              path(blacklist)
 
         path tads
-        path blacklist
-
-        val labels_replicates
-        val labels_conditions
 
     output:
         path "plots/*.png", emit: png
         path "plots/*.svg", emit: svg
-        path "*.tsv", emit: tsv
 
     shell:
         suffix="_${normalization}_${resolution}"
         '''
-        if [[ '!{type}' == cond ]]; then
-            labels='!{labels_conditions}'
-        else
-            labels='!{labels_replicates}'
-        fi
+
+        ls -lahL insulation*
 
         generate_insulation_report.py \\
-            '!{insulation}' \\
-            *WT_*merged!{suffix}_domains.bed.gz \
+            insulation_scores_replicates.bedgraph.gz \\
+            *WT_*merged!{suffix}_domains.bed.gz \\
             --output-prefix=report_replicates_insulation \\
-            --blacklist '!{blacklist}' \\
-            --labels="$labels"
+            --blacklist '!{blacklist}'
+
+        generate_insulation_report.py \\
+            insulation_scores_conditions.bedgraph.gz \\
+            *WT_*merged!{suffix}_domains.bed.gz \\
+            --output-prefix=report_conditions_insulation \\
+            --blacklist '!{blacklist}'
 
         mkdir plots
         mv *.svg *.png plots/

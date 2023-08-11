@@ -41,6 +41,13 @@ def make_cli():
     )
 
     cli.add_argument(
+        "-o",
+        "--output-prefix",
+        type=pathlib.Path,
+        help="Output prefix.",
+    )
+
+    cli.add_argument(
         "--force",
         action="store_true",
         default=False,
@@ -48,6 +55,28 @@ def make_cli():
     )
 
     return cli
+
+
+def handle_path_collisions(*paths: pathlib.Path) -> None:
+    collisions = [p for p in paths if p.exists()]
+
+    if len(collisions) != 0:
+        collisions = "\n - ".join((str(p) for p in collisions))
+        raise RuntimeError(
+            "Refusing to overwrite file(s):\n" f" - {collisions}\n" "Pass --force to overwrite existing file(s)."
+        )
+
+
+def save_plot_to_file(fig: plt.Figure, outprefix: pathlib.Path, force: bool, close_after_save: bool = True) -> None:
+    png = outprefix.with_suffix(".png")
+    svg = outprefix.with_suffix(".svg")
+    if not force:
+        handle_path_collisions(png, svg)
+
+    fig.savefig(png, bbox_inches="tight", dpi=300)
+    fig.savefig(svg, bbox_inches="tight")
+    if close_after_save:
+        plt.close(fig)
 
 
 def import_bedgraph(path_to_bedgraph: pathlib.Path) -> pd.DataFrame:
@@ -101,7 +130,6 @@ def map_insulation_to_tads(domains: pd.DataFrame, scores: pd.DataFrame) -> pd.Da
         .rename(columns=lambda c: c.rstrip("_"))
         .set_index(["chrom", "start", "end"])
     )
-    df2["std"] = df2.std(axis="columns")
 
     return df2
 
@@ -167,8 +195,14 @@ def main():
             columns=["chrom", "start", "end"]
         )
 
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(scores["std"], bins=25, log=True)
+    ax.set(title="Insulation score STD", xlabel="std", ylabel="frequency")
+    outprefix = pathlib.Path(str(args["output_prefix"]) + "_hist")
+    plt.tight_layout()
+    save_plot_to_file(fig, outprefix, args["force"])
+
     scores = map_insulation_to_tads(domains, scores)
-    scores.to_csv(sys.stdout, sep="\t", index=True, header=True, na_rep="NaN")
 
     grid_size = len(scores.columns) - 1
     fig, axs = plt.subplots(grid_size, grid_size, figsize=(grid_size * 6.4, grid_size * 6.4))
@@ -176,7 +210,9 @@ def main():
     plot_scatters(fig, axs, lb, ub, scores.drop(columns=["std"]))
 
     plt.tight_layout()
-    fig.savefig("/tmp/test.scatter.png")
+
+    outprefix = pathlib.Path(str(args["output_prefix"]) + "_scatter")
+    save_plot_to_file(fig, outprefix, args["force"])
 
 
 if __name__ == "__main__":
