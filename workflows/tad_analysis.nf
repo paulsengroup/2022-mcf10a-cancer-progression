@@ -64,6 +64,15 @@ workflow {
         params.cond_pretty_labels
     )
 
+    generate_tad_interaction_scatter(
+        apply_normalization_to_coolers.out.cool
+            .map { tuple(it[1], it[2], it[3]) }
+            .groupTuple(by: [0, 1])
+            .join(tads, by: [0, 1]),
+        params.repl_labels,
+        params.cond_labels
+    )
+
     generate_insulation_report(
         aggregate_insulation_scores.out.bedgraph
             .join(generate_blacklist.out.bed, by: [0, 1]),
@@ -293,8 +302,7 @@ process generate_tad_report {
     input:
         tuple val(normalization),
               val(resolution),
-              path(domains),
-              path(interactions)
+              path(domains)
 
         val labels_replicates
         val labels_conditions
@@ -307,14 +315,14 @@ process generate_tad_report {
     shell:
         suffix="_${normalization}_${resolution}"
         '''
-        generate_tad_report.py \
-            hg38_???_*!{suffix}_domains.bed.gz \
-            --output-prefix=report_replicates \
+        generate_tad_report.py \\
+            hg38_???_*!{suffix}_domains.bed.gz \\
+            --output-prefix=report_replicates \\
             --labels='!{labels_replicates}'
 
-        generate_tad_report.py \
-            *{WT,T1,C1}_*merged!{suffix}_domains.bed.gz \
-            --output-prefix=report_conditions \
+        generate_tad_report.py \\
+            *{WT,T1,C1}_*merged!{suffix}_domains.bed.gz \\
+            --output-prefix=report_conditions \\
             --labels='!{labels_conditions}'
 
         mkdir plots
@@ -343,9 +351,6 @@ process generate_insulation_report {
     shell:
         suffix="_${normalization}_${resolution}"
         '''
-
-        ls -lahL insulation*
-
         generate_insulation_report.py \\
             insulation_scores_replicates.bedgraph.gz \\
             *WT_*merged!{suffix}_domains.bed.gz \\
@@ -357,6 +362,43 @@ process generate_insulation_report {
             *WT_*merged!{suffix}_domains.bed.gz \\
             --output-prefix=report_conditions_insulation \\
             --blacklist '!{blacklist}'
+
+        mkdir plots
+        mv *.svg *.png plots/
+        '''
+}
+
+process generate_tad_interaction_scatter {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "${normalization}/${resolution}/${it}" }
+
+    input:
+        tuple val(normalization),
+              val(resolution),
+              path(coolers),
+              path(tads)
+
+        val labels_replicates
+        val labels_conditions
+
+    output:
+        path "plots/*.png", emit: png
+        path "plots/*.svg", emit: svg
+
+    shell:
+        suffix="_${normalization}_${resolution}"
+        '''
+        generate_tad_interaction_scatter.py \\
+            hg38_???_*!{suffix}.cool \\
+            *WT_*merged!{suffix}_domains.bed.gz \\
+            --output-prefix=tad_interactions_scatter_replicates \\
+            --labels='!{labels_replicates}'
+
+        generate_tad_interaction_scatter.py \\
+            *{WT,T1,C1}_merged!{suffix}.cool \\
+            *WT_*merged!{suffix}_domains.bed.gz \\
+            --output-prefix=tad_interactions_scatter_conditions \\
+            --labels='!{labels_conditions}'
 
         mkdir plots
         mv *.svg *.png plots/
