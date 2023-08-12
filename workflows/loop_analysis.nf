@@ -41,6 +41,13 @@ workflow {
         lowest_resolution
     )
 
+    plot_loops_venn(
+        merge_loops.out.bedpe
+            .map { it[1] }
+            .collect(),
+        lowest_resolution
+    )
+
 }
 
 process compute_expected_cis {
@@ -151,8 +158,7 @@ process detect_differential_loops {
         val lowest_resolution
 
     output:
-        tuple val(label),
-              path("*.tsv.gz"), emit: tsv
+        path "*.tsv.gz", emit: tsv
 
     shell:
         '''
@@ -167,4 +173,25 @@ process detect_differential_loops {
             gzip -9 > differential_loops_by_sample.tsv.gz
         '''
 
+}
+
+process plot_loops_venn {
+    publishDir "${params.output_dir}/plots", mode: 'copy'
+
+    input:
+        path loops
+        val lowest_resolution
+
+    output:
+        path "*.png", emit: png
+        path "*.svg", emit: svg
+
+    shell:
+        '''
+        plot_loops_venn.py \\
+            *{WT,T1,C1}_merged.bedpe.gz \\
+            '!{lowest_resolution}' \\
+            -o loops_venn \\
+            --labels WT T1 C1
+        '''
 }

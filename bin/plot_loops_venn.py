@@ -6,12 +6,12 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import itertools
 import pathlib
-import sys
 import warnings
 
 import bioframe as bf
+import matplotlib.pyplot as plt
+import matplotlib_venn
 import pandas as pd
 
 
@@ -28,7 +28,7 @@ def make_cli():
         "loops",
         nargs="+",
         type=pathlib.Path,
-        help="Path to two or more BEDPE with the list of loops to compare.",
+        help="Path to three BEDPE with the list of loops to plot.",
     )
 
     cli.add_argument("lowest-resolution", type=positive_int, help="Lowest resolution used for loop calling.")
@@ -38,6 +38,19 @@ def make_cli():
         type=str,
         nargs="+",
         help="List of labels to use instead of file names.",
+    )
+
+    cli.add_argument(
+        "-o",
+        "--output-prefix",
+        type=pathlib.Path,
+        help="Output prefix.",
+    )
+    cli.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing files (if any).",
     )
 
     return cli
@@ -50,10 +63,26 @@ def import_bedpe(path_to_bedpe: pathlib.Path) -> pd.DataFrame:
         return bf.read_table(path_to_bedpe, schema="bedpe")[cols]
 
 
-def detect_path_collisions(*args: pathlib.Path) -> None:
-    for path in args:
-        if path.exists():
-            raise RuntimeError(f"Refusing to overwrite file {path}. Pass --force to overwrite existing file(s).")
+def handle_path_collisions(*paths: pathlib.Path) -> None:
+    collisions = [p for p in paths if p.exists()]
+
+    if len(collisions) != 0:
+        collisions = "\n - ".join((str(p) for p in collisions))
+        raise RuntimeError(
+            "Refusing to overwrite file(s):\n" f" - {collisions}\n" "Pass --force to overwrite existing file(s)."
+        )
+
+
+def save_plot_to_file(fig: plt.Figure, outprefix: pathlib.Path, force: bool, close_after_save: bool = True) -> None:
+    png = outprefix.with_suffix(".png")
+    svg = outprefix.with_suffix(".svg")
+    if not force:
+        handle_path_collisions(png, svg)
+
+    fig.savefig(png, bbox_inches="tight", dpi=300)
+    fig.savefig(svg, bbox_inches="tight")
+    if close_after_save:
+        plt.close(fig)
 
 
 def pad_loops(df: pd.DataFrame, target_size: int) -> pd.DataFrame:
@@ -114,6 +143,9 @@ def main():
 
     labels = args.get("labels")
     paths_to_loops = args["loops"]
+    if len(paths_to_loops) != 3:
+        raise RuntimeError(f"Expected path to 3 loop annotations, found {len(paths_to_loops)}")
+
     if labels is None:
         labels = [p.name for p in paths_to_loops]
     elif len(labels) != len(paths_to_loops):
@@ -123,17 +155,29 @@ def main():
 
     loops = {k: pad_loops(import_bedpe(path), args["lowest-resolution"]) for k, path in zip(labels, paths_to_loops)}
 
-    print_header = True
-    for (k1, l1), (k2, l2) in itertools.product(loops.items(), repeat=2):
-        if k1 == k2:
-            continue
+    a = loops[labels[0]]
+    b = loops[labels[1]]
+    c = loops[labels[2]]
 
-        df = overlap_bedpe(l1, l2)
-        df = df[~df["has_overlap"]].drop(columns="has_overlap")
-        df["cond1"] = k1
-        df["cond2"] = k2
-        df.to_csv(sys.stdout, sep="\t", header=print_header, index=True)
-        print_header = False
+    a_vs_b = overlap_bedpe(a, b)
+    a_vs_c = overlap_bedpe(a, c)
+    b_vs_c = overlap_bedpe(b, c)
+    shared = overlap_bedpe(a, b, c)
+
+    ab = len(a_vs_b) - len(shared)
+    bc = len(b_vs_c) - len(shared)
+    ac = len(a_vs_c) - len(shared)
+
+    a_only = len(a) - ab - ac - len(shared)
+    b_only = len(b) - ab - bc - len(shared)
+    c_only = len(c) - ac - bc - len(shared)
+
+    subsets = {"100": a_only, "010": b_only, "001": c_only, "110": ab, "101": ac, "011": bc, "111": len(shared)}
+
+    fig, ax = plt.subplots(1, 1)
+    matplotlib_venn.venn3(subsets, set_labels=labels, ax=ax)
+
+    save_plot_to_file(fig, args["output_prefix"], args["force"])
 
 
 if __name__ == "__main__":
