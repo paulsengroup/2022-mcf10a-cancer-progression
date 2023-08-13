@@ -6,13 +6,22 @@
 nextflow.enable.dsl=2
 
 workflow {
-    sort_and_filter_chrom_sizes(file(params.hg38_chrom_sizes_in, checkIfExists: true),
-                                params.hg38_chrom_sizes_out)
+    sort_and_filter_chrom_sizes(
+        file(params.hg38_chrom_sizes_in, checkIfExists: true),
+        params.hg38_chrom_sizes_out
+    )
 
-    process_microarray_data(file(params.hg38_chrom_sizes_in, checkIfExists: true),
-                            file(params.microarray_cnvs, checkIfExists: true),
-                            file(params.microarray_probe_dbs, checkIfExists: true),
-                            file(params.hg17_to_hg38_liftover_chain, checkIfExists: true))
+    sort_and_filter_fna(
+        file(params.hg38_assembly_in, checkIfExists: true),
+        params.hg38_assembly_filtered_out
+    )
+
+    process_microarray_data(
+        file(params.hg38_chrom_sizes_in, checkIfExists: true),
+        file(params.microarray_cnvs, checkIfExists: true),
+        file(params.microarray_probe_dbs, checkIfExists: true),
+        file(params.hg17_to_hg38_liftover_chain, checkIfExists: true)
+    )
 
     generate_blacklist(
         file(params.hg38_assembly_gaps, checkIfExists: true),
@@ -20,9 +29,13 @@ workflow {
         params.hg38_blacklist
     )
 
+    Channel.of(
+        tuple(file(params.hg38_assembly_in), params.hg38_assembly_out),
+        tuple(file(params.hg38_gtf_in), params.hg38_gtf_out)
+    ).set { files }
+
     decompress_data(
-        Channel.fromPath([params.hg38_assembly_in, params.hg38_gtf_in], checkIfExists: true),
-        Channel.of(params.hg38_assembly_out, params.hg38_gtf_out)
+        files
     )
 }
 
@@ -44,6 +57,33 @@ process sort_and_filter_chrom_sizes {
         '''
         grep '^chr[[:digit:]XY]\\+[[:space:]]' '!{chrom_sizes_in}' |
            sort -V > '!{out}'
+        '''
+}
+
+process sort_and_filter_fna {
+    publishDir params.output_dir, mode: 'copy',
+                                  saveAs: { "${fna_out}" }
+
+    input:
+        path fna_in
+        val fna_out
+
+    output:
+        path "*.fa", emit: fa
+
+    shell:
+        out=file(fna_out).getName()
+        '''
+        seqkit grep  \\
+            --pattern '^chr[XY\\d]+$' \\
+            --use-regexp \\
+            '!{fna_in}' > fa.tmp
+
+        seqkit sort \\
+            --by-name \\
+            --natural-order \\
+            --two-pass \\
+            fa.tmp > '!{out}'
         '''
 }
 
@@ -112,8 +152,8 @@ process decompress_data {
     label 'process_short'
 
     input:
-        path src
-        val dest
+        tuple path(src),
+              val(dest)
 
     output:
         path "*", emit: file
