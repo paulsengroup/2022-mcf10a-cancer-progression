@@ -15,7 +15,7 @@ RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build
 RUN micromamba install -y \
         -c conda-forge \
         -c bioconda \
-        python=3.11 \
+        python=3.10 \
         'bioframe>=0.4.1' \
         'cooler>=0.9.2' \
         matplotlib \
