@@ -3,3 +3,7 @@ MCF10A_WT_REP1,data/input/raw_data/chipseq/H3K9ac/ChIP_003_MCF10A_WT_IgG_R1.fast
 MCF10A_WT_REP2,data/input/raw_data/chipseq/H3K9ac/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz,,,
 MCF10A_WT_H3K9ac_REP1,data/input/raw_data/chipseq/H3K9ac/ChIP_001_MCF10A_WT_H3K9ac_R1.fastq.gz,,H3K9ac,MCF10A_WT_REP1
 MCF10A_WT_H3K9ac_REP2,data/input/raw_data/chipseq/H3K9ac/ChIP_002_MCF10A_WT_H3K9ac_R1.fastq.gz,,H3K9ac,MCF10A_WT_REP2
+MCF10A_WT,data/input/raw_data/chipseq/H3K9ac/ChIP_003_MCF10A_WT_IgG_R1.fastq.gz,,,
+MCF10A_WT,data/input/raw_data/chipseq/H3K9ac/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz,,,
+MCF10A_WT_H3K9ac,data/input/raw_data/chipseq/H3K9ac/ChIP_001_MCF10A_WT_H3K9ac_R1.fastq.gz,,H3K9ac,MCF10A_WT
+MCF10A_WT_H3K9ac,data/input/raw_data/chipseq/H3K9ac/ChIP_002_MCF10A_WT_H3K9ac_R1.fastq.gz,,H3K9ac,MCF10A_WT
