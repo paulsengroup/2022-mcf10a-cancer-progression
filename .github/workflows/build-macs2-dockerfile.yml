@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build MACS2 Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-macs2-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/macs2*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-macs2-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/macs2*.Dockerfile"
+
+jobs:
+  build-macs2-dockerfile:
+    name: Build MACS2 Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/macs2*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
