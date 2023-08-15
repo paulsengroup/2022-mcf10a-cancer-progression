@@ -7,15 +7,15 @@
 
 import argparse
 import pathlib
-import sys
 import warnings
-from typing import Dict, Tuple, Union
+from typing import Tuple, Union
 
 import bioframe as bf
 import cooler
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def make_cli():
@@ -109,9 +109,17 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(i + 1, num_cols):
             cond1, cond2 = scores.columns[i], scores.columns[j]
-            df = scores.copy()
-            df["delta"] = (df[cond1] - df[cond2]).abs()
-            axs[i][j].scatter(df[cond1], df[cond2], color="blue", alpha=0.1)
+            sns.regplot(
+                scores,
+                x=cond1,
+                y=cond2,
+                ci=False,
+                color="blue",
+                scatter_kws={"alpha": 0.1},
+                line_kws={"color": "red"},
+                ax=axs[i][j],
+            )
+
     for i in range(num_cols):
         for j in range(num_cols):
             ax = axs[i][j]
@@ -135,7 +143,7 @@ def get_interactions(coords, sel: cooler.api.RangeSelector2D, diagonals_to_mask)
         m.setdiag(0, i)
 
     m = m.tocoo()
-    return m.sum() / m.max()
+    return m.sum() / (m.shape[0] ** 2)
 
 
 def main():
@@ -157,7 +165,8 @@ def main():
     domains = import_tads(paths_to_domains)
 
     for key, uri in zip(labels, args["coolers"]):
-        sel = cooler.Cooler(str(uri)).matrix(sparse=True, balance=False)
+        clr = cooler.Cooler(str(uri))
+        sel = clr.matrix(sparse=True, balance=False)
         domains[key] = domains.index.to_frame().apply(
             get_interactions,
             args=(sel, args["diagonals_to_mask"]),

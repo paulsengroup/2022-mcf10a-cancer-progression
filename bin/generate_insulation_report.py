@@ -7,7 +7,6 @@
 
 import argparse
 import pathlib
-import sys
 import warnings
 from typing import Dict, Tuple
 
@@ -15,6 +14,7 @@ import bioframe as bf
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def make_cli():
@@ -156,9 +156,17 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(i + 1, num_cols):
             cond1, cond2 = scores.columns[i], scores.columns[j]
-            df = scores.copy()
-            df["delta"] = (df[cond1] - df[cond2]).abs()
-            axs[i][j].scatter(df[cond1], df[cond2], color="blue", alpha=0.1)
+            sns.regplot(
+                scores,
+                x=cond1,
+                y=cond2,
+                ci=False,
+                color="blue",
+                scatter_kws={"alpha": 0.1},
+                line_kws={"color": "red"},
+                ax=axs[i][j],
+            )
+
     for i in range(num_cols):
         for j in range(num_cols):
             ax = axs[i][j]
