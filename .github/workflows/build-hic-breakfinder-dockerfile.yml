@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build hic_breakfinder Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-hic-breakfinder*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/hic_breakfinder*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-hic-breakfinder*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/hic_breakfinder*.Dockerfile"
+
+jobs:
+  build-hicbreakfinder-dockerfile:
+    name: Build hic_breakfinder Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/hic-breakfinderhint.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
