@@ -61,7 +61,7 @@ workflow {
     )
 
     digest_genome_for_hint(
-        file(params.reference_genome),
+        file(params.reference_genome, checkIfExists: true),
         params.ref_genome_name,
         params.restriction_enzymes,
         params.restriction_enzymes_alias
@@ -69,7 +69,7 @@ workflow {
 
     run_hint_cnv(
         mcools,
-        file(params.hint_refzip),
+        file(params.hint_refzip, checkIfExists: true),
         digest_genome_for_hint.out.txt,
         params.hint_resolution,
         params.ref_genome_name
@@ -77,20 +77,19 @@ workflow {
 
     run_hint_tl(
         mcools,
-        file(params.hint_refzip),
-        file(params.hint_backdirzip),
+        file(params.hint_refzip, checkIfExists: true),
+        file(params.hint_backdirzip, checkIfExists: true),
         digest_genome_for_hint.out.txt,
         params.ref_genome_name
     )
 
     filter_mappings(
-        alignments
-        params.quality_score
+        alignments,
+        params.hic_breakfinder_quality_score
     )
 
     merge_bams(
-        filter_mappings.out.bam
-            .groupTuple()
+        filter_mappings.out.bam.groupTuple()
     )
 
     run_hic_breakfinder(
@@ -353,24 +352,26 @@ process run_hint_tl {
         '''
 }
 
-
 process filter_mappings {
     label 'process_medium'
 
-    tag "${condition}"
+    tag "${aln.simpleName}"
 
     input:
         tuple val(condition),
               path(aln)
+
         val score
 
     output:
         tuple val(condition),
-              path "*.bam", emit: bam
+              path("*.bam"),
+        emit: bam
 
     shell:
         outname="${aln.baseName}.filtered.bam"
         '''
+        mkdir -p tmp
         samtools view -bSq '!{score}' -@'!{task.cpus}' '!{aln}' |
            samtools sort -T tmp/ -O bam -@'!{task.cpus}' -o '!{outname}'
         '''
@@ -387,7 +388,8 @@ process merge_bams {
 
     output:
         tuple val(condition),
-              path "*.bam", emit: bam
+              path("*.bam"),
+        emit: bam
 
     shell:
         outname="${condition}.filtered.bam"
@@ -405,6 +407,7 @@ process run_hic_breakfinder {
     input:
         tuple val(condition),
               path(bam)
+
         path expected_intra
         path expected_inter
 

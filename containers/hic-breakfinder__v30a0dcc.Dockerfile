@@ -47,6 +47,7 @@ RUN micromamba install -y \
     -c conda-forge \
     -c bioconda \
     bamtools \
+    procps-ng \
 && micromamba clean --all -y
 
 COPY --from=builder --chown=nobody:nogroup /tmp/hic_breakfinder/src/hic_breakfinder /usr/local/bin/
