@@ -394,7 +394,7 @@ process merge_bams {
     shell:
         outname="${condition}.filtered.bam"
         '''
-        samtools merge -o '!{outname}' !{bams}
+        samtools merge  -@'!{task.cpus}' -O bam -o '!{outname}' !{bams}
         '''
 }
 
@@ -412,7 +412,7 @@ process run_hic_breakfinder {
         path expected_inter
 
     output:
-        path "*.txt", emit: txt
+        path "*breaks*.txt", emit: txt
 
     shell:
         outprefix=condition
