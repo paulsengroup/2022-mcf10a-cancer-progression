@@ -78,6 +78,12 @@ workflow {
             .join(generate_blacklist.out.bed, by: [0, 1]),
         tads.map { it[2] }.collect() // domains
     )
+
+    generate_tad_overlap_report(
+        tads.join(generate_blacklist.out.bed, by: [0, 1]),
+        params.repl_pretty_labels,
+        params.cond_pretty_labels
+    )
 }
 
 process generate_chrom_sizes {
@@ -403,4 +409,39 @@ process generate_tad_interaction_scatter {
         mkdir plots
         mv *.svg *.png plots/
         '''
+}
+
+process generate_tad_overlap_report {
+    publishDir "${params.output_dir}", mode: 'copy',
+                                       saveAs: { "${normalization}/${resolution}/${it}" }
+
+    tag "${normalization}_${resolution}"
+
+    input:
+        tuple val(normalization),
+              val(resolution),
+              path(domains),
+              path(blacklist)
+
+        val labels_replicates
+        val labels_conditions
+
+    output:
+        path "plots/*.png", emit: png
+        path "plots/*.svg", emit: svg
+
+    shell:
+        suffix="_${normalization}_${resolution}"
+        '''
+        generate_tad_overlap_report.py \\
+            *{WT,T1,C1}_merged!{suffix}_domains.bed.gz \\
+            --blacklist '!{blacklist}' \\
+            --output-prefix=tad_overlap_conditions \\
+            --title='!{normalization}_!{resolution}' \\
+            --labels='!{labels_conditions}'
+
+        mkdir plots
+        mv *.svg *.png plots/
+        '''
+
 }
