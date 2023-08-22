@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.1 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -17,12 +17,13 @@ RUN micromamba install -y \
         -c bioconda \
         python=3.10 \
         r=4.2 \
-        bioframe \
+        'bioframe>=0.4.1' \
         'cooler>=0.9' \
         matplotlib \
+        matplotlib-venn \
         natsort \
         numpy \
-        pandas \
+        'pandas<2' \
         procps-ng \
         pyBigWig \
         r-alluvial \
@@ -41,7 +42,7 @@ WORKDIR /data
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-plotting}"

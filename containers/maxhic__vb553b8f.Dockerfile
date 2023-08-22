@@ -21,7 +21,7 @@ RUN apt-get update \
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-FROM mambaorg/micromamba:1.4.0 AS base
+FROM mambaorg/micromamba:1.4.3 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
@@ -37,7 +37,7 @@ RUN micromamba install -y \
         -c bioconda \
         'cooler>=0.9' \
         'numpy>=1.4,<1.22' \
-        'pandas>=0.24' \
+        'pandas>=0.24,<2' \
         procps-ng \
         'scipy>=1.1' \
         'tensorflow>=1.3,<2' \
@@ -65,7 +65,7 @@ RUN maxhic --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
-LABEL org.opencontainers.image.documentation='https://github.com/2022-mcf10a-cancer-progression'
+LABEL org.opencontainers.image.documentation='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.source='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
 LABEL org.opencontainers.image.licenses='MIT'
 LABEL org.opencontainers.image.title="${CONTAINER_TITLE:-maxhic}"

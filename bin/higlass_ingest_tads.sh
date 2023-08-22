@@ -19,31 +19,35 @@ higlass_dir="$data_dir/higlass/"
 "$(dirname "$0")/higlass_start_instance.sh"
 
 function uuidgen {
-    "$(dirname "$0")/higlass_uuid_generator.py" "$1"
+  "$(dirname "$0")/higlass_uuid_generator.py" "$1"
 }
 
 export uuidgen
 
-for beddb in "$data_dir/output/tad_analysis/clodius/GRCh38_0"??_*.beddb; do
-    beddb_name="$(basename "$beddb" _domains.bed.beddb)"
-    sudo -E higlass-manage ingest \
-        --project-name "tad_by_sample" \
-        --name "$beddb_name" \
-        --uid "$(uuidgen "$(basename "$beddb")")" \
-        --hg-name "$name" \
-        --no-upload \
-        --assembly hg38 \
-        "${beddb#"$data_dir/"}"
+for beddb in "$data_dir/output/tad_analysis/clodius/hg38_0"??_*.beddb; do
+  beddb_name="$(basename "$beddb" _domains.bed.beddb)"
+  sudo -E higlass-manage ingest \
+    --filetype bed2ddb \
+    --datatype 2d-rectangle-domains \
+    --project-name "tad_by_sample" \
+    --name "$beddb_name" \
+    --uid "$(uuidgen "$(basename "$beddb")")" \
+    --hg-name "$name" \
+    --no-upload \
+    --assembly hg38 \
+    "${beddb#"$data_dir/"}"
 done
 
-for beddb in "$data_dir/output/tad_analysis/clodius/GRCh38_"*merged*.beddb; do
-    beddb_name="$(basename "$beddb" _domains.bed.beddb)"
-    sudo -E higlass-manage ingest \
-        --project-name "tad_by_condition" \
-        --name "$beddb_name" \
-        --uid "$(uuidgen "$(basename "$beddb")")" \
-        --hg-name "$name" \
-        --no-upload \
-        --assembly hg38 \
-        "${beddb#"$data_dir/"}"
+for beddb in "$data_dir/output/tad_analysis/clodius/hg38_"*merged*.beddb; do
+  beddb_name="$(basename "$beddb" _domains.bed.beddb)"
+  sudo -E higlass-manage ingest \
+    --filetype bed2ddb \
+    --datatype 2d-rectangle-domains \
+    --project-name "tad_by_condition" \
+    --name "$beddb_name" \
+    --uid "$(uuidgen "$(basename "$beddb")")" \
+    --hg-name "$name" \
+    --no-upload \
+    --assembly hg38 \
+    "${beddb#"$data_dir/"}"
 done

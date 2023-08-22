@@ -11,8 +11,8 @@ set -u
 # IMPORTANT! This script should be run from the repository root!
 
 if [ $# -lt 3 ]; then
-  1>&2 echo "Usage: $0 working-dir workflow-archive configs..."
-  1>&2 echo "Example: $0 .nextflow-nfcore-chipseq-wd nfcore-chipseq-v2.0.0.tar.xz configs/nfcore_chipseq_*.config"
+  1>&2 echo "Usage: $0 working-dir workflow-archive param_files..."
+  1>&2 echo "Example: $0 .nextflow-nfcore-chipseq-wd nfcore-chipseq-v2.0.0.tar.xz configs/nfcore/nfcore_chipseq_*.json"
   exit 1
 fi
 
@@ -31,7 +31,7 @@ function readlink_py {
 wd="$1"
 workflow_archive="$(readlink_py "$2")"
 name="$(basename "$workflow_archive" .tar.xz)"
-configs=("${@:3}")
+param_files=("${@:3}")
 
 if [ ! -d "$wd" ]; then
   1>&2 echo "Working directory '$wd' does not exist! Please create it before running $(basename "$0")"
@@ -43,9 +43,9 @@ if [ ! -f "$workflow_archive" ]; then
   exit 1
 fi
 
-for config in "${configs[@]}"; do
-  if [ ! -f "$config" ]; then
-    1>&2 echo "Unable to find config file '$config'!"
+for param_file in "${param_files[@]}"; do
+  if [ ! -f "$param_file" ]; then
+    1>&2 echo "Unable to find params file '$params_file'!"
     exit 1
   fi
 done
@@ -61,7 +61,7 @@ tar -xf "$workflow_archive" -C "$name/" --strip-components 1
 
 
 args=()
-if [[ $HOSTNAME == *.saga* ]]; then
+if [[ "$(hostname -d)" == saga ]]; then
   base_config="configs/base_saga.config"
   args+=(--max_memory=400.GB
          --max_cpus=52
@@ -80,11 +80,11 @@ if [ ! -f "$base_config" ]; then
   exit 1
 fi
 
-for config in "${configs[@]}"; do
-  1>&2 echo "### Running workflow '$name' -c '$(basename "$config")'..."
+for params_file in "${param_files[@]}"; do
+  1>&2 echo "### Running workflow '$name' -params-file '$(basename "$params_file")'..."
   cmd=(nextflow run
        "${args[@]+"${args[@]}"}"
-       -c "$config"
+       -params-file "$params_file"
        -c "$base_config"
        -process.cache=deep
        "$name"

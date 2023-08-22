@@ -1,0 +1,29 @@
+# Copyright (c) 2023 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build wiggletools Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-wiggletools-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/wiggletools*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-wiggletools-dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/wiggletools*.Dockerfile"
+
+jobs:
+  build-wiggletools-dockerfile:
+    name: Build wiggletools Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/wiggletools*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write

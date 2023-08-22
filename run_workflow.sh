@@ -49,7 +49,7 @@ if [ ! -f "$config" ]; then
 fi
 
 args=("${@:3}")
-if [[ $HOSTNAME == *.saga* ]]; then
+if [[ "$(hostname -d)" == saga ]]; then
   base_config="configs/base_saga.config"
   args+=(--max_memory=400.GB
          --max_cpus=52

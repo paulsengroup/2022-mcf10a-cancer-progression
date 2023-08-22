@@ -3,3 +3,7 @@ MCF10A_WT_REP1,data/input/raw_data/chipseq/p53/ChIP_003_MCF10A_WT_IgG_R1.fastq.g
 MCF10A_WT_REP2,data/input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz,,,
 MCF10A_WT_p53_REP1,data/input/raw_data/chipseq/p53/ChIP_001_MCF10A_WT_p53_R1.fastq.gz,,p53,MCF10A_WT_REP1
 MCF10A_WT_p53_REP2,data/input/raw_data/chipseq/p53/ChIP_002_MCF10A_WT_p53_R1.fastq.gz,,p53,MCF10A_WT_REP2
+MCF10A_WT,data/input/raw_data/chipseq/p53/ChIP_003_MCF10A_WT_IgG_R1.fastq.gz,,,
+MCF10A_WT,data/input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz,,,
+MCF10A_WT_p53,data/input/raw_data/chipseq/p53/ChIP_001_MCF10A_WT_p53_R1.fastq.gz,,p53,MCF10A_WT
+MCF10A_WT_p53,data/input/raw_data/chipseq/p53/ChIP_002_MCF10A_WT_p53_R1.fastq.gz,,p53,MCF10A_WT

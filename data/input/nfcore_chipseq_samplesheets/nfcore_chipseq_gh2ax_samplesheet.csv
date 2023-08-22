@@ -1,4 +1,6 @@
 sample,fastq_1,fastq_2,antibody,control
-MCF10A_WT_REP1,data/input/raw_data/chipseq/gH2AX/ChIP_003_MCF10A_IgG_R1.fastq.gz,,,
-MCF10A_WT_gH2AX_REP1,data/input/raw_data/chipseq/gH2AX/ChIP_001_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT_REP1
-MCF10A_WT_gH2AX_REP2,data/input/raw_data/chipseq/gH2AX/ChIP_002_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT_REP1
+MCF10A_WT,data/input/raw_data/chipseq/gH2AX/ChIP_003_MCF10A_IgG_R1.fastq.gz,,,
+MCF10A_WT_gH2AX_REP1,data/input/raw_data/chipseq/gH2AX/ChIP_001_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT
+MCF10A_WT_gH2AX_REP2,data/input/raw_data/chipseq/gH2AX/ChIP_002_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT
+MCF10A_WT_gH2AX,data/input/raw_data/chipseq/gH2AX/ChIP_001_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT
+MCF10A_WT_gH2AX,data/input/raw_data/chipseq/gH2AX/ChIP_002_MCF10A_gH2AX_R1.fastq.gz,,gH2AX,MCF10A_WT

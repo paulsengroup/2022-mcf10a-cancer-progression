@@ -18,4 +18,4 @@ mkdir -p "$wd"
 ./run_external_workflow.sh \
   "$wd" \
   'workflows/nfcore-nascent-v2.1.1.tar.xz' \
-   configs/nfcore_nascent*.config
+   configs/nfcore/nfcore_nascent*.json

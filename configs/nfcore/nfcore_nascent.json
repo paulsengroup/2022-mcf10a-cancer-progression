@@ -1,0 +1,9 @@
+{
+    "input": "data/input/nfcore_nascent_samplesheet.csv",
+    "outdir": "data/output/nfcore_nascent/",
+    "assay_type": "PROseq",
+    "fasta": "data/input/hg38/hg38.fa",
+    "gtf": "data/input/hg38/hg38_gencode_v43.gtf",
+    "process.withName:PINTS_CALLER.time": "24h",
+    "schema_ignore_params": "cluster-options,clusterOptions,genomes,project"
+}

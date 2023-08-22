@@ -17,14 +17,14 @@ wd="$data_dir/output/tad_analysis/clodius"
 rm -rf "$wd"
 mkdir -p "$wd"
 
-chrom_sizes="$data_dir/output/preprocessing/chrom_sizes/GRCh38.chrom.sizes"
+chrom_sizes="$data_dir/input/hg38/hg38.filtered.chrom.sizes"
 
 clodius_wrapper="$(mktemp)"
 trap 'rm -f "$clodius_wrapper"' EXIT
 
 chmod 755 "$clodius_wrapper"
 
-cat << 'EOF' >> "$clodius_wrapper"
+cat <<'EOF' >>"$clodius_wrapper"
 #!/usr/bin/env bash
 
 set -e
@@ -42,16 +42,18 @@ normalization="$(basename "$(dirname "$(dirname "$bed")")")"
 out_name="$wd/$(basename "$bed" .bed.gz)_${normalization}_${resolution}.beddb"
 
 echo "Processing \"$bed\"..."
-clodius aggregate bedfile \
+clodius aggregate bedpe \
   --chromsizes-filename="$chrom_sizes" \
+  --chr1-col 1 --from1-col 2 --to1-col 3 \
+  --chr2-col 1 --from2-col 2 --to2-col 3 \
   -o "$out_name" "$bed" > /dev/null
 EOF
 
 function run_clodius {
-   "$clodius_wrapper" "$wd" "$chrom_sizes" "$1"
+  "$clodius_wrapper" "$wd" "$chrom_sizes" "$1"
 }
 
 export -f run_clodius
 
 printf '%s\n' "$data_dir/output/tad_analysis/"*/*/*_domains.bed.gz |
-xargs -L 1 -P "$(nproc)" bash -c "\"$clodius_wrapper\" \"$wd\" \"$chrom_sizes\" \"\$1\"" bash
+  xargs -L 1 -P "$(nproc)" bash -c "\"$clodius_wrapper\" \"$wd\" \"$chrom_sizes\" \"\$1\"" bash
