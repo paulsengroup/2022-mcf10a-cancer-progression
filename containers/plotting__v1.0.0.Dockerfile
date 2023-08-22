@@ -17,8 +17,10 @@ RUN micromamba install -y \
         -c bioconda \
         python=3.10 \
         r=4.2 \
+        bedtools \
         'bioframe>=0.4.1' \
         'cooler>=0.9' \
+        cooltools \
         matplotlib \
         matplotlib-venn \
         natsort \
@@ -26,6 +28,7 @@ RUN micromamba install -y \
         'pandas<2' \
         procps-ng \
         pyBigWig \
+        upsetplot \
         r-alluvial \
         r-data.table \
         r-optparse \
