@@ -1,4 +1,8 @@
 url	sha256	dest	action
+https://www.dropbox.com/scl/fi/7lekl4jeeduym9gav2ajr/backgroundMatrices_hg38.zip?rlkey=bh0pd0pbpedtxf45u6nb2e3m0&dl=1	d0964aa7cb005bd0a1d855175840ccbd26a18f3ec18ec16ebb848a93c441b2de	input/hint/backgroundMatrices_hg38.zip	none
+https://www.dropbox.com/scl/fi/qtac9ptpy5j8066rtr9z6/refData_hg38.zip?rlkey=col12qdnu3nmpdzb461b29sof&dl=1	1d3e34d8a53a6d0fe90db4e49803d6d0452121da53dc9ac69ef9203ce6bdd878	input/hint/refData_hg38.zip	none
+https://www.dropbox.com/scl/fi/gxr3f5wtolcdbifwxix61/inter_expect_1Mb.hg38.txt?rlkey=4qya4yst8qry1n0l9luqjkisq&dl=1	98cbf89605e03b21ef1ab438b434c800d51661a63c379034dc154a0ed1bfcbea	input/hic_breakfinder/inter_expect_1Mb.hg38.txt	none
+https://www.dropbox.com/scl/fi/t6mw9sxnq33qlyyfn5rf3/intra_expect_100kb.hg38.txt?rlkey=gf62gc8dpvi7h069bninagkfv&dl=1	e9910862481aeef61b0be7571c0f85705c4151701041707ddb85141b3e0c4472	input/hic_breakfinder/intra_expected_100kb.hg38.txt
 https://hgdownload.soe.ucsc.edu/goldenPath/hg17/liftOver/hg17ToHg38.over.chain.gz	0e68992e2bf3fabc8f549be61a4c0ee69e4234dfa0b4b116cc5cfca14f8eb806	input/NCBI35/liftover/hg17_to_hg38.over.chain.gz	none
 ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE19nnn/GSE19920/suppl/GSE19920_mcf10a_series_cnat_copynumber.txt.gz	d1605f99440b541056308b5ea819286be5f511e1793e1b105639f080882eeb5e	input/NCBI35/microarrays/GSE19920_MCF10A_series_cnvs.txt.gz	none
 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?mode=raw&is_datatable=true&acc=GPL3718&id=44346&db=GeoDb_blob10	73909b66e63eb287655aa258dbebadafb57baffc34a7941054c7530239d16c9f	input/NCBI35/microarrays/affymetrix_probes_mapping250K_Nsp.tsv.gz	compress
