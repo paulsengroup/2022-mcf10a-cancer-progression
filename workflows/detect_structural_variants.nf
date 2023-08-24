@@ -421,7 +421,6 @@ process run_hic_breakfinder {
             --bam-file '!{bam}' \\
             --exp-file-inter '!{expected_inter}' \\
             --exp-file-intra '!{expected_intra}' \\
-            --min-1kb \\
             --name '!{outprefix}'
         '''
 }
