@@ -124,11 +124,8 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
         for j in range(num_cols):
             ax = axs[i][j]
 
-            if i == 0:
-                ax.set(title=scores.columns[j])
-
             if j == i + 1:
-                ax.set(ylabel=scores.columns[i])
+                ax.set(ylabel=scores.columns[i], xlabel=scores.columns[j])
 
             if i >= j:
                 fig.delaxes(ax)

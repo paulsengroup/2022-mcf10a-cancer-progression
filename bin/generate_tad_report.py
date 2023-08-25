@@ -117,7 +117,29 @@ def plot_size_distribution(tads: Dict[str, pd.DataFrame], ylim: Tuple[int, int] 
         ylim=ylim,
     )
 
-    plt.tight_layout()
+    fig.tight_layout()
+
+    return fig
+
+
+def plot_tad_numbers(tads: Dict[str, pd.DataFrame]) -> plt.Figure:
+    labels = list(tads.keys())
+    sizes = [len(t) for t in tads.values()]
+
+    sizes = pd.DataFrame({"x": labels, "y": sizes})
+
+    fig, ax = plt.subplots(1, 1)
+    sns.barplot(sizes, x="x", y="y", ax=ax)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+
+    ax.set(
+        title="# of TADs",
+        xlabel="",
+        ylabel="Count",
+        # ylim=(int(0.975 * sizes["y"].min()), int(1.025 * sizes["y"].max()))
+    )
+
+    fig.tight_layout()
 
     return fig
 
@@ -136,6 +158,7 @@ def main():
     path_to_size_distribution_plot = pathlib.Path(output_prefix.parent) / (
         output_prefix.name + "_size_distribution.png"
     )
+    path_to_barplot = pathlib.Path(output_prefix.parent) / (output_prefix.name + "_numbers.png")
 
     if not args["force"]:
         detect_path_collisions(
@@ -163,6 +186,10 @@ def main():
     fig = plot_size_distribution(tads)
     fig.savefig(path_to_size_distribution_plot, dpi=600)
     fig.savefig(path_to_size_distribution_plot.with_suffix(".svg"))
+
+    fig = plot_tad_numbers(tads)
+    fig.savefig(path_to_barplot, dpi=600)
+    fig.savefig(path_to_barplot.with_suffix(".svg"))
 
 
 if __name__ == "__main__":
