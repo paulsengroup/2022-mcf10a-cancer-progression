@@ -116,8 +116,6 @@ process generate_blacklist {
         '''
 }
 
-
-
 process process_microarray_data {
     publishDir "${params.output_dir}/microarray", mode: 'copy'
     label 'process_short'

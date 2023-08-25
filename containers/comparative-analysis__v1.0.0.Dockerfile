@@ -14,6 +14,7 @@ RUN micromamba install -y \
                -c conda-forge \
                -c bioconda \
                'bioframe>=0.4.1' \
+               'hdbscan==0.8.*' \
                matplotlib \
                'networkx==3.*' \
                numpy \
@@ -34,7 +35,7 @@ ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
 WORKDIR /data
 
-RUN python3 -c 'import bioframe, matplotlib, networkx, numpy, pandas, pyBigWig, scipy, seaborn'
+RUN python3 -c 'import bioframe, hdbscan, matplotlib, networkx, numpy, pandas, pyBigWig, scipy, seaborn'
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
