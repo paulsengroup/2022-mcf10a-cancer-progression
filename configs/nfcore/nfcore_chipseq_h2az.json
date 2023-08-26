@@ -3,7 +3,7 @@
     "outdir": "data/output/nfcore_chipseq/h2az",
     "fasta": "data/input/hg38/hg38.fa",
     "gtf": "data/input/hg38/hg38_gencode_v43.gtf",
-    "aligner": "chromap",
+    "aligner": "bwa",
     "macs_gsize": 2708135512,
     "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 50)",
     "schema_ignore_params": "cluster-options,clusterOptions,genomes,macs_gsize_comment_,project"

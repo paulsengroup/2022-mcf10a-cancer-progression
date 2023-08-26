@@ -3,7 +3,7 @@
     "outdir": "data/output/nfcore_chipseq/ctcf",
     "fasta": "data/input/hg38/hg38.fa",
     "gtf": "data/input/hg38/hg38_gencode_v43.gtf",
-    "aligner": "chromap",
+    "aligner": "bwa",
     "macs_gsize": 2820945813,
     "macs_gsize_comment_": "Computed with unique-kmers.py from khmer v2.1.1 (using -k 100)",
     "narrow_peak": true,
