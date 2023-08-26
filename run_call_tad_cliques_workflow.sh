@@ -30,3 +30,13 @@ mkdir -p "$wd"
   "$wd" \
   'workflows/robomics-call_tad_cliques-v0.3.1.tar.xz' \
    configs/call_tad_cliques_vs_control.json
+
+
+step='postprocess_call_tad_cliques'
+wd=".nextflow-$step-wd"
+mkdir -p "$wd"
+
+./setup_workflow_workdir.sh "$PWD" "$wd"
+
+1>&2 echo 'Running postprocessing step for robomics/call_tad_cliques...'
+./run_workflow.sh "$wd" "$step"

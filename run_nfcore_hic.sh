@@ -18,3 +18,12 @@ echo 1>&2 'Running nfcore/hic...'
   "$wd" \
   'workflows/robomics-nfcore-hic-v2.0.0-patched.tar.xz' \
   configs/nfcore/nfcore_hic*.json
+
+step='postprocess_nfcore_hic'
+wd=".nextflow-$step-wd"
+mkdir -p "$wd"
+
+./setup_workflow_workdir.sh "$PWD" "$wd"
+
+echo 1>&2 'Running postprocessing for nfcore/hic...'
+./run_workflow.sh "$wd" "$step"
