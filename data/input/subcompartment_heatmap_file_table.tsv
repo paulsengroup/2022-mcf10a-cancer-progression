@@ -1,34 +1,34 @@
 marker	condition	peaks	bigwig
-CTCF	MCF10A_WT	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_WT_CTCF_REP1_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_WT_CTCF_REP1.bigWig
-CTCF	MCF10A_WT	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_WT_CTCF_REP2_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_WT_CTCF_REP2.bigWig
-gH2AX	MCF10A_WT	gh2ax/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_gH2AX_REP1_peaks.broadPeak	gh2ax/chromap/mergedLibrary/bigwig/MCF10A_WT_gH2AX_REP1.bigWig
-gH2AX	MCF10A_WT	gh2ax/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_gH2AX_REP2_peaks.broadPeak	gh2ax/chromap/mergedLibrary/bigwig/MCF10A_WT_gH2AX_REP2.bigWig
-H2A.ZH	MCF10A_WT	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_HIGH_REP1_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_WT_H2AZ_HIGH_REP1.bigWig
-H2A.ZH	MCF10A_WT	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_HIGH_REP2_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_WT_H2AZ_HIGH_REP2.bigWig
-H2A.ZL	MCF10A_WT	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_LOW_REP1_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_WT_H2AZ_LOW_REP1.bigWig
-H2A.ZL	MCF10A_WT	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_LOW_REP2_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_WT_H2AZ_LOW_REP2.bigWig
-H3K27ac	MCF10A_WT	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K_REP1_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K_REP1.bigWig
-H3K27ac	MCF10A_WT	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K_REP2_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K_REP2.bigWig
-H3K27me3	MCF10A_WT	h3kxxme/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K27me3_REP1_peaks.broadPeak	h3kxxme/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K27me3_REP1.bigWig
-H3K4me3	MCF10A_WT	h3kxxme/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K4me3_REP1_peaks.broadPeak	h3kxxme/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K4me3_REP1.bigWig
-H3K79me3	MCF10A_WT	h3kxxme/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K79me2_REP1_peaks.broadPeak	h3kxxme/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K79me2_REP1.bigWig
-H3K9ac	MCF10A_WT	h3k9ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9ac_REP1_peaks.broadPeak	h3k9ac/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K9ac_REP1.bigWig
-H3K9ac	MCF10A_WT	h3k9ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9ac_REP2_peaks.broadPeak	h3k9ac/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K9ac_REP2.bigWig
-H3K9me3	MCF10A_WT	h3k9me3/chromap/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9me3_REP1_peaks.broadPeak	h3k9me3/chromap/mergedLibrary/bigwig/MCF10A_WT_H3K9me3_REP1.bigWig
-p53	MCF10A_WT	p53/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_WT_p53_REP1_peaks.narrowPeak	p53/chromap/mergedLibrary/bigwig/MCF10A_WT_p53_REP1.bigWig
-p53	MCF10A_WT	p53/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_WT_p53_REP2_peaks.narrowPeak	p53/chromap/mergedLibrary/bigwig/MCF10A_WT_p53_REP2.bigWig
-LMNB1	MCF10A_WT	lads/GRCh38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	
-CTCF	MCF10A_T1	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_T1_CTCF_REP1_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_T1_CTCF_REP1.bigWig
-CTCF	MCF10A_T1	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_T1_CTCF_REP2_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_T1_CTCF_REP2.bigWig
-H3K27ac	MCF10A_T1	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_T1_H3K_REP1_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_T1_H3K_REP1.bigWig
-H3K27ac	MCF10A_T1	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_T1_H3K_REP2_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_T1_H3K_REP2.bigWig
-LMNB1	MCF10A_T1	lads/GRCh38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	
-CTCF	MCF10A_C1	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_C1_CTCF_REP1_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_C1_CTCF_REP1.bigWig
-CTCF	MCF10A_C1	ctcf/chromap/mergedLibrary/macs2/narrowPeak/MCF10A_C1_CTCF_REP2_peaks.narrowPeak	ctcf/chromap/mergedLibrary/bigwig/MCF10A_C1_CTCF_REP2.bigWig
-H2A.ZH	MCF10A_C1	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_HIGH_REP1_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_C1_H2AZ_HIGH_REP1.bigWig
-H2A.ZH	MCF10A_C1	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_HIGH_REP2_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_C1_H2AZ_HIGH_REP2.bigWig
-H2A.ZL	MCF10A_C1	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_LOW_REP1_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_C1_H2AZ_LOW_REP1.bigWig
-H2A.ZL	MCF10A_C1	h2az/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_LOW_REP2_peaks.broadPeak	h2az/chromap/mergedLibrary/bigwig/MCF10A_C1_H2AZ_LOW_REP2.bigWig
-H3K27ac	MCF10A_C1	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H3K_REP1_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_C1_H3K_REP1.bigWig
-H3K27ac	MCF10A_C1	h3k27ac/chromap/mergedLibrary/macs2/broadPeak/MCF10A_C1_H3K_REP2_peaks.broadPeak	h3k27ac/chromap/mergedLibrary/bigwig/MCF10A_C1_H3K_REP2.bigWig
-LMNB1	MCF10A_C1	lads/GRCh38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	
+CTCF	MCF10A_WT	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_WT_CTCF_REP1_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_WT_CTCF_REP1.bigWig
+CTCF	MCF10A_WT	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_WT_CTCF_REP2_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_WT_CTCF_REP2.bigWig
+gH2AX	MCF10A_WT	gh2ax/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_gH2AX_REP1_peaks.broadPeak	gh2ax/bwa/mergedLibrary/bigwig/MCF10A_WT_gH2AX_REP1.bigWig
+gH2AX	MCF10A_WT	gh2ax/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_gH2AX_REP2_peaks.broadPeak	gh2ax/bwa/mergedLibrary/bigwig/MCF10A_WT_gH2AX_REP2.bigWig
+H2A.ZH	MCF10A_WT	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_HIGH_REP1_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_WT_H2AZ_HIGH_REP1.bigWig
+H2A.ZH	MCF10A_WT	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_HIGH_REP2_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_WT_H2AZ_HIGH_REP2.bigWig
+H2A.ZL	MCF10A_WT	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_LOW_REP1_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_WT_H2AZ_LOW_REP1.bigWig
+H2A.ZL	MCF10A_WT	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H2AZ_LOW_REP2_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_WT_H2AZ_LOW_REP2.bigWig
+H3K27ac	MCF10A_WT	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K27ac_REP1_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K27ac_REP1.bigWig
+H3K27ac	MCF10A_WT	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K27ac_REP2_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K27ac_REP2.bigWig
+H3K27me3	MCF10A_WT	h3kxxme/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K27me3_peaks.broadPeak	h3kxxme/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K27me3.bigWig
+H3K4me3	MCF10A_WT	h3kxxme/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K4me3_peaks.broadPeak	h3kxxme/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K4me3.bigWig
+H3K79me3	MCF10A_WT	h3kxxme/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K79me2_peaks.broadPeak	h3kxxme/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K79me2.bigWig
+H3K9ac	MCF10A_WT	h3k9ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9ac_REP1_peaks.broadPeak	h3k9ac/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K9ac_REP1.bigWig
+H3K9ac	MCF10A_WT	h3k9ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9ac_REP2_peaks.broadPeak	h3k9ac/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K9ac_REP2.bigWig
+H3K9me3	MCF10A_WT	h3k9me3/bwa/mergedLibrary/macs2/broadPeak/MCF10A_WT_H3K9me3_peaks.broadPeak	h3k9me3/bwa/mergedLibrary/bigwig/MCF10A_WT_H3K9me3.bigWig
+p53	MCF10A_WT	p53/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_WT_p53_REP1_peaks.narrowPeak	p53/bwa/mergedLibrary/bigwig/MCF10A_WT_p53_REP1.bigWig
+p53	MCF10A_WT	p53/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_WT_p53_REP2_peaks.narrowPeak	p53/bwa/mergedLibrary/bigwig/MCF10A_WT_p53_REP2.bigWig
+LMNB1	MCF10A_WT	lads/hg38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	
+CTCF	MCF10A_T1	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_T1_CTCF_REP1_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_T1_CTCF_REP1.bigWig
+CTCF	MCF10A_T1	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_T1_CTCF_REP2_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_T1_CTCF_REP2.bigWig
+H3K27ac	MCF10A_T1	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_T1_H3K27ac_REP1_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_T1_H3K27ac_REP1.bigWig
+H3K27ac	MCF10A_T1	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_T1_H3K27ac_REP2_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_T1_H3K27ac_REP2.bigWig
+LMNB1	MCF10A_T1	lads/hg38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	
+CTCF	MCF10A_C1	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_C1_CTCF_REP1_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_C1_CTCF_REP1.bigWig
+CTCF	MCF10A_C1	ctcf/bwa/mergedLibrary/macs2/narrowPeak/MCF10A_C1_CTCF_REP2_peaks.narrowPeak	ctcf/bwa/mergedLibrary/bigwig/MCF10A_C1_CTCF_REP2.bigWig
+H2A.ZH	MCF10A_C1	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_HIGH_REP1_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_C1_H2AZ_HIGH_REP1.bigWig
+H2A.ZH	MCF10A_C1	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_HIGH_REP2_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_C1_H2AZ_HIGH_REP2.bigWig
+H2A.ZL	MCF10A_C1	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_LOW_REP1_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_C1_H2AZ_LOW_REP1.bigWig
+H2A.ZL	MCF10A_C1	h2az/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H2AZ_LOW_REP2_peaks.broadPeak	h2az/bwa/mergedLibrary/bigwig/MCF10A_C1_H2AZ_LOW_REP2.bigWig
+H3K27ac	MCF10A_C1	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H3K27ac_REP1_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_C1_H3K27ac_REP1.bigWig
+H3K27ac	MCF10A_C1	h3k27ac/bwa/mergedLibrary/macs2/broadPeak/MCF10A_C1_H3K27ac_REP2_peaks.broadPeak	h3k27ac/bwa/mergedLibrary/bigwig/MCF10A_C1_H3K27ac_REP2.bigWig
+LMNB1	MCF10A_C1	lads/hg38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	

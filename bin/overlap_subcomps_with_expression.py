@@ -142,7 +142,7 @@ def import_expression_table(
     path_to_tsv: pathlib.Path, gtf: pd.DataFrame, sample_name_mappings: Dict[str, str]
 ) -> pd.DataFrame:
     logging.info("Importing expression table...")
-    df = pd.read_table(path_to_tsv).rename(sample_name_mappings)
+    df = pd.read_table(path_to_tsv).rename(columns=sample_name_mappings)
     return (
         gtf[["chrom", "start", "end", "gene_type"]]
         .merge(df[df.sum(axis="columns", numeric_only=True) != 0], on="gene_id", how="right")

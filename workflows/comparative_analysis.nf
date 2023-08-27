@@ -57,7 +57,6 @@ workflow {
         params.hdbscan_min_cluster_size,
         params.hdbscan_min_samples,
         params.hdbscan_cluster_selection_method,
-        params.hdbscan_epsilon,
         params.hdbscan_dist
     )
 
@@ -83,7 +82,7 @@ workflow {
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
-    publishDir "${params.output_dir}/subcomps_vs_epigenetic_markers/", mode: 'copy'
+    publishDir "${params.output_dir}/subcomps_vs_epigenetic_markers/${resolution}", mode: 'copy'
     label 'process_medium'
 
     input:
@@ -174,7 +173,6 @@ process cluster_domains_by_subcompartment {
         val min_size
         val min_samples
         val selection_method
-        val epsilon
         val metric
 
     output:
@@ -195,7 +193,6 @@ process cluster_domains_by_subcompartment {
             --min-cluster-size '!{min_size}' \\
             --min-samples '!{min_samples}' \\
             --cluster-selection-method '!{selection_method}' \\
-            --cluster-selection-epsilon '!{epsilon}' \\
             --distance-metric '!{metric}' \\
             *MCF10A_{WT,T1,C1}*.gz \\
             --output-prefix='!{outprefix}'
@@ -256,6 +253,7 @@ process overlap_subcomps_with_expression_lvls {
 
     shell:
         '''
+        mkdir '!{resolution}'
         overlap_subcomps_with_expression.py \\
             '!{subcomps}' \\
             '!{expression_table}' \\
