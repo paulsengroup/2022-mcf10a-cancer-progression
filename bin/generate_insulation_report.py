@@ -11,6 +11,7 @@ import warnings
 from typing import Dict, Tuple
 
 import bioframe as bf
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -158,8 +159,8 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
             cond1, cond2 = scores.columns[i], scores.columns[j]
             sns.regplot(
                 scores,
-                x=cond1,
-                y=cond2,
+                x=cond2,
+                y=cond1,
                 ci=False,
                 color="blue",
                 scatter_kws={"alpha": 0.1},
@@ -170,10 +171,6 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(num_cols):
             ax = axs[i][j]
-
-            if j == i + 1:
-                ax.set(ylabel=scores.columns[i], xlabel=scores.columns[j])
-
             if i >= j:
                 fig.delaxes(ax)
             else:
@@ -204,21 +201,30 @@ def main():
     ax.hist(scores["std"], bins=25, log=True)
     ax.set(title="Insulation score STD", xlabel="std", ylabel="frequency")
     outprefix = pathlib.Path(str(args["output_prefix"]) + "_hist")
-    plt.tight_layout()
+    fig.tight_layout()
     save_plot_to_file(fig, outprefix, args["force"])
 
     scores = map_insulation_to_tads(domains, scores)
 
     grid_size = len(scores.columns) - 1
-    fig, axs = plt.subplots(grid_size, grid_size, figsize=(grid_size * 6.4, grid_size * 6.4))
+    fig, axs = plt.subplots(grid_size, grid_size, figsize=(grid_size * 3, grid_size * 3))
     lb, ub = compute_axis_scale(scores)
     plot_scatters(fig, axs, lb, ub, scores.drop(columns=["std"]))
 
-    plt.tight_layout()
+    fig.tight_layout()
 
     outprefix = pathlib.Path(str(args["output_prefix"]) + "_scatter")
     save_plot_to_file(fig, outprefix, args["force"])
 
 
 if __name__ == "__main__":
+    mpl.rcParams.update(
+        {
+            "axes.titlesize": 10,
+            "axes.labelsize": 22,
+            "legend.fontsize": 17,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
+        }
+    )
     main()
