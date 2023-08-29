@@ -23,8 +23,16 @@ def make_cli() -> argparse.ArgumentParser:
         description="Convert the output of robomics/call_tad_cliques to a BEDPE with pairs of interacting domains."
     )
 
-    cli.add_argument("domains", type=existing_file, help="Path to a BED file with the list of domains.")
-    cli.add_argument("cliques", type=existing_file, help="Path to a TSV file with the list of cliques.")
+    cli.add_argument(
+        "domains",
+        type=existing_file,
+        help="Path to a BED file with the list of domains.",
+    )
+    cli.add_argument(
+        "cliques",
+        type=existing_file,
+        help="Path to a TSV file with the list of cliques.",
+    )
 
     return cli
 

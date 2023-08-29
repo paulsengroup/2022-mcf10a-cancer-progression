@@ -29,7 +29,12 @@ def make_cli() -> argparse.ArgumentParser:
         help="Path to one or more files to use as source of entropy",
     )
 
-    cli.add_argument("--number-of-seeds", type=positive_int, default=50, help="Number of seeds to generate.")
+    cli.add_argument(
+        "--number-of-seeds",
+        type=positive_int,
+        default=50,
+        help="Number of seeds to generate.",
+    )
     cli.add_argument("--sep", type=str, default="\n", help="Seed separator.")
     cli.add_argument(
         "--lower-bound",

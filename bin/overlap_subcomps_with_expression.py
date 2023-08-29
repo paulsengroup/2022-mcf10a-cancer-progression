@@ -145,7 +145,11 @@ def import_expression_table(
     df = pd.read_table(path_to_tsv).rename(columns=sample_name_mappings)
     return (
         gtf[["chrom", "start", "end", "gene_type"]]
-        .merge(df[df.sum(axis="columns", numeric_only=True) != 0], on="gene_id", how="right")
+        .merge(
+            df[df.sum(axis="columns", numeric_only=True) != 0],
+            on="gene_id",
+            how="right",
+        )
         .set_index(["gene_id", "gene_name", "gene_type"])
         .sort_index()
     )
@@ -225,7 +229,13 @@ def plot_boxplots(dfs: Dict[str, pd.DataFrame], yscale: str, gene_type: Union[st
             df = df.copy()[df["gene_type"] == gene_type]
 
         sns.boxplot(
-            df, x="state", y="tpm", ax=ax, order=get_subcompartment_ranks().keys(), palette="coolwarm", bootstrap=10000
+            df,
+            x="state",
+            y="tpm",
+            ax=ax,
+            order=get_subcompartment_ranks().keys(),
+            palette="coolwarm",
+            bootstrap=10000,
         )
         ax.set(title=condition)
 
@@ -241,7 +251,12 @@ def plot_boxplots(dfs: Dict[str, pd.DataFrame], yscale: str, gene_type: Union[st
         # Ignore warnings about 0 values and log-scale
         warnings.filterwarnings("ignore", category=UserWarning)
         for ax in axs:
-            ax.set(xlabel="Subcompartment state", ylabel="TPM", yscale=yscale, ylim=(0, ylim_ub))
+            ax.set(
+                xlabel="Subcompartment state",
+                ylabel="TPM",
+                yscale=yscale,
+                ylim=(0, ylim_ub),
+            )
             ax.tick_params(axis="x", which="both", length=0)  # Hide xticks but keep showning labels
             # ax.grid(True, which="both", ls="-")
 

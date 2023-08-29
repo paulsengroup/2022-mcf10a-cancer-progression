@@ -81,7 +81,10 @@ def main():
     args = vars(make_cli().parse_args())
 
     clr = cooler.Cooler(str(args["cooler"]))
-    bins = process_bins(read_bins(clr, args["norm_name"]), read_weight_scale_attribute(clr, args["norm_name"]))
+    bins = process_bins(
+        read_bins(clr, args["norm_name"]),
+        read_weight_scale_attribute(clr, args["norm_name"]),
+    )
     bins.to_csv(sys.stdout, index=False, header=False, sep="\t")
 
 

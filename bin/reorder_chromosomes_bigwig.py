@@ -32,7 +32,13 @@ def make_cli():
         help="Path to a .chrom.sizes file.",
     )
 
-    cli.add_argument("-o", "--output", required=True, type=pathlib.Path, help="Output path (including the extension)")
+    cli.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        type=pathlib.Path,
+        help="Output path (including the extension)",
+    )
 
     return cli
 

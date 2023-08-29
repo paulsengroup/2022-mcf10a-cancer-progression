@@ -34,11 +34,16 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--blacklist", type=pathlib.Path, help="Path to a BED file with the list of regions to be excluded."
+        "--blacklist",
+        type=pathlib.Path,
+        help="Path to a BED file with the list of regions to be excluded.",
     )
 
     cli.add_argument(
-        "--blacklist-padding", type=int, default=100_000, help="Number of bps to add as padding to blacklisted regions."
+        "--blacklist-padding",
+        type=int,
+        default=100_000,
+        help="Number of bps to add as padding to blacklisted regions.",
     )
 
     cli.add_argument(

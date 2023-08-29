@@ -37,7 +37,10 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--rescale", action=argparse.BooleanOptionalAction, default=True, help="Rescale values based on inteval span."
+        "--rescale",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Rescale values based on inteval span.",
     )
     cli.add_argument(
         "--relative",
@@ -89,7 +92,12 @@ def min_max_scaler(data: np.ndarray) -> np.ndarray:
 
 
 def plot_heatmap(
-    data: np.ndarray, relative: bool, ax: plt.Axes, subcompartment_labels: Tuple[str], markers: Tuple[str], cmap="Reds"
+    data: np.ndarray,
+    relative: bool,
+    ax: plt.Axes,
+    subcompartment_labels: Tuple[str],
+    markers: Tuple[str],
+    cmap="Reds",
 ) -> None:
     # Rescale values such that the smallest value in each row has the same dynamic range
     scaled_data = min_max_scaler(data)

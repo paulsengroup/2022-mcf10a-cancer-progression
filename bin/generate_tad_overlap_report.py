@@ -37,15 +37,24 @@ def make_cli():
         help="Output prefix.",
     )
 
-    cli.add_argument("--labels", type=str, help="Comma separated list of labels to use instead of file names.")
+    cli.add_argument(
+        "--labels",
+        type=str,
+        help="Comma separated list of labels to use instead of file names.",
+    )
 
     cli.add_argument(
-        "--blacklist", type=pathlib.Path, help="Path to a BED file with the list of regions to be excluded."
+        "--blacklist",
+        type=pathlib.Path,
+        help="Path to a BED file with the list of regions to be excluded.",
     )
     cli.add_argument("--title", type=str, help="Plot title.")
 
     cli.add_argument(
-        "--blacklist-padding", type=int, default=0, help="Number of base-pairs used to pad blacklisted intervals."
+        "--blacklist-padding",
+        type=int,
+        default=0,
+        help="Number of base-pairs used to pad blacklisted intervals.",
     )
     cli.add_argument("--overlap-threshold", type=float, default=0.8)
 

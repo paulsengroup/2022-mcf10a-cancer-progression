@@ -25,9 +25,17 @@ def make_cli():
         help="Path to two or more bedgraph with the scores to be processed.",
     )
 
-    cli.add_argument("--blacklist", type=pathlib.Path, help="Path to a BED file with the list of regions to be masked")
+    cli.add_argument(
+        "--blacklist",
+        type=pathlib.Path,
+        help="Path to a BED file with the list of regions to be masked",
+    )
 
-    cli.add_argument("--labels", type=str, help="Comma separated list of labels to use instead of file names.")
+    cli.add_argument(
+        "--labels",
+        type=str,
+        help="Comma separated list of labels to use instead of file names.",
+    )
 
     return cli
 

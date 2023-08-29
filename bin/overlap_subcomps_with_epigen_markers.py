@@ -127,7 +127,11 @@ def read_markers_table(path_to_table: pathlib.Path, prefix: pathlib.Path) -> pd.
     logging.info("Reading marker file table from %s...", path_to_table)
     df = pd.read_table(path_to_table).fillna("")
 
-    logging.info("Read %d markers across %d conditions...", len(df["marker"].unique()), len(df["condition"].unique()))
+    logging.info(
+        "Read %d markers across %d conditions...",
+        len(df["marker"].unique()),
+        len(df["condition"].unique()),
+    )
 
     # Group replicates (i.e. rows with the same marker)
     # Also group by condition (i.e. cell type)
@@ -238,7 +242,8 @@ def overlap_bigwig_with_peaks_helper(
 
         with pyBigWig.open(bigwig_file) as bwf:
             df["score"] = df.apply(
-                lambda row: bwf.stats(row["chrom"], row["start"], row["end"], method)[0], axis="columns"
+                lambda row: bwf.stats(row["chrom"], row["start"], row["end"], method)[0],
+                axis="columns",
             )
 
         dfs.append(df)
@@ -274,7 +279,9 @@ def overlap_bigwigs_with_peaks(
 
 
 def overlap_peaks_with_subcompartments(
-    subcompartent_coords: pd.DataFrame, peak_dfs: List[pd.DataFrame], aggregation_method: str = "sum"
+    subcompartent_coords: pd.DataFrame,
+    peak_dfs: List[pd.DataFrame],
+    aggregation_method: str = "sum",
 ) -> np.ndarray:
     """
     Overlap peaks with subcompartments aggregating values with the method specified through aggregation_method.

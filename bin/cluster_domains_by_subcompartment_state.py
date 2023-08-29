@@ -125,7 +125,12 @@ def import_tsv(path_to_tsvs: List[pathlib.Path], labels: Union[List[str], None])
 
 
 def run_clustering(
-    df: pd.DataFrame, dist_metric, min_cluster_size, min_samples, cluster_selection_method, num_clusters
+    df: pd.DataFrame,
+    dist_metric,
+    min_cluster_size,
+    min_samples,
+    cluster_selection_method,
+    num_clusters,
 ) -> Tuple[pd.DataFrame, hdbscan.flat.HDBSCAN]:
     cols = df.filter(regex=r"[AB]\d\.state").columns.tolist()
     m = df[cols].to_numpy()

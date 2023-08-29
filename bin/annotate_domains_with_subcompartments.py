@@ -239,7 +239,8 @@ def annotate_cliques(cliques: pd.DataFrame, domains: pd.DataFrame):
     num_states = len(domains.filter(regex=r"^[AB\d]+\.state$").columns)
 
     return pd.DataFrame(
-        data=data, columns=["clique"] + get_output_df_columns(aggregate_subcompartments=num_states <= 2)
+        data=data,
+        columns=["clique"] + get_output_df_columns(aggregate_subcompartments=num_states <= 2),
     )
 
 

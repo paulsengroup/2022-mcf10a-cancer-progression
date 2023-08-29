@@ -45,7 +45,11 @@ def make_cli() -> argparse.ArgumentParser:
         " - contrast - Condition(s) to use as contrast",
     )
 
-    cli.add_argument("output-folder", type=pathlib.Path, help="Path to folder where output files will be stored.")
+    cli.add_argument(
+        "output-folder",
+        type=pathlib.Path,
+        help="Path to folder where output files will be stored.",
+    )
 
     cli.add_argument(
         "--lfc-thresh",
