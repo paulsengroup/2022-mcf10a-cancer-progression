@@ -88,7 +88,8 @@ workflow {
     generate_subcompartment_transition_report(
         postprocess_dchic_output.out.subcompartments
     )
-    plot_subcompartment_coverage(
+
+    classify_compartment_switches(
         postprocess_dchic_output.out.subcompartments
     )
 }
@@ -864,6 +865,34 @@ process plot_subcompartment_coverage {
             '!{outprefix}_subcompartment_coverage'
 
         mkdir -p '!{resolution}/plots/'
+        mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
+        '''
+}
+
+process classify_compartment_switches {
+    publishDir params.output_dir, mode: 'copy'
+
+    label 'process_low'
+    label 'process_very_short'
+    tag "$resolution"
+
+    input:
+        tuple val(resolution),
+              path(bedgraph)
+
+    output:
+        val resolution, emit: resolution
+        path "${resolution}/plots/*.svg", emit: svg
+        path "${resolution}/plots/*.png", emit: png
+
+    shell:
+        outprefix="${resolution}/${bedgraph.simpleName}"
+        '''
+        mkdir -p '!{resolution}/plots/'
+        classify_compartment_switches.py \\
+            '!{bedgraph}' \\
+            -o '!{outprefix}'
+
         mv '!{resolution}/'*.{svg,png} '!{resolution}/plots/'
         '''
 }
