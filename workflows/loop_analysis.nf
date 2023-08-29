@@ -7,12 +7,7 @@ nextflow.enable.dsl=2
 
 workflow {
     Channel.fromPath(params.mcools)
-           .map {
-                if ("${it}".endsWith("_merged.mcool")) {
-                    return tuple(file(it).getSimpleName(), it)
-                }
-                return tuple(file(it).getSimpleName(), it)
-           }
+           .map { tuple(file(it).getSimpleName(), it) }
            .combine(params.resolutions)
             // label, resolution, cooler
            .map { tuple(it[0], it[2], it[1] )}
@@ -41,7 +36,9 @@ workflow {
         lowest_resolution
     )
 
-    plot_loops_venn(
+    generate_loop_report(
+        Channel.fromPath(params.mcools)
+            .collect(),
         merge_loops.out.bedpe
             .map { it[1] }
             .collect(),
@@ -108,6 +105,8 @@ process call_loops {
         cooltools dots \\
             "$cooler" \\
             '!{expected_cis}' \\
+            --max-loci-separation 6000000 \\
+            --clustering-radius 50000 \\
             -p '!{task.cpus}' \\
             -o '!{label}'
 
@@ -175,10 +174,13 @@ process detect_differential_loops {
 
 }
 
-process plot_loops_venn {
+process generate_loop_report {
     publishDir "${params.output_dir}/plots", mode: 'copy'
 
+    label 'process_medium'
+
     input:
+        path mcools
         path loops
         val lowest_resolution
 
@@ -188,10 +190,11 @@ process plot_loops_venn {
 
     shell:
         '''
-        plot_loops_venn.py \\
-            *{WT,T1,C1}_merged.bedpe.gz \\
-            '!{lowest_resolution}' \\
-            -o loops_venn \\
+        generate_loop_report.py \\
+            --mcools *{WT,T1,C1}*_merged.mcool \\
+            --loops *{WT,T1,C1}_merged.bedpe.gz \\
+            --lowest-resolution '!{lowest_resolution}' \\
+            -o loops \\
             --labels WT T1 C1
         '''
 }

@@ -31,7 +31,11 @@ def make_cli():
         help="Path to two or more BEDPE with the list of loops to compare.",
     )
 
-    cli.add_argument("lowest-resolution", type=positive_int, help="Lowest resolution used for loop calling.")
+    cli.add_argument(
+        "lowest-resolution",
+        type=positive_int,
+        help="Lowest resolution used for loop calling.",
+    )
 
     cli.add_argument(
         "--labels",
@@ -80,7 +84,12 @@ def overlap_bedpe(*dfs: pd.DataFrame) -> pd.DataFrame:
 
     for df2 in dfs[1:]:
         # Overlap first triplet
-        df3 = bf.overlap(df1, df2, cols1=("chrom1", "start1", "end1"), cols2=("chrom1", "start1", "end1")).dropna()
+        df3 = bf.overlap(
+            df1,
+            df2,
+            cols1=("chrom1", "start1", "end1"),
+            cols2=("chrom1", "start1", "end1"),
+        ).dropna()
 
         data = []
 
@@ -96,13 +105,25 @@ def overlap_bedpe(*dfs: pd.DataFrame) -> pd.DataFrame:
             df4["end2"] = df4["end2"].astype(int)
             df5["end2_"] = df5["end2_"].astype(int)
 
-            overlap = bf.closest(df4, df5, cols1=("chrom2", "start2", "end2"), cols2=("chrom2_", "start2_", "end2_"))
+            overlap = bf.closest(
+                df4,
+                df5,
+                cols1=("chrom2", "start2", "end2"),
+                cols2=("chrom2_", "start2_", "end2_"),
+            )
 
             if len(overlap) == 0:
                 continue
 
             data.append(
-                [chrom1, start1, end1, overlap.loc[0, "chrom2"], overlap.loc[0, "start2"], overlap.loc[0, "end2"]]
+                [
+                    chrom1,
+                    start1,
+                    end1,
+                    overlap.loc[0, "chrom2"],
+                    overlap.loc[0, "start2"],
+                    overlap.loc[0, "end2"],
+                ]
             )
 
         df1 = pd.DataFrame.from_records(data, columns=bf.SCHEMAS["bedpe"][:6])
