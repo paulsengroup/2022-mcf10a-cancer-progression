@@ -93,7 +93,7 @@ process macs2_fold_change_over_control {
 
 
 process bedgraph_to_bigwig {
-    publishDir "${params.output_dir}/chromap/mergedLibrary/bigwig/fold_change", mode: 'copy'
+    publishDir "${params.output_dir}/bwa/mergedLibrary/bigwig/fold_change", mode: 'copy'
 
     tag "${bedgraph.simpleName}"
 
