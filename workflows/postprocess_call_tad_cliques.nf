@@ -24,6 +24,9 @@ workflow {
     plot_maximal_clique_sizes(
         cliques.mix(cliques_wt)
     )
+    plot_clique_alluvials(
+        cliques.mix(cliques_wt)
+    )
 }
 
 process plot_maximal_clique_sizes {
@@ -58,3 +61,29 @@ process plot_maximal_clique_sizes {
         '''
 }
 
+
+process plot_clique_alluvials {
+    publishDir "${params.output_dir}/${output_folder}/plots", mode: 'copy'
+
+
+    tag "${type}"
+
+    input:
+        tuple val(type),
+              path(cliques),
+              val(labels),
+              val(output_folder)
+
+    output:
+        tuple val(type),
+              path("*.svg"), emit: svg
+
+    shell:
+        '''
+        plot_clique_alluvials.py                                    \\
+            *{WT,T1,C1}_*cliques.tsv.gz                             \\
+            --path-to-plotting="$(which plot_clique_alluvials.r)"   \\
+            --labels !{labels}                                      \\
+            -o '!{type}_alluvial'
+        '''
+}
