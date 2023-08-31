@@ -10,6 +10,7 @@ import pathlib
 import warnings
 from typing import Tuple
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -199,5 +200,14 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.rcParams.update(
+        {
+            "axes.titlesize": 18,
+            "axes.labelsize": 22,
+            "legend.fontsize": 17,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
+        }
+    )
     setup_logger()
     main()
