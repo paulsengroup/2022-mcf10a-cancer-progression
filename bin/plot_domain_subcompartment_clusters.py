@@ -37,7 +37,7 @@ def make_cli() -> argparse.ArgumentParser:
         "--plot-type",
         nargs="+",
         type=str,
-        choices={"scatter", "line", "outliers"},
+        choices={"scatter", "barplot", "line", "outliers"},
         default=["line"],
         help="Type(s) of plot to generate.",
     )
@@ -102,7 +102,8 @@ def get_color_palette_list(
     return [
         color
         for _, color in sorted(
-            get_color_palette_dict(num_colors, cmap, outlier_color).items(), key=lambda item: item[0]
+            get_color_palette_dict(num_colors, cmap, outlier_color).items(),
+            key=lambda item: item[0],
         )
     ]
 
@@ -161,7 +162,7 @@ def plot_distribution(df: pd.DataFrame, suptitle: str, highlight_label: Union[st
     num_clusters = df["cluster"].max() + 1
     color_palette = get_color_palette_list(num_colors=num_clusters, cmap=cmap)
 
-    fig, axs = plt.subplots(num_clusters, 1, figsize=(20, 2 * num_clusters))
+    fig, axs = plt.subplots(num_clusters, 1, figsize=(6.4, 2 * num_clusters))
     for cluster_id, ax, color in zip(rank_clusters(df), axs, color_palette):
         cluster_df = df.loc[df["cluster"] == cluster_id, cols]
         cluster_size = len(cluster_df)
@@ -169,7 +170,10 @@ def plot_distribution(df: pd.DataFrame, suptitle: str, highlight_label: Union[st
 
         cluster_sizes = cluster_df.groupby("label").size()
         ax.add_artist(
-            AnchoredText("\n".join((f"{id}: {size}" for id, size in cluster_sizes.items())), loc="upper right")
+            AnchoredText(
+                "\n".join((f"{id}: {size}" for id, size in cluster_sizes.items())),
+                loc="upper right",
+            )
         )
 
         if highlight_label is None:
@@ -195,7 +199,24 @@ def plot_distribution(df: pd.DataFrame, suptitle: str, highlight_label: Union[st
         ax.set_xticklabels((c.removesuffix(".state") for c in cluster_df.columns))
 
     fig.suptitle(suptitle)
-    plt.tight_layout()
+    fig.tight_layout()
+    return fig
+
+
+def plot_barplot(df: pd.DataFrame, suptitle: str) -> plt.Figure:
+    fig, ax = plt.subplots(1, 1)
+
+    cluster_sizes = df.groupby(["label", "cluster"]).size().to_frame().reset_index()
+    cluster_sizes["cluster"] += 1
+    cluster_sizes.loc[cluster_sizes["cluster"] == 0, "cluster"] = "Outliers"
+    cluster_sizes.columns = ["label", "cluster", "size"]
+
+    sns.barplot(cluster_sizes, x="cluster", y="size", hue="label", ax=ax)
+    ticks = ax.get_xticklabels()
+    ticks[0].set_rotation(90)
+
+    fig.suptitle(suptitle)
+    fig.tight_layout()
     return fig
 
 
@@ -277,7 +298,12 @@ def main():
         higlight_label = args["label_to_highlight"]
         if higlight_label.lower() == "all":
             higlight_label = None
-        fig = plot_distribution(clusters, suptitle=suptitle, cmap=args["cmap"], highlight_label=higlight_label)
+        fig = plot_distribution(
+            clusters,
+            suptitle=suptitle,
+            cmap=args["cmap"],
+            highlight_label=higlight_label,
+        )
         save_plot_to_file(fig, pathlib.Path(f"{out_prefix}_lineplot"), args["force"])
     if "outliers" in plot_types:
         fig = plot_outlier_scores(clusters, suptitle=suptitle)
@@ -285,8 +311,20 @@ def main():
     if "scatter" in plot_types:
         fig = plot_scatter(clusters, suptitle=suptitle, cmap=args["cmap"])
         save_plot_to_file(fig, pathlib.Path(f"{out_prefix}_scatter"), args["force"])
+    if "barplot" in plot_types:
+        fig = plot_barplot(clusters, suptitle=suptitle)
+        save_plot_to_file(fig, pathlib.Path(f"{out_prefix}_barplot"), args["force"])
 
 
 if __name__ == "__main__":
+    mpl.rcParams.update(
+        {
+            "axes.titlesize": 18,
+            "axes.labelsize": 22,
+            "legend.fontsize": 17,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
+        }
+    )
     setup_logger()
     main()

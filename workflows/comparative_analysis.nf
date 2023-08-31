@@ -79,6 +79,12 @@ workflow {
         file(params.rnaseq_design_table, checkIfExists: true),
         params.condition_labels.join(',')
     )
+
+    overlap_subcomps_with_de_genes_heatmaps(
+        subcomp_bgs,
+        file(params.deg_table, checkIfExists: true),
+        file(params.gtf, checkIfExists: true)
+    )
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
@@ -232,6 +238,14 @@ process plot_domain_clusters {
             --plot-title='!{label} ('!{condition_of_interest}')' \\
             --label-to-highlight='!{condition_of_interest}' \\
             --output-prefix='!{label}_!{condition_of_interest}'
+
+        plot_domain_subcompartment_clusters.py \\
+            '!{clusters}' \\
+            '!{clusterer}' \\
+            --plot-type=barplot \\
+            --plot-title='!{label} ('!{condition_of_interest}')' \\
+            --label-to-highlight='!{condition_of_interest}' \\
+            --output-prefix='!{label}_!{condition_of_interest}'
         '''
 }
 
@@ -262,5 +276,58 @@ process overlap_subcomps_with_expression_lvls {
             --labels='!{labels}' \\
             --sample-name-mappings-tsv=<(tail -n +2 '!{sample_name_mappings}')
             # tail -n +2 is used to skip the header
+        '''
+}
+
+process overlap_subcomps_with_de_genes_heatmaps {
+    publishDir "${params.output_dir}/subcomps_vs_rnaseq/plots/", mode: 'copy'
+    label 'process_short'
+
+    input:
+        tuple val(resolution),
+              path(subcomps)
+        path deg_table
+        path gtf
+
+    output:
+        path "${resolution}/*.png", emit: png
+        path "${resolution}/*.svg", emit: svg
+
+    shell:
+        '''
+        mkdir '!{resolution}'
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_WT_vs_MCF10A_T1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_WT_vs_MCF10A_T1_subcomps_vs_deg' \\
+            --contrast MCF10A_WT \\
+            --condition MCF10A_T1 \\
+            --plot-type=heatmap \\
+            --padj 0.01 \\
+            --lfc 2
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_WT_vs_MCF10A_C1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_WT_vs_MCF10A_C1_subcomps_vs_deg' \\
+            --contrast MCF10A_WT \\
+            --condition MCF10A_C1 \\
+            --plot-type=heatmap \\
+            --padj 0.01 \\
+            --lfc 2
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_T1_vs_MCF10A_C1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_T1_vs_MCF10A_C1_subcomps_vs_deg' \\
+            --contrast MCF10A_T1 \\
+            --condition MCF10A_C1 \\
+            --plot-type=heatmap \\
+            --padj 0.01 \\
+            --lfc 2
         '''
 }

@@ -75,7 +75,11 @@ def make_cli():
     )
 
     cli.add_argument(
-        "--plot-type", type=str, choices={"boxplot", "heatmap", "correlation"}, default="correlation", help="Plot type."
+        "--plot-type",
+        type=str,
+        choices={"boxplot", "heatmap", "correlation"},
+        default="correlation",
+        help="Plot type.",
     )
 
     cli.add_argument(
@@ -176,7 +180,8 @@ def extract_gene_types(dfs: Iterable[pd.DataFrame], gene_type_key="gene_type"):
 
 
 def import_de_gene_table(path_to_tsv: pathlib.Path, contrast: str, condition: str) -> pd.DataFrame:
-    df = pd.read_table(path_to_tsv).set_index("gene_id")
+    df = pd.read_table(path_to_tsv).set_index("id")
+    df.index.name = "gene_id"
     assert df["contrast"].isin([contrast]).any()
     assert df["condition"].isin([condition]).any()
 
@@ -250,7 +255,6 @@ def plot_heatmap(df: pd.DataFrame, ax: plt.Axes, lfc_type: str, lfc_cutoff: floa
         i2 = get_subcompartment_ranks().get(s2)
         m[i1, i2] = len(df1)
 
-    # img = ax.imshow(m.astype(float) + 1, norm=LogNorm())
     img = ax.imshow(m)
     plt.colorbar(img, ax=ax)
 
@@ -264,25 +268,47 @@ def plot_heatmap(df: pd.DataFrame, ax: plt.Axes, lfc_type: str, lfc_cutoff: floa
     return m
 
 
+def plot_diag_ratio(ax: plt.Axes, m: npt.NDArray):
+    values = [1.0]
+    for i in range(1, m.shape[0]):
+        ratio = np.diag(m, i).sum() / np.diag(m, -i).sum()
+        values.append(ratio)
+
+    ax.plot(list(range(m.shape[0])), np.log2(values))
+    ax.plot(list(range(m.shape[0])), [0] * len(values))
+    ax.set(ylim=(-3.5, 3.5))
+
+
 def plot_heatmaps(
-    df: pd.DataFrame, contrast: str, condition: str, gene_types: List[str], lfc_cutoff: float, padj_cutoff: float
+    df: pd.DataFrame,
+    contrast: str,
+    condition: str,
+    gene_types: List[str],
+    lfc_cutoff: float,
+    padj_cutoff: float,
 ):
+    padj = "padj" if "padj" in df else "svalue"
     mask = df["gene_type"].str.lower().isin([s.lower() for s in gene_types])
-    de = df[(df["padj"] <= padj_cutoff) & mask].rename(columns={condition: "condition", contrast: "contrast"})
-    nonde = df[(df["padj"] > padj_cutoff) & mask].rename(columns={condition: "condition", contrast: "contrast"})
+    de = df[(df[padj] <= padj_cutoff) & mask].rename(columns={condition: "condition", contrast: "contrast"})
+    nonde = df[(df[padj] > padj_cutoff) & mask].rename(columns={condition: "condition", contrast: "contrast"})
 
     types = ["down", "non-de", "up"]
 
-    fig, axs = plt.subplots(1, len(types), figsize=(6.4 * len(types), 6.4))
+    fig, axs = plt.subplots(2, len(types), figsize=(6.4 * len(types), 1.25 * 6.4), height_ratios=[1, 0.25])
 
-    m1 = plot_heatmap(de, axs[0], "down", lfc_cutoff)
-    m2 = plot_heatmap(nonde, axs[1], "non-de", lfc_cutoff)
-    m3 = plot_heatmap(de, axs[2], "up", lfc_cutoff)
+    m1 = plot_heatmap(de, axs[0][0], "down", lfc_cutoff)
+    m2 = plot_heatmap(nonde, axs[0][1], "non-de", lfc_cutoff)
+    m3 = plot_heatmap(de, axs[0][2], "up", lfc_cutoff)
 
-    for t, ax, m in zip(types, axs, (m1, m2, m3)):
+    plot_diag_ratio(axs[1][0], m1)
+    plot_diag_ratio(axs[1][1], m2)
+    plot_diag_ratio(axs[1][2], m3)
+
+    for t, ax, m in zip(types, axs[0], (m1, m2, m3)):
         ax.set(title=f"{t} genes (sum={m.sum()}; tril={np.tril(m).sum()}; triu={np.triu(m).sum()})")
 
     fig.suptitle(f"{contrast} vs {condition} (lfc={lfc_cutoff:.2f}, pval={padj_cutoff:.2f}): " + ";".join(gene_types))
+    fig.tight_layout()
     return fig
 
 
@@ -366,10 +392,17 @@ def plot_correlation(df: pd.DataFrame, contrast: str, condition: str, gene_types
 
 
 def plot_boxplot(
-    df: pd.DataFrame, contrast: str, condition: str, gene_types: List[str], lfc_cutoff: float, padj_cutoff: float
+    df: pd.DataFrame,
+    contrast: str,
+    condition: str,
+    gene_types: List[str],
+    lfc_cutoff: float,
+    padj_cutoff: float,
 ) -> plt.Figure:
     df = filter_by_gene_type(df, *gene_types).copy()
-    df = df[(df["log2FoldChange"].abs() >= lfc_cutoff) & (df["padj"] < padj_cutoff)]
+
+    padj = "padj" if "padj" in df else "svalue"
+    df = df[(df["log2FoldChange"].abs() >= lfc_cutoff) & (df[padj] < padj_cutoff)]
 
     df["delta"] = compute_subcompartment_delta(df, contrast, condition)
     max_delta = df["delta"].abs().max()
@@ -379,8 +412,20 @@ def plot_boxplot(
         colors[i] = mpl.colormaps["bwr"](n)
 
     fig, ax = plt.subplots(1, 1)
-    sns.boxplot(df[df["log2FoldChange"] < 0], x="delta", y="log2FoldChange", palette=colors, ax=ax)
-    sns.boxplot(df[df["log2FoldChange"] >= 0], x="delta", y="log2FoldChange", palette=colors, ax=ax)
+    sns.boxplot(
+        df[df["log2FoldChange"] < 0],
+        x="delta",
+        y="log2FoldChange",
+        palette=colors,
+        ax=ax,
+    )
+    sns.boxplot(
+        df[df["log2FoldChange"] >= 0],
+        x="delta",
+        y="log2FoldChange",
+        palette=colors,
+        ax=ax,
+    )
 
     fig.suptitle(f"{contrast} vs {condition} (padj={padj_cutoff:.2f}; lfc={lfc_cutoff:.2f}): " + ";".join(gene_types))
 
@@ -440,8 +485,19 @@ def main():
         logging.info("Plotting boxplot...")
         fig = plot_boxplot(df, contrast, condition, args["gene_types"], args["lfc"], args["padj"])
         save_plot_to_file(fig, output_prefix, args["force"])
+    else:
+        assert False
 
 
 if __name__ == "__main__":
+    mpl.rcParams.update(
+        {
+            "axes.titlesize": 10,
+            "axes.labelsize": 22,
+            "legend.fontsize": 17,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
+        }
+    )
     setup_logger()
     main()
