@@ -207,13 +207,10 @@ def plot_barplot(df: pd.DataFrame, suptitle: str) -> plt.Figure:
     fig, ax = plt.subplots(1, 1)
 
     cluster_sizes = df.groupby(["label", "cluster"]).size().to_frame().reset_index()
-    cluster_sizes["cluster"] += 1
-    cluster_sizes.loc[cluster_sizes["cluster"] == 0, "cluster"] = "Outliers"
+    cluster_sizes.loc[cluster_sizes["cluster"] == -1, "cluster"] = "Outliers"
     cluster_sizes.columns = ["label", "cluster", "size"]
 
-    sns.barplot(cluster_sizes, x="cluster", y="size", hue="label", ax=ax)
-    ticks = ax.get_xticklabels()
-    ticks[0].set_rotation(90)
+    sns.barplot(cluster_sizes, x="size", y="cluster", hue="label", ax=ax)
 
     fig.suptitle(suptitle)
     fig.tight_layout()
