@@ -159,7 +159,7 @@ def rank_clusters(df: pd.DataFrame) -> List[int]:
 def plot_distribution(df: pd.DataFrame, suptitle: str, highlight_label: Union[str, None], cmap="deep") -> plt.Figure:
     cols = df.filter(regex=r"[AB\d]{2}\.state").columns.tolist() + ["label"]
 
-    num_clusters = df["cluster"].max() + 1
+    num_clusters = df["cluster"].nunique()
     color_palette = get_color_palette_list(num_colors=num_clusters, cmap=cmap)
 
     fig, axs = plt.subplots(num_clusters, 1, figsize=(6.4, 2 * num_clusters))
