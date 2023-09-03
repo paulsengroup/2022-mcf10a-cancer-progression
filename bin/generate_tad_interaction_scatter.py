@@ -35,7 +35,12 @@ def make_cli():
         help="Path to a BED file with the list of TADs to be used for plotting (usually WT).",
     )
 
-    cli.add_argument("--diagonals-to-mask", type=int, default=5, help="Number of diagonal to mask.")
+    cli.add_argument(
+        "--diagonal-window-mask",
+        type=int,
+        default=100_000,
+        help="Number of base-pairs surrounding the diagonal to mask.",
+    )
 
     cli.add_argument(
         "-o",
@@ -137,7 +142,9 @@ def get_interactions(coords, sel: cooler.api.RangeSelector2D, diagonals_to_mask)
         m.setdiag(0, i)
 
     m = m.tocoo()
-    return m.sum() / (m.shape[0] ** 2)
+    n = m.shape[0]
+    area = (n * (n - 1)) // 2
+    return m.sum() / area
 
 
 def main():
@@ -161,9 +168,10 @@ def main():
     for key, uri in zip(labels, args["coolers"]):
         clr = cooler.Cooler(str(uri))
         sel = clr.matrix(sparse=True, balance=False)
+        diagonals_to_mask = int(np.ceil(clr.binsize / args["diagonal_window_mask"]))
         domains[key] = domains.index.to_frame().apply(
             get_interactions,
-            args=(sel, args["diagonals_to_mask"]),
+            args=(sel, diagonals_to_mask),
             axis="columns",
         )
     grid_size = len(domains.columns)

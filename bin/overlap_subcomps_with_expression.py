@@ -184,7 +184,15 @@ def overlap_genes_with_subcompartments(expression: pd.DataFrame, subcomps: pd.Se
         .rename(columns=lambda c: c.removesuffix("_2"))
     )
     df3["cov"] = (df3["overlap_end"] - df3["overlap_start"]) / (df3["end"] - df3["start"])
-    df3 = df3.sort_values(["chrom", "start", "cov"], ascending=True).drop_duplicates(keep="last").set_index(["gene_id"])
+
+    df3 = (
+        df3.sort_values(["chrom", "start", "cov"], ascending=True)
+        .drop_duplicates(subset=["gene_id", "cov"])
+        .drop_duplicates(subset=["gene_id"], keep="last")
+        .set_index(["gene_id"])
+    )
+
+    assert len(df3) <= len(df2)
 
     return df3[["chrom", "start", "end", "gene_type", "tpm", "state", "cov"]]
 
