@@ -34,6 +34,9 @@ WORKDIR /data
 
 
 RUN hicConvertFormat --help
+RUN hicFindTADs --help
+RUN hicDetectLoops --help
+RUN hicMergeLoops --help
 
 LABEL org.opencontainers.image.authors='Roberto Rossini <roberros@uio.no>'
 LABEL org.opencontainers.image.url='https://github.com/paulsengroup/2022-mcf10a-cancer-progression'
