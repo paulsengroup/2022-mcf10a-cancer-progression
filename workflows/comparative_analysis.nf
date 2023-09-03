@@ -69,8 +69,14 @@ workflow {
         .set { plot_domain_clusters_inputs }
         // [resolution, label, clusterer, cluster, condition]
 
+    plot_domain_clusters(
+        plot_domain_clusters_inputs
+    )
 
-    plot_domain_clusters(plot_domain_clusters_inputs)
+    plot_clique_subcomp_composition(
+        annotated_cliques,
+        params.condition_labels.join(',')
+    )
 
     overlap_subcomps_with_expression_lvls(
         subcomp_bgs,
@@ -246,6 +252,38 @@ process plot_domain_clusters {
             --plot-title='!{label} ('!{condition_of_interest}')' \\
             --label-to-highlight='!{condition_of_interest}' \\
             --output-prefix='!{label}_!{condition_of_interest}'
+        '''
+}
+
+process plot_clique_subcomp_composition {
+    publishDir "${params.output_dir}/annotated_domains/", mode: 'copy',
+                                                          saveAs: { "${resolution}/clusters/plots/${it}" }
+    label 'process_short'
+
+    input:
+        tuple val(resolution),
+              val(label),
+              path(annotated_domains)
+
+        val labels
+
+    output:
+        tuple val(resolution),
+              val(label),
+              path("*.svg"),
+        emit: svg
+        tuple val(resolution),
+              val(label),
+              path("*.png"),
+        emit: png
+
+    shell:
+        outprefix = label
+        '''
+        plot_clique_subcomp_composition.py \\
+            *{WT,T1,C1}*.tsv.gz \\
+            --labels !{labels} \\
+            --output-prefix='!{outprefix}'
         '''
 }
 

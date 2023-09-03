@@ -233,14 +233,14 @@ def compute_state_stats_for_clique(clique, domains, tad_ids):
 
 def annotate_cliques(cliques: pd.DataFrame, domains: pd.DataFrame):
     data = []
-    for clique, (tad_ids, _) in cliques.iterrows():
-        data.append(compute_state_stats_for_clique(clique, domains, tad_ids))
+    for clique, (tad_ids, size) in cliques.iterrows():
+        data.append(compute_state_stats_for_clique(clique, domains, tad_ids) + [size])
 
     num_states = len(domains.filter(regex=r"^[AB\d]+\.state$").columns)
 
     return pd.DataFrame(
         data=data,
-        columns=["clique"] + get_output_df_columns(aggregate_subcompartments=num_states <= 2),
+        columns=["clique"] + get_output_df_columns(aggregate_subcompartments=num_states <= 2) + ["clique_size"],
     )
 
 
