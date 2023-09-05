@@ -26,7 +26,14 @@ workflow {
                   it[3])
         }.set { run_deseq2_input_ch }
 
-    run_deseq2(run_deseq2_input_ch)
+    run_deseq2(
+        run_deseq2_input_ch
+    )
+
+
+    run_cluster_profiler(
+        run_deseq2.out.tsv.filter { it[0] == "gene" }
+    )
 }
 
 
@@ -66,5 +73,43 @@ process run_deseq2 {
             '!{design_table}'  \\
             '!{outdir}'        \\
             --lfc-thresh='!{lfc_cutoff}'
+        '''
+}
+
+
+process run_cluster_profiler {
+    publishDir "${params.output_dir}/", mode: 'copy'
+
+    input:
+        tuple val(count_type),
+              val(pipeline_type),
+              val(lfc_cutoff),
+              path(deg_tables)
+
+    output:
+
+        tuple val(count_type),
+              val(pipeline_type),
+              val(lfc_cutoff),
+              path("${pipeline_type}_${count_type}/lfc_${lfc_cutoff}/*.rds"),
+        emit: rds
+        tuple val(count_type),
+              val(pipeline_type),
+              val(lfc_cutoff),
+              path("${pipeline_type}_${count_type}/lfc_${lfc_cutoff}/*.pdf"),
+        emit: pdf
+
+    shell:
+        outdir="${pipeline_type}_${count_type}/lfc_${lfc_cutoff}/"
+        '''
+        mkdir -p '!{outdir}'
+
+        for f in !{deg_tables}; do
+            outprefix="!{outdir}/$(basename "$f" .tsv.gz)"
+            run_cluster_profiler_do.py \\
+                "$f"                   \\
+                "$outprefix"           \\
+                --type=ora
+        done
         '''
 }
