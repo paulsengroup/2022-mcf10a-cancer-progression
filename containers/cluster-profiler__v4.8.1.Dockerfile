@@ -18,10 +18,11 @@ RUN micromamba install -y                                       \
                python                                           \
                r                                                \
                "bioconductor-clusterprofiler=$CLUSTER_PROFILER" \
-               "bioconductor-org.hs.eg.db=$ORG_HS_EG_DB_VER"   \
+               "bioconductor-org.hs.eg.db=$ORG_HS_EG_DB_VER"    \
                bioframe                                         \
                numpy                                            \
                pandas                                           \
+               procps-ng                                        \
                rpy2                                             \
 && micromamba clean --all -y
 
