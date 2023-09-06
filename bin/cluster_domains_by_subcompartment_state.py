@@ -42,6 +42,7 @@ def make_cli():
         type=comma_separated_string,
         help="Comma-separated list of labels used to label conditions. Should be in the same order as the input TSV(s).",
     )
+    cli.add_argument("--min-clique-size", type=int, default=3, help="Minimum clique size.")
     cli.add_argument(
         "--min-cluster-size",
         type=count_or_fraction,
@@ -192,6 +193,9 @@ def main():
     out_prefix.parent.mkdir(parents=True, exist_ok=True)
 
     df = import_tsv(args["tsv"], args.get("labels"))
+
+    if "clique_size" in df:
+        df = df[df["clique_size"] >= args["min_clique_size"]]
 
     min_cluster_size = compute_min_cluster_size(df, args["min_cluster_size"])
     min_samples = compute_min_samples(df, args["min_samples"])
