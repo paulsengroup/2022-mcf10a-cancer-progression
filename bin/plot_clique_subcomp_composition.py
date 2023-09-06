@@ -9,6 +9,7 @@ import functools
 import pathlib
 from typing import Iterable, List, Union
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -130,12 +131,15 @@ def group_by_clique_size(df):
     return df1.fillna(0).astype(int).T
 
 
-def plot_composition(df: pd.DataFrame, relative: bool) -> plt.Figure:
+def plot_composition(df: pd.DataFrame, label: str, relative: bool) -> plt.Figure:
     if relative:
         df = df.divide(df.sum(axis="columns"), axis="rows")
 
     fig, ax = plt.subplots(1, 1)
     df.plot(kind="bar", color=get_compartment_color_mappings().values(), stacked=True, ax=ax)
+
+    ax.set(title=label, xlabel="Maximal clique size", ylabel="Relative coverage")
+    ax.tick_params(axis="x", rotation=0)
 
     return fig
 
@@ -157,15 +161,24 @@ def main():
     for domains, label in zip(path_to_domains, labels):
         df = import_tsv(domains, label)
         df = group_by_clique_size(df)
-        fig = plot_composition(df, relative=False)
+        fig = plot_composition(df, label, relative=False)
 
         outprefix = pathlib.Path(str(args["output_prefix"]) + f"{label}_subcomp_composition")
 
         save_plot_to_file(fig, outprefix, args["force"])
 
-        fig = plot_composition(df, relative=True)
+        fig = plot_composition(df, label, relative=True)
         save_plot_to_file(fig, pathlib.Path(str(outprefix) + "_relative"), args["force"])
 
 
 if __name__ == "__main__":
+    mpl.rcParams.update(
+        {
+            "axes.titlesize": 10,
+            "axes.labelsize": 22,
+            "legend.fontsize": 17,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
+        }
+    )
     main()
