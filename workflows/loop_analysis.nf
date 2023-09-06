@@ -29,22 +29,16 @@ workflow {
         lowest_resolution
     )
 
-    detect_differential_loops(
-        merge_loops.out.bedpe
-            .map { it[1] }
-            .collect(),
+    call_consensus_loops(
+        call_loops.out.bedpe.groupTuple(size: params.resolutions.size()),
         lowest_resolution
     )
 
     generate_loop_report(
-        Channel.fromPath(params.mcools)
-            .collect(),
-        merge_loops.out.bedpe
-            .map { it[1] }
-            .collect(),
+        Channel.fromPath(params.mcools).collect(),
+        call_consensus_loops.out.bedpe.map { it[1] }.collect(),
         lowest_resolution
     )
-
 }
 
 process compute_expected_cis {
@@ -76,7 +70,7 @@ process compute_expected_cis {
 }
 
 process call_loops {
-    publishDir "${params.output_dir}", mode: 'copy'
+    publishDir "${params.output_dir}/raw", mode: 'copy'
 
     label 'process_medium'
 
@@ -115,7 +109,7 @@ process call_loops {
 }
 
 process merge_loops {
-    publishDir "${params.output_dir}", mode: 'copy'
+    publishDir "${params.output_dir}/merged", mode: 'copy'
 
     label 'process_short'
 
@@ -149,29 +143,34 @@ process merge_loops {
         '''
 }
 
-process detect_differential_loops {
-    publishDir "${params.output_dir}", mode: 'copy'
+process call_consensus_loops {
+    publishDir "${params.output_dir}/consensus", mode: 'copy'
+
+    label 'process_short'
+
+    tag "${label}"
 
     input:
-        path loops
+        tuple val(label),
+              val(resolutions),
+              path(loops)
+
         val lowest_resolution
 
     output:
-        path "*.tsv.gz", emit: tsv
+        tuple val(label),
+              path("*.bedpe.gz"), emit: bedpe
 
     shell:
         '''
-        identify_differential_loops.py \\
-            *_merged.bedpe.gz \\
-            '!{lowest_resolution}' |
-            gzip -9 > differential_loops_by_condition.tsv.gz
+        set -o pipefail
 
-        identify_differential_loops.py \\
-            hg38_00*.bedpe.gz \\
-            '!{lowest_resolution}' |
-            gzip -9 > differential_loops_by_sample.tsv.gz
+        call_consensus_loops.py *.bedpe.gz \\
+            --skip-header \\
+            --loop-resolution !{lowest_resolution} \\
+            --vote-type=majority |
+            gzip -9c > '!{label}.consensus.bedpe.gz'
         '''
-
 }
 
 process generate_loop_report {
@@ -192,7 +191,7 @@ process generate_loop_report {
         '''
         generate_loop_report.py \\
             --mcools *{WT,T1,C1}*_merged.mcool \\
-            --loops *{WT,T1,C1}_merged.bedpe.gz \\
+            --loops *{WT,T1,C1}_merged*.bedpe.gz \\
             --lowest-resolution '!{lowest_resolution}' \\
             -o loops \\
             --labels WT T1 C1

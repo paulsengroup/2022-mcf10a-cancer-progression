@@ -90,6 +90,8 @@ def make_cli():
         help="Maximum number of parallel processes.",
     )
 
+    cli.add_argument("--skip-pileup", action="store_true", default=False)
+
     return cli
 
 
@@ -345,6 +347,9 @@ def main():
         args["output_prefix"] + "_upset",
         args["force"],
     )
+
+    if args["skip_pileup"]:
+        return
 
     for label, clr in zip(labels, (clra, clrb, clrc)):
         plot_pileups(
