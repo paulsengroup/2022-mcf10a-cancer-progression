@@ -38,7 +38,7 @@ def make_cli():
     cli.add_argument(
         "--diagonal-window-mask",
         type=int,
-        default=100_000,
+        default=150_000,
         help="Number of base-pairs surrounding the diagonal to mask.",
     )
 
@@ -129,6 +129,7 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(num_cols):
             ax = axs[i][j]
+            ax.set_aspect("equal", adjustable="box")
             if i >= j:
                 fig.delaxes(ax)
             else:

@@ -176,6 +176,7 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(num_cols):
             ax = axs[i][j]
+            ax.set_aspect("equal", adjustable="box")
             if i >= j:
                 fig.delaxes(ax)
             else:
