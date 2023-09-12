@@ -108,7 +108,7 @@ jobs:
 
       - name: Build Docker image and push to registries
         id: docker-build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           push: ${{ needs.collect-metadata.outputs.push }}
           cache-from: type=gha,scope=${{ needs.collect-metadata.outputs.dockerfile }}
