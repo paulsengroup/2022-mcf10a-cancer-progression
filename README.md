@@ -1,6 +1,6 @@
 # Synopsis
 
-This repository contains the source code and input data used for the data analysis and modeling for XXX <!-- TODO: reference paper -->.
+This repository contains the source code and input data used for the data analysis and modeling for Deterioration of multi-level 3D genome organization during breast cancer progression (preprint available soon).
 
 Input data download and subsequent analyses are automated using Nextflow and Singularity/Apptainer.
 
@@ -27,8 +27,8 @@ Each workflow is paired with a config file (see `configs` folder). As an example
 Please make sure Nextflow is properly installed and configured before running any of the workflows.
 
 The following workflows should be executed first, as they download and prepare files required by other workflows.
-1. `fetch_data.nf`
-2. `preprocess_data.nf`
+1. `run_fetch_data.nf`
+2. `run_preprocessing.nf`
 
 The `fetch_data.nf` workflow requires internet access and can fail for various reason (e.g. connection reset by peer, service temporarily unavailable etc.). In case the workflow fails, wait few minutes, then relaunch the workflow.
 
@@ -36,17 +36,15 @@ The execution order of the rest of the worklows varies depending on which parts 
 The following order assumes you want to re-run the entire analysis. If you only want to re-run some steps, feel free to get in touch with us to know which steps you have to run.
 
 1. `run_nfcore_hic.sh`
-2. `run_postprocess_nfcore_hic.sh`
-3. `run_tad_analysis.sh`
-4. `run_compartment_analysis.sh`
-5. `run_call_tad_cliques.sh`
-6. `run_chrom3d.sh`
-7. `run_nfcore_rnaseq.sh`
-8. `run_diff_expression_analysis.sh`
+2. `run_tad_analysis.sh`
+3. `run_compartment_analysis.sh`
+4. `run_call_tad_cliques_workflow.sh`
+5. `run_chrom3d_workflow.sh`
+6. `run_nfcore_rnaseq.sh`
+7. `run_diff_expression_analysis.sh`
 8. `run_nfcore_chipseq.sh`
-9. `run_nfcore_nascent.sh`
-10. `run_comparative_analysis_hic.sh`
-11. `run_comparative_analysis.sh`
+9. `run_comparative_analysis_hic.sh`
+10. `run_comparative_analysis.sh`
 
 Inside the `config` folder there are the following base configs:
 - `base_hovig.config`
