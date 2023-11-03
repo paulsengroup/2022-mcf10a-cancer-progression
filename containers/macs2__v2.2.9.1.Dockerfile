@@ -9,11 +9,11 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 RUN if [ -z "$CONTAINER_VERSION" ]; then echo "Missing CONTAINER_VERSION --build-arg" && exit 1; fi
 
-RUN micromamba install -y                         \
-               -c conda-forge                     \
-               -c bioconda                        \
-               procps-ng                          \
-               ucsc-bedgraphtobigwig              \
+RUN micromamba install -y                   \
+               -c conda-forge               \
+               -c bioconda                  \
+               procps-ng                    \
+               ucsc-bedgraphtobigwig        \
                "macs2=${CONTAINER_VERSION}" \
 && micromamba clean --all -y
 
