@@ -17,7 +17,7 @@ mkdir -p "$wd"
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.3.1.tar.xz' \
+  'workflows/robomics-call_tad_cliques-v0.4.0.tar.xz' \
    configs/call_tad_cliques.json
 
 wd=".nextflow-robomics-call-tad-cliques-wd2"
@@ -28,7 +28,7 @@ mkdir -p "$wd"
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.3.1.tar.xz' \
+  'workflows/robomics-call_tad_cliques-v0.4.0.tar.xz' \
    configs/call_tad_cliques_vs_control.json
 
 
