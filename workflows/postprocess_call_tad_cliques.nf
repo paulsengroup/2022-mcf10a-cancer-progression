@@ -7,83 +7,55 @@ nextflow.enable.dsl=2
 
 
 workflow {
-    Channel.empty()
-        .mix(Channel.fromPath(params.cliques_cis, checkIfExists: true).collect().map { tuple("cis-only", it) })
-        .mix(Channel.fromPath(params.cliques_trans, checkIfExists: true).collect().map { tuple("trans-only", it) })
-        .mix(Channel.fromPath(params.cliques_all, checkIfExists: true).collect().map { tuple("all", it) })
-        .map{ tuple(it[0], it[1], params.labels.join(","), "") }
+
+    labels_merged = params.labels_merged.join(",")
+
+    Channel.fromPath(params.cliques_cis_merged, checkIfExists: true)
+        .collect()
         .set { cliques }
 
-    Channel.empty()
-        .mix(Channel.fromPath(params.cliques_cis_wt, checkIfExists: true).collect().map { tuple("cis-only", it) })
-        .mix(Channel.fromPath(params.cliques_trans_wt, checkIfExists: true).collect().map { tuple("trans-only", it) })
-        .mix(Channel.fromPath(params.cliques_all_wt, checkIfExists: true).collect().map { tuple("all", it) })
-        .map{ tuple(it[0], it[1], params.labels.join(","), "aggregate_on_wt") }
-        .set { cliques_wt }
+    pair_maximal_cliques(
+        cliques,
+        labels_merged
+    )
 
-    plot_maximal_clique_sizes(
-        cliques.mix(cliques_wt)
+    plot_maximal_clique_alluvials(
+        pair_maximal_cliques.out.tsv
     )
-    plot_clique_alluvials(
-        cliques.mix(cliques_wt)
-    )
+
 }
 
-process plot_maximal_clique_sizes {
-    publishDir "${params.output_dir}/${output_folder}/plots", mode: 'copy'
-
-
-    tag "${type}"
-
+process pair_maximal_cliques {
     input:
-        tuple val(type),
-              path(cliques),
-              val(labels),
-              val(output_folder)
+        path cliques
+        val labels
 
     output:
-        tuple val(type),
-              path("*.png"), emit: png
-
-        tuple val(type),
-              path("*.svg"), emit: svg
+        path "*.tsv", emit: tsv
 
     shell:
+        cliques_str=cliques.join(" ")
         '''
-        plot_maximal_clique_sizes.py            \\
-            *{WT,T1,C1}_*cliques.tsv.gz         \\
-            -o '!{type}_maximal_clique_size_abs'
-
-        plot_maximal_clique_sizes.py            \\
-            *{WT,T1,C1}_*cliques.tsv.gz         \\
-            --stat='density'                    \\
-            -o '!{type}_maximal_clique_size_rel'
+        pair_maximal_cliques.py  \\
+            !{cliques_str}       \\
+            --labels='!{labels}' > paired_cliques.tsv
         '''
 }
 
-
-process plot_clique_alluvials {
-    publishDir "${params.output_dir}/${output_folder}/plots", mode: 'copy'
-
-
-    tag "${type}"
+process plot_maximal_clique_alluvials {
+    publishDir "${params.output_dir}/plots/cliques/", mode: 'copy'
 
     input:
-        tuple val(type),
-              path(cliques),
-              val(labels),
-              val(output_folder)
+        path paired_cliques
 
     output:
-        tuple val(type),
-              path("*.svg"), emit: svg
+        path "*.svg", emit: svg
 
     shell:
         '''
         plot_clique_alluvials.py                                    \\
-            *{WT,T1,C1}_*cliques.tsv.gz                             \\
+            '!{paired_cliques}'                                     \\
             --path-to-plotting="$(which plot_clique_alluvials.r)"   \\
-            --labels !{labels}                                      \\
-            -o '!{type}_alluvial'
+            -o 'cis_alluvial'
         '''
 }

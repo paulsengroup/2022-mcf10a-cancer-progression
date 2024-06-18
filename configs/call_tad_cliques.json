@@ -1,6 +1,0 @@
-{
-    "sample_sheet": "data/input/call_tad_cliques_samplesheets/call_tad_cliques_samplesheet.tsv",
-    "clique_size_thresh": 0,
-    "nchg_log_ratio_cis": 1.5,
-    "outdir": "data/output/cliques/"
-}

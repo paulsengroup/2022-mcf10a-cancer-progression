@@ -1,0 +1,4 @@
+sample	hic_file	resolution	tads
+hg38_001_MCF10A_WT	data/output/nfcore_hic/mcools/hg38_MCF10A_WT_merged.mcool	50000	data/output/tad_analysis/ICE/50000/hg38_MCF10A_WT_merged_domains.bed.gz
+hg38_002_MCF10A_T1	data/output/nfcore_hic/mcools/hg38_MCF10A_T1_merged.mcool	50000	data/output/tad_analysis/ICE/50000/hg38_MCF10A_WT_merged_domains.bed.gz
+hg38_003_MCF10A_C1	data/output/nfcore_hic/mcools/hg38_MCF10A_C1_merged.mcool	50000	data/output/tad_analysis/ICE/50000/hg38_MCF10A_WT_merged_domains.bed.gz
