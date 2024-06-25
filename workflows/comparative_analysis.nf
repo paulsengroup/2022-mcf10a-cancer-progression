@@ -38,7 +38,8 @@ workflow {
     annotate_domains_with_subcompartments(
         subcomp_bgs,
         file(params.tads, checkIfExists: true),
-        file(params.cliques, checkIfExists: true)
+        file(params.cliques, checkIfExists: true),
+        params.subcomp_clique_labels
     )
 
     annotate_domains_with_subcompartments.out.tads
@@ -53,7 +54,7 @@ workflow {
 
     cluster_domains_by_subcompartment(
         annotated_tads.mix(annotated_cliques),
-        params.condition_labels.join(','),
+        params.repl_labels.join(','),
         params.hdbscan_min_cluster_size,
         params.hdbscan_min_samples,
         params.hdbscan_cluster_selection_method,
@@ -65,7 +66,7 @@ workflow {
               by: [0, 1],
               failOnDuplicate: true,
               failOnMismatch: true)
-        .combine(params.condition_labels + ['all'])
+        .combine(params.repl_labels + ['all'])
         .set { plot_domain_clusters_inputs }
         // [resolution, label, clusterer, cluster, condition]
 
@@ -75,7 +76,7 @@ workflow {
 
     plot_clique_subcomp_composition(
         annotated_cliques,
-        params.condition_labels.join(',')
+        params.repl_labels.join(',')
     )
 
     overlap_subcomps_with_expression_lvls(
@@ -155,6 +156,7 @@ process annotate_domains_with_subcompartments {
 
         path tads
         path cliques
+        val domain_names
 
     output:
         tuple val(resolution), path("${resolution}/*.bed.gz"), emit: tads
@@ -162,11 +164,13 @@ process annotate_domains_with_subcompartments {
 
     shell:
         outprefix="${resolution}/${subcompartments.simpleName}"
+        domain_names_str=domain_names.join(" ")
         '''
         annotate_domains_with_subcompartments.py \\
             '!{subcompartments}' \\
-            --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
-            --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
+            --domains *MCF10A_*_cis_domains.bed.gz \\
+            --cliques *MCF10A_*_cis_cliques.tsv.gz \\
+            --domain-names !{domain_names_str} \\
             --output-folder '!{resolution}'
         '''
 }
