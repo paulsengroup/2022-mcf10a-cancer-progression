@@ -13,6 +13,7 @@ import sys
 from typing import List, Tuple, Union
 
 import hdbscan.flat
+import numpy as np
 import pandas as pd
 
 
@@ -135,7 +136,7 @@ def run_clustering(
 ) -> Tuple[pd.DataFrame, hdbscan.flat.HDBSCAN]:
     cols = df.filter(regex=r"[AB]\d\.state").columns.tolist()
     m = df[cols].to_numpy()
-    m = m / m.sum(axis=1)[:, None]
+    m = np.nan_to_num(m / m.sum(axis=1)[:, None], nan=0)
 
     clusterer = hdbscan.flat.HDBSCAN_flat(
         m,
