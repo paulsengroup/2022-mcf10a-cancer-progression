@@ -3,5 +3,6 @@
     "clique_size_thresh": 0,
     "nchg_log_ratio_cis": 1.25,
     "nchg_fdr_cis": 0.05,
+    "nchg_mad_max": 10,
     "outdir": "data/output/cliques/repl/"
 }
