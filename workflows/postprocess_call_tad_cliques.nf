@@ -14,6 +14,10 @@ workflow {
         .collect()
         .set { cliques }
 
+    Channel.fromPath(params.domains_cis_merged, checkIfExists: true)
+        .collect()
+        .set { domains }
+
     pair_maximal_cliques(
         cliques,
         labels_merged
@@ -23,6 +27,11 @@ workflow {
         pair_maximal_cliques.out.tsv
     )
 
+    plot_median_clique_genomic_span(
+        cliques,
+        domains,
+        labels_merged
+    )
 }
 
 process pair_maximal_cliques {
@@ -37,7 +46,7 @@ process pair_maximal_cliques {
         cliques_str=cliques.join(" ")
         '''
         pair_maximal_cliques.py  \\
-            !{cliques_str}       \\
+            *{WT,T1,C1}_cis_cliques.tsv.gz  \\
             --labels='!{labels}' > paired_cliques.tsv
         '''
 }
@@ -57,5 +66,28 @@ process plot_maximal_clique_alluvials {
             '!{paired_cliques}'                                     \\
             --path-to-plotting="$(which plot_clique_alluvials.r)"   \\
             -o 'cis_alluvial'
+        '''
+}
+
+process plot_median_clique_genomic_span {
+    publishDir "${params.output_dir}/plots/cliques/", mode: 'copy'
+
+    input:
+        path cliques
+        path domains
+        val labels
+
+    output:
+        path "*.svg", emit: svg
+
+    shell:
+        cliques_str=cliques.join(" ")
+        domains_str=domains.join(" ")
+        '''
+        plot_median_clique_genomic_span_distribution.py \\
+            --cliques *{WT,T1,C1}_cis_cliques.tsv.gz  \\
+            --domains *{WT,T1,C1}_cis_domains.bed.gz  \\
+            --labels='!{labels}' \\
+            -o cis_clique_span_distribution.svg
         '''
 }
