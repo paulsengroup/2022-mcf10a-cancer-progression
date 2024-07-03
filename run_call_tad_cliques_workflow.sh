@@ -17,7 +17,7 @@ mkdir -p "$wd"
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.4.2.tar.xz' \
+  'workflows/robomics-call_tad_cliques-0.5.0.tar.xz' \
    configs/call_tad_cliques_merged.json
 
 wd=".nextflow-robomics-call-tad-cliques-wd2"
@@ -28,7 +28,7 @@ mkdir -p "$wd"
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.4.2.tar.xz' \
+  'workflows/robomics-call_tad_cliques-0.5.0.tar.xz' \
    configs/call_tad_cliques_repl.json
 
 
@@ -40,19 +40,8 @@ mkdir -p "$wd"
 1>&2 echo 'Running robomics/call_tad_cliques...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.4.2.tar.xz' \
+  'workflows/robomics-call_tad_cliques-0.5.0.tar.xz' \
    configs/call_tad_cliques_merged_with_masking.json
-
-wd=".nextflow-robomics-call-tad-cliques-wd4"
-mkdir -p "$wd"
-
-./setup_workflow_workdir.sh "$PWD" "$wd"
-
-1>&2 echo 'Running robomics/call_tad_cliques...'
-./run_external_workflow.sh \
-  "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.4.2.tar.xz' \
-   configs/call_tad_cliques_repl_with_masking.json
 
 
 step='postprocess_call_tad_cliques'
