@@ -87,12 +87,12 @@ process plot_maximal_tad_clique_size {
     shell:
         labels_str=labels.split(",").join(" ")
         '''
-        plot_max_clique_size_distribution.py \\
+        plot_tad_maximal_clique_size_distribution.py \\
             *{WT,T1,C1}_cis_cliques.masked.tsv.gz \\
             --labels !{labels_str} \\
             -o 'cis_tad_max_clique_size_distribution_abs_with_masking'
 
-        plot_max_clique_size_distribution.py \\
+        plot_tad_maximal_clique_size_distribution.py \\
             *{WT,T1,C1}_cis_cliques.masked.tsv.gz \\
             --labels !{labels_str} \\
             --stat='density' \\

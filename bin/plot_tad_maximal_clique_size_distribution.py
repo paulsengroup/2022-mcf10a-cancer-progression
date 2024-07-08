@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
+# Copyright (C) 2024 Roberto Rossini <roberros@uio.no>
 # SPDX-License-Identifier: MIT
 
 
@@ -99,13 +99,22 @@ def read_cliques(cliques: pathlib.Path, raise_on_empty_files: bool) -> pd.DataFr
     if raise_on_empty_files and len(df) == 0:
         raise RuntimeError(f"Unable to read any record from {cliques}")
 
+    df["tad_ids"] = df["tad_ids"].str.split(",")
+
     return df.set_index("clique")
 
 
-def compute_counts_minmax(cliques: Iterable[pd.DataFrame]) -> Tuple[int, int]:
-    lb = min((df["size"].min() for df in cliques))
-    ub = max((df["size"].max() for df in cliques))
-    return int(lb), int(ub)
+def compute_max_tad_clique_size(cliques: pd.DataFrame) -> pd.DataFrame:
+    clique_sizes = {}
+
+    for _, (tads, size) in cliques[["tad_ids", "size"]].iterrows():
+        for tad in tads:
+            if tad in clique_sizes:
+                clique_sizes[tad] = max(clique_sizes[tad], size)
+            else:
+                clique_sizes[tad] = size
+
+    return pd.DataFrame({"tad": clique_sizes.keys(), "size": clique_sizes.values()})
 
 
 def plot_maximal_clique_sizes(cliques: Dict[str, pd.DataFrame], stat: str) -> plt.Figure:
@@ -159,7 +168,9 @@ def main():
 
     cliques = {label: read_cliques(path, args["raise_on_empty_files"]) for label, path in zip(labels, args["cliques"])}
 
-    fig = plot_maximal_clique_sizes(cliques, stat=args["stat"])
+    max_clique_size = {label: compute_max_tad_clique_size(df) for label, df in cliques.items()}
+
+    fig = plot_maximal_clique_sizes(max_clique_size, stat=args["stat"])
     save_plot_to_file(fig, args["output_prefix"], args["force"])
 
 
