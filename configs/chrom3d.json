@@ -1,0 +1,9 @@
+{
+    "sample_sheet": "data/input/chrom3d_nf_samplesheet.tsv",
+    "outdir": "data/output/chrom3d",
+    "chrom3d_args": "-n 2000000 -l 1000 -r 5.0 -y 0.15",
+    "ploidy": 2,
+    "number_of_models": 100,
+    "nchg_log_ratio_cis": 1.2,
+    "nchg_log_ratio_trans": 0.25
+}

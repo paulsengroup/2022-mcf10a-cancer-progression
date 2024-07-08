@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
+# Copyright (C) 2024 Roberto Rossini <roberros@uio.no>
 #
 # SPDX-License-Identifier: MIT
 
@@ -9,17 +9,13 @@ set -o pipefail
 set -u
 
 
-step='chrom3d'
-wd=".nextflow-$step-wd"
+wd=".nextflow-robomics-chrom3d-nf-wd"
 mkdir -p "$wd"
 
 ./setup_workflow_workdir.sh "$PWD" "$wd"
 
-1>&2 echo 'Running robomics/call_tad_cliques...'
+echo 1>&2 'Running robomics/chrom3d-nf...'
 ./run_external_workflow.sh \
   "$wd" \
-  'workflows/robomics-call_tad_cliques-v0.3.1.tar.xz' \
-   configs/call_tad_cliques_chrom3d.json
-
-
-./run_workflow.sh "$wd" "$step"
+  'workflows/robomics-chrom3d-nf-v0.0.2.tar.xz' \
+  configs/chrom3d.json
