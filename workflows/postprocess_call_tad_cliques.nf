@@ -10,16 +10,32 @@ workflow {
 
     labels_merged = params.labels_merged.join(",")
 
-    Channel.fromPath(params.cliques_cis_merged, checkIfExists: true)
-        .collect()
+    Channel.fromList(params.cliques_cis_merged)
+        .map { tuple(it[0], file(it[1], checkIfExists: true)) }
         .set { cliques }
 
-    Channel.fromPath(params.domains_cis_merged, checkIfExists: true)
-        .collect()
+    Channel.fromList(params.domains_cis_merged)
+        .map { tuple(it[0], file(it[1], checkIfExists: true)) }
         .set { domains }
 
+    cliques.join(domains)
+        .set { masking_tasks }
+
+    mask_cliques(
+        masking_tasks,
+        file(params.mask, checkIfExists: true)
+    )
+
+    mask_cliques.out.cliques
+        .set { masked_cliques }
+
+    plot_maximal_tad_clique_size(
+        masked_cliques.map { it[1] }.collect(),
+        labels_merged
+    )
+
     pair_maximal_cliques(
-        cliques,
+        cliques.map{ it[1] }.collect(),
         labels_merged
     )
 
@@ -28,10 +44,60 @@ workflow {
     )
 
     plot_median_clique_genomic_span(
-        cliques,
-        domains,
+        cliques.map{ it[1] }.collect(),
+        domains.map{ it[1] }.collect(),
         labels_merged
     )
+}
+
+process mask_cliques {
+    input:
+        tuple val(sample),
+              path(cliques),
+              path(domains)
+
+        path mask
+
+    output:
+        tuple val(sample),
+              path("*.tsv.gz"),
+        emit: cliques
+
+    shell:
+    outname="${cliques.simpleName}.masked.tsv.gz"
+    '''
+    set -o pipefail
+
+    mask_cliques.py '!{cliques}' '!{domains}' --mask='!{mask}' |
+        gzip -9 > '!{outname}'
+    '''
+}
+
+process plot_maximal_tad_clique_size {
+    publishDir "${params.output_dir}/plots/cliques/", mode: 'copy'
+
+    input:
+        path cliques
+
+        val labels
+
+    output:
+        path "*.svg", emit: svg
+
+    shell:
+        labels_str=labels.split(",").join(" ")
+        '''
+        plot_max_clique_size_distribution.py \\
+            *{WT,T1,C1}_cis_cliques.masked.tsv.gz \\
+            --labels !{labels_str} \\
+            -o 'cis_tad_max_clique_size_distribution_abs_with_masking'
+
+        plot_max_clique_size_distribution.py \\
+            *{WT,T1,C1}_cis_cliques.masked.tsv.gz \\
+            --labels !{labels_str} \\
+            --stat='density' \\
+            -o 'cis_tad_max_clique_size_distribution_rel_with_masking'
+        '''
 }
 
 process pair_maximal_cliques {
@@ -40,14 +106,14 @@ process pair_maximal_cliques {
         val labels
 
     output:
-        path "*.tsv", emit: tsv
+        path "*.tsv.gz", emit: tsv
 
     shell:
-        cliques_str=cliques.join(" ")
         '''
         pair_maximal_cliques.py  \\
             *{WT,T1,C1}_cis_cliques.tsv.gz  \\
-            --labels='!{labels}' > paired_cliques.tsv
+            --labels='!{labels}' |
+            gzip -9 > paired_cliques.tsv.gz
         '''
 }
 

@@ -4,5 +4,5 @@
     "nchg_log_ratio_cis": 1.5,
     "nchg_fdr_cis": 0.01,
     "nchg_mad_max": 10,
-    "outdir": "data/output/cliques/wo_masking/merged/"
+    "outdir": "data/output/cliques/merged/"
 }
