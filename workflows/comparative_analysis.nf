@@ -168,8 +168,8 @@ process annotate_domains_with_subcompartments {
         '''
         annotate_domains_with_subcompartments.py \\
             '!{subcompartments}' \\
-            --domains *MCF10A_*_cis_domains.bed.gz \\
-            --cliques *MCF10A_*_cis_cliques.tsv.gz \\
+            --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
+            --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
             --domain-names !{domain_names_str} \\
             --output-folder '!{resolution}'
         '''
