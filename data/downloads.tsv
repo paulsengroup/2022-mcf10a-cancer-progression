@@ -87,3 +87,4 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/066/SRR10434766/SRR10434766.fastq.gz	d
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/068/SRR10434768/SRR10434768.fastq.gz	af6aa6c7d2ac1279fe4e0e153f7d158e8fafba7677c89f3edec5359da40db276	input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/076/SRR11445276/SRR11445276.fastq.gz	2ca82487c3ca7f1e00f54033cb2d2cf8fd59751f54fefecba4ba28001e5a0747	input/raw_data/proseq/PROseq_001_MCF10A_WT_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/077/SRR11445277/SRR11445277.fastq.gz	c15589edfa0222fb48d32f4a6aeb5b4f9943a1f1ab3bf68e9ecc2e207054cabd	input/raw_data/proseq/PROseq_002_MCF10A_WT_R1.fastq.gz	none
+https://www.dropbox.com/scl/fi/nunqlzmuml96h6y73bu4u/2022-mcf10a-cancer-progression-fish-db.tar.gz?rlkey=bpszedm0t6gi56vfyryvzdznq&dl=1	698326598d2434f08bc9fa2c3710a7fba6bbd59c5b96bf2c7b7bbaa922b33db2	input/raw_data/fish/fish_db.tar.gz	none
