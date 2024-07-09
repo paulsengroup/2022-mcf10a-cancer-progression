@@ -1,0 +1,29 @@
+# Copyright (c) 2024 Roberto Rossini (roberros@uio.no)
+# SPDX-License-Identifier: MIT
+
+name: Build image-analysis Dockerfile
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-image-analysis*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/image-analysis*.Dockerfile"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-image-analysis*dockerfile.yml"
+      - ".github/workflows/build-dockerfile.yml"
+      - "containers/image-analysis*.Dockerfile"
+
+jobs:
+  build-image-analysis-dockerfile:
+    name: Build image-analysis Dockerfile
+    uses: paulsengroup/2022-mcf10a-cancer-progression/.github/workflows/build-dockerfile.yml@main
+    with:
+      dockerfile-glob: "containers/image-analysis*.Dockerfile"
+
+    permissions:
+      contents: read
+      packages: write
