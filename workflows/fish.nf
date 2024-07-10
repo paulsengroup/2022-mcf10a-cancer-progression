@@ -65,7 +65,8 @@ process segment_nuclei {
     segment_nuclei.py \\
         *.png \\
         -o '!{outname}' \\
-        --contour-padding='!{contour_padding}'
+        --contour-padding='!{contour_padding}' \\
+        --crop
     '''
 }
 
