@@ -18,6 +18,7 @@ RUN micromamba install -y \
         python=3.10 \
         'bioframe>=0.4.1' \
         'cooler>=0.9.2' \
+        'hictkpy==0.0.5' \
         matplotlib \
         matplotlib-venn \
         natsort \
