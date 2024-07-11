@@ -124,6 +124,8 @@ RUN printf '%s\nexec /usr/bin/java -Xms512m -Xmx16g -jar %s "$@"\n' \
       "$(printf '%s' /usr/local/share/java/hic_tools/hic_tools*.jar)" > /usr/local/bin/hic_tools \
 && chmod 755 /usr/local/bin/*_tools
 
+ENV PATH="/opt/conda/bin:$PATH"
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD ["/bin/bash"]
 WORKDIR /data
 
