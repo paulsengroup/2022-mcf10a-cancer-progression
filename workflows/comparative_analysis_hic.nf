@@ -6,28 +6,75 @@
 nextflow.enable.dsl=2
 
 workflow {
-    coolers_by_condition = Channel.fromPath(params.mcools_by_condition)
-    coolers_by_sample = Channel.fromPath(params.mcools_by_sample)
+    Channel.fromList(params.mcools_by_condition)
+        .map { tuple(it[0], file(it[1], checkIfExists: true)) }
+        .set { coolers_by_condition }
 
-    run_hicrep(coolers_by_sample.collect(),
-               params.plot_pretty_labels,
-               params.hicrep_bin_size,
-               params.hicrep_h)
+    Channel.fromList(params.mcools_by_sample)
+        .map { tuple(it[0], file(it[1], checkIfExists: true)) }
+        .set { coolers_by_sample }
 
-    extract_chrom_sizes_from_mcool(coolers_by_sample.first(), params.hicrep_bin_size)
+    Channel.fromList(params.hint_cnv_profiles)
+        .map { tuple(it[0], file(it[1], checkIfExists: true)) }
+        .set { hint_cnv_tars }
 
-    plot_scc(extract_chrom_sizes_from_mcool.out.chrom_sizes,
-             run_hicrep.out.tsv)
+    run_hicrep(
+        coolers_by_sample
+            .map { it[1] }
+            .collect(),
+        params.plot_pretty_labels,
+        params.hicrep_bin_size,
+        params.hicrep_h
+    )
 
-    run_maxhic(coolers_by_condition,
-               params.maxhic_bin_size)
+    extract_chrom_sizes_from_mcool(
+        coolers_by_sample.first(),
+        params.hicrep_bin_size
+    )
+
+    extract_chrom_sizes_from_mcool.out.chrom_sizes
+        .set { chrom_sizes }
+
+    plot_scc(
+        chrom_sizes,
+        run_hicrep.out.tsv
+    )
+
+    run_maxhic(
+        coolers_by_condition,
+        params.maxhic_bin_size
+    )
+
+    merge_hint_cnv_profiles(
+        hint_cnv_tars,
+        chrom_sizes
+    )
+
+    coolers_by_condition
+        .join(merge_hint_cnv_profiles.out.bedgraph)
+        .set { balancing_tasks }
+
+
+    balance_with_loic(
+        balancing_tasks,
+        params.cnv_balancing_resolution,
+        params.cnv_balancing_chromosomes
+    )
+
+    balance_with_caic(
+        balancing_tasks,
+        params.cnv_balancing_resolution,
+        params.cnv_balancing_chromosomes
+    )
 }
 
 process extract_chrom_sizes_from_mcool {
     label 'process_very_short'
 
     input:
-        path mcool
+        tuple val(sample),
+              path(mcool)
+
         val resolution
 
     output:
@@ -67,10 +114,10 @@ process run_hicrep {
             coolers=(!{coolers})
         fi
 
-        run_hicrep.py \
-            "${coolers[@]}" \
-            -p '!{task.cpus}' \
-            --h '!{h}' \
+        run_hicrep.py \\
+            "${coolers[@]}" \\
+            -p '!{task.cpus}' \\
+            --h '!{h}' \\
             --labels='!{labels}' |
             grep -v 'chr[MY]' > hicrep.scc.tsv
         '''
@@ -91,9 +138,9 @@ process plot_scc {
 
     shell:
         '''
-        plot_scc.py \
-            '!{hicrep_output}' \
-            --chrom-sizes '!{chrom_sizes}' \
+        plot_scc.py \\
+            '!{hicrep_output}' \\
+            --chrom-sizes '!{chrom_sizes}' \\
             -o hicrep
         '''
 }
@@ -104,7 +151,9 @@ process run_maxhic {
     label 'process_high'
 
     input:
-        path mcool
+        tuple val(sample),
+              path(mcool)
+
         val resolution
 
     output:
@@ -133,5 +182,102 @@ process run_maxhic {
         mv output '!{outprefix}'
 
         tar -cf - '!{outprefix}/ModelParameters/' | zstd -T!{task.cpus} -13 -o '!{outprefix}_model_params.tar.zst'
+        '''
+}
+
+process merge_hint_cnv_profiles {
+    label 'process_short'
+
+    input:
+        tuple val(sample),
+              path(tar)
+
+        path chrom_sizes
+
+    output:
+        tuple val(sample),
+              path(outname),
+        emit: bedgraph
+
+    shell:
+        outname="${sample}.hint.cnv.bedgraph.gz"
+        '''
+        set -o pipefail
+
+        mkdir hint-out
+        tar -xf '!{tar}' -C hint-out --strip-components=1
+
+        merge_hint_cnv_profiles.py \\
+            hint-out/segmentation/b*/ \\
+            '!{chrom_sizes}' |
+            gzip -9 > '!{outname}'
+        '''
+}
+
+process balance_with_loic {
+    publishDir "${params.output_dir}/balanced_matrices/loic/", mode: 'copy'
+
+    label 'process_long'
+
+    input:
+        tuple val(sample),
+              path(mcool),
+              path(cnvs)
+
+        val resolution
+        val chroms
+
+    output:
+        tuple val(sample),
+              path(outname),
+        emit: cool
+
+    shell:
+        uri=mcool
+        if(resolution != 0) {
+            uri="${mcool}::/resolutions/${resolution}"
+        }
+        outname="${sample}.${resolution}.loic.cool"
+        '''
+        cooler_balance_cnv.py \\
+            '!{uri}' \\
+            '!{cnvs}' \\
+            '!{outname}' \\
+            --method=LOIC \\
+            --chromosomes='!{chroms}'
+        '''
+}
+
+process balance_with_caic {
+    publishDir "${params.output_dir}/balanced_matrices/caic/", mode: 'copy'
+
+    label 'process_long'
+
+    input:
+        tuple val(sample),
+              path(mcool),
+              path(cnvs)
+
+        val resolution
+        val chroms
+
+    output:
+        tuple val(sample),
+              path(outname),
+        emit: cool
+
+    shell:
+        uri=mcool
+        if(resolution != 0) {
+            uri="${mcool}::/resolutions/${resolution}"
+        }
+        outname="${sample}.${resolution}.caic.cool"
+        '''
+        cooler_balance_cnv.py \\
+            '!{uri}' \\
+            '!{cnvs}' \\
+            '!{outname}' \\
+            --method=CAIC \\
+            --chromosomes='!{chroms}'
         '''
 }
