@@ -239,6 +239,9 @@ process balance_with_loic {
         }
         outname="${sample}.${resolution}.loic.cool"
         '''
+        mkdir tmp/
+
+        TMPDIR=./tmp/ \\
         cooler_balance_cnv.py \\
             '!{uri}' \\
             '!{cnvs}' \\
@@ -273,6 +276,9 @@ process balance_with_caic {
         }
         outname="${sample}.${resolution}.caic.cool"
         '''
+        mkdir tmp/
+
+        TMPDIR=./tmp/ \\
         cooler_balance_cnv.py \\
             '!{uri}' \\
             '!{cnvs}' \\
