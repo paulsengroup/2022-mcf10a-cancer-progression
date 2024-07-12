@@ -63,6 +63,13 @@ def make_cli() -> argparse.ArgumentParser:
     )
 
     cli.add_argument(
+        "--pvalue-cutoff",
+        type=float,
+        default=1.0,
+        help="Cut off on the subcompartment p-adjusted value.",
+    )
+
+    cli.add_argument(
         "--aggregate-subcompartments",
         action="store_true",
         default=False,
@@ -146,7 +153,7 @@ def get_label_to_comp_mappings() -> dict:
     return {v: k for k, v in get_comp_to_label_mappings().items()}
 
 
-def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
+def import_data(path_to_df: pathlib.Path, pvalue_cutoff: float) -> Tuple[int, pd.DataFrame]:
     if str(path_to_df) == "-":
         path_to_df = sys.stdin
 
@@ -154,6 +161,7 @@ def import_data(path_to_df: pathlib.Path) -> Tuple[int, pd.DataFrame]:
 
     bin_size = (df["end"] - df["start"]).max()
     df.loc[df["state.mode"] == "None", "state.mode"] = pd.NA
+    df = df[df["padj"] <= pvalue_cutoff]
     return bin_size, df.set_index(["chrom", "start", "end"])
 
 
@@ -558,7 +566,7 @@ def add_path_suffix(path: pathlib.Path, suffix: str, extension: str) -> pathlib.
 
 
 def make_alluvial_plots_subcmd(args: Dict) -> None:
-    _, df = import_data(args["bedgraph"])
+    _, df = import_data(args["bedgraph"], args["pvalue_cutoff"])
     df = group_and_sort_subcompartments(df.filter(regex=r"\.state$"), args["aggregate_subcompartments"])
 
     output_prefix = args["output_prefix"]
@@ -583,7 +591,7 @@ def make_alluvial_plots_subcmd(args: Dict) -> None:
 
 
 def make_heatmap_plots_subcmd(args: Dict) -> None:
-    bin_size, df = import_data(args["bedgraph"])
+    bin_size, df = import_data(args["bedgraph"], args["pvalue_cutoff"])
 
     if args["aggregate_subcompartments"]:
         conditions = df.filter(regex=".state$").columns

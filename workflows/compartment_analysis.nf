@@ -74,8 +74,8 @@ workflow {
     run_dchic_cis(dchic_input_ch) |
         run_dchic_select |
         run_dchic_analyze |
-        run_dchic_fithic |
-        run_dchic_dloop |
+        // run_dchic_fithic |
+        // run_dchic_dloop |
         run_dchic_subcomp |
         // run_dchic_enrich |
         run_dchic_viz |
@@ -821,6 +821,26 @@ process generate_subcompartment_transition_report {
             --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \\
             '!{bedgraph}'
 
+        generate_compartment_transition_report.py \\
+            --plot-type=alluvial \\
+            --pvalue-cutoff=0.01 \\
+            --output-prefix='!{outprefix}_subcompartments_significant' \\
+            --base-color="white" \\
+            --width=5 \\
+            --height=3.5 \\
+            --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \\
+            '!{bedgraph}'
+
+        generate_compartment_transition_report.py \\
+            --plot-type=alluvial \\
+            --pvalue-cutoff=0.01 \\
+            --aggregate-subcompartments \\
+            --output-prefix='!{outprefix}_compartments_significant' \\
+            --highlight-color="#b40426ff" \\
+            --base-color="#3b4cc0ff" \\
+            --path-to-plotting-script="$(which make_ab_comp_alluvial.r)" \\
+            '!{bedgraph}'
+
         # Plot heatmaps
         generate_compartment_transition_report.py \\
             --plot-type=heatmap \\
@@ -831,6 +851,19 @@ process generate_subcompartment_transition_report {
             --plot-type=heatmap \\
             --aggregate-subcompartments \\
             --output-prefix='!{outprefix}_compartments' \\
+            '!{bedgraph}'
+
+        generate_compartment_transition_report.py \\
+            --pvalue-cutoff=0.01 \\
+            --plot-type=heatmap \\
+            --output-prefix='!{outprefix}_subcompartments_significant' \\
+            '!{bedgraph}'
+
+        generate_compartment_transition_report.py \\
+            --pvalue-cutoff=0.01 \\
+            --plot-type=heatmap \\
+            --aggregate-subcompartments \\
+            --output-prefix='!{outprefix}_compartments_significant' \\
             '!{bedgraph}'
         '''
 }
