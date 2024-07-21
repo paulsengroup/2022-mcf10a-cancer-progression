@@ -25,9 +25,8 @@ def make_cli():
     cli = argparse.ArgumentParser()
 
     cli.add_argument(
-        "--deg-tables",
+        "--deg-table",
         required=True,
-        nargs="+",
         type=pathlib.Path,
         help="Path to table with the list of differentially expressed genes.",
     )
@@ -214,9 +213,9 @@ def classify_de_genes(
         columns=["log2FoldChange", "svalue"]
     )
 
-    downreg["rgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("blue"))
-    nonde["rgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("gray"))
-    upreg["rgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("red"))
+    downreg["itemRgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("blue"))
+    nonde["itemRgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("gray"))
+    upreg["itemRgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb("red"))
 
     df = pd.concat([downreg, nonde, upreg]).reset_index()
 
@@ -249,7 +248,7 @@ def main():
 
     pcas = import_pca(args["subcomps_pca"])
 
-    genes = classify_de_genes(args["deg_tables"][1], import_gtf(args["gtf"]))
+    genes = classify_de_genes(args["deg_table"], import_gtf(args["gtf"]))
 
     compartments_lb, compartments_ub = compute_bedgraph_bounds(pcas, args["region"])
     with tempfile.TemporaryDirectory() as tmpdir:
