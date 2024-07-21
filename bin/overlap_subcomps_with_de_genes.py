@@ -235,6 +235,19 @@ def compute_subcompartment_delta(df: pd.DataFrame, contrast: str, condition: str
     return (df[condition].map(get_subcompartment_ranks()) - df[contrast].map(get_subcompartment_ranks())).to_numpy()
 
 
+def compute_fisher_exact_test(df: pd.DataFrame, lfc_cutoff: float) -> Tuple[float, float]:
+    df["delta"] = df["condition"].map(get_subcompartment_ranks()) - df["contrast"].map(get_subcompartment_ranks())
+
+    m = np.zeros([2, 2], dtype=int)
+    m[0][0] = len(df[(df["log2FoldChange"] >= lfc_cutoff) & (df["delta"] < 0)])
+    m[0][1] = len(df[(df["log2FoldChange"] >= lfc_cutoff) & (df["delta"] > 0)])
+
+    m[1][0] = len(df[(df["log2FoldChange"] < -lfc_cutoff) & (df["delta"] < 0)])
+    m[1][1] = len(df[(df["log2FoldChange"] < -lfc_cutoff) & (df["delta"] > 0)])
+
+    return ss.fisher_exact(m)
+
+
 def plot_heatmap(df: pd.DataFrame, ax: plt.Axes, lfc_type: str, lfc_cutoff: float) -> npt.NDArray:
     if lfc_type == "down":
         df = df[df["log2FoldChange"] <= -lfc_cutoff]
@@ -274,9 +287,13 @@ def plot_diag_ratio(ax: plt.Axes, m: npt.NDArray):
         ratio = np.diag(m, i).sum() / np.diag(m, -i).sum()
         values.append(ratio)
 
+    values = np.nan_to_num(values, nan=1.0)
+
     ax.plot(list(range(m.shape[0])), np.log2(values))
     ax.plot(list(range(m.shape[0])), [0] * len(values))
     ax.set(ylim=(-3.5, 3.5))
+    ax.set_xticks(np.arange(0, len(values)))
+    ax.set_xticklabels(np.arange(0, len(values)))
 
 
 def plot_heatmaps(
@@ -307,7 +324,13 @@ def plot_heatmaps(
     for t, ax, m in zip(types, axs[0], (m1, m2, m3)):
         ax.set(title=f"{t} genes (sum={m.sum()}; tril={np.tril(m).sum()}; triu={np.triu(m).sum()})")
 
-    fig.suptitle(f"{contrast} vs {condition} (lfc={lfc_cutoff:.2f}, pval={padj_cutoff:.2f}): " + ";".join(gene_types))
+    df1 = df.rename(columns={condition: "condition", contrast: "contrast"})
+    fisher_stat, fisher_pvalue = compute_fisher_exact_test(df1[df1[padj] <= padj_cutoff], lfc_cutoff)
+
+    fig.suptitle(
+        f"{contrast} vs {condition} (lfc={lfc_cutoff:.2f}, pval={padj_cutoff:.2f}, fisher_stat={fisher_stat:.2f}, fisher_pval={fisher_pvalue:.2g}): "
+        + ";".join(gene_types)
+    )
     fig.tight_layout()
     return fig
 
