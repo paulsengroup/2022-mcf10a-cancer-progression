@@ -163,13 +163,12 @@ process annotate_domains_with_subcompartments {
         tuple val(resolution), path("${resolution}/*.tsv.gz"), emit: cliques
 
     shell:
-        outprefix="${resolution}/${subcompartments.simpleName}"
         domain_names_str=domain_names.join(" ")
         '''
         annotate_domains_with_subcompartments.py \\
             '!{subcompartments}' \\
-            --domains *MCF10A_{WT,T1,C1}_cis_domains.bed.gz \\
-            --cliques *MCF10A_{WT,T1,C1}_cis_cliques.tsv.gz \\
+            --domains *MCF10A_{WT,T1,C1}*cis_domains.bed.gz \\
+            --cliques *MCF10A_{WT,T1,C1}*cis_cliques.tsv.gz \\
             --domain-names !{domain_names_str} \\
             --output-folder '!{resolution}'
         '''
