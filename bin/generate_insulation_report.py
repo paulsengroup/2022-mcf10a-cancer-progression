@@ -14,7 +14,9 @@ import bioframe as bf
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
+import scipy.stats as ss
 import seaborn as sns
 
 
@@ -140,6 +142,12 @@ def map_insulation_to_tads(domains: pd.DataFrame, scores: pd.DataFrame) -> pd.Da
     return df2
 
 
+def rsquared(x: npt.NDArray, y: npt.NDArray) -> float:
+    mask = np.isnan(x) | np.isnan(y)
+    _, _, r_value, _, _ = ss.linregress(x[~mask], y[~mask])
+    return r_value**2
+
+
 def compute_axis_scale(scores: pd.DataFrame) -> Tuple[float, float]:
     lb = np.inf
     ub = -np.inf
@@ -162,6 +170,7 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
     for i in range(num_cols):
         for j in range(i + 1, num_cols):
             cond1, cond2 = scores.columns[i], scores.columns[j]
+            ax = axs[i][j]
             sns.regplot(
                 scores,
                 x=cond2,
@@ -170,8 +179,14 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
                 color="blue",
                 scatter_kws={"alpha": 0.1},
                 line_kws={"color": "red"},
-                ax=axs[i][j],
+                ax=ax,
             )
+
+            r2 = rsquared(scores[cond1], scores[cond2])
+
+            pos_x = scores[cond1].min() * 1.1
+            pos_y = scores[cond2].max() * 0.9
+            ax.text(pos_x, pos_y, f"R^2: {r2:.2f}")
 
     for i in range(num_cols):
         for j in range(num_cols):
