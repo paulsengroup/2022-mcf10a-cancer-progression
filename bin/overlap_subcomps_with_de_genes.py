@@ -287,7 +287,7 @@ def plot_diag_ratio(ax: plt.Axes, m: npt.NDArray):
         ratio = np.diag(m, i).sum() / np.diag(m, -i).sum()
         values.append(ratio)
 
-    values = np.nan_to_num(values, nan=1.0)
+    values = np.nan_to_num(values, nan=1.0, neginf=1.0, posinf=1.0)
 
     ax.plot(list(range(m.shape[0])), np.log2(values))
     ax.plot(list(range(m.shape[0])), [0] * len(values))
