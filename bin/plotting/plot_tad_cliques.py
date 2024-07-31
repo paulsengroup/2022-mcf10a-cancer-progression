@@ -63,7 +63,7 @@ def make_cli():
     cli.add_argument(
         "--region",
         type=str,
-        default="chr2:120000000-130000000",
+        default="chr2:120000000-132500000",
         help="Region to use for plotting (UCSC format).",
     )
 
@@ -163,9 +163,9 @@ def color_domains(domains: pd.DataFrame, color1="forestgreen", color2="royalblue
     df = domains.copy()
     df["thickStart"] = df["start"]
     df["thickEnd"] = df["end"]
-    df["rgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb(color1))
+    df["itemRgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb(color1))
     idx = np.arange(len(df)) % 2 == 0
-    df.loc[idx, "rgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb(color2))
+    df.loc[idx, "itemRgb"] = ",".join(f"{round(n * 255):.0f}" for n in mpl.colors.to_rgb(color2))
 
     return df[bf.SCHEMAS["bed9"]]
 
