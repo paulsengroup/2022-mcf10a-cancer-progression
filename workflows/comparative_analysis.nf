@@ -92,6 +92,12 @@ workflow {
         file(params.deg_table, checkIfExists: true),
         file(params.gtf, checkIfExists: true)
     )
+
+    overlap_subcomps_with_de_genes_pvalue_heatmaps(
+        subcomp_bgs,
+        file(params.deg_table, checkIfExists: true),
+        file(params.gtf, checkIfExists: true)
+    )
 }
 
 process overlap_subcompartments_with_epigenetic_markers {
@@ -368,6 +374,59 @@ process overlap_subcomps_with_de_genes_heatmaps {
             --contrast MCF10A_T1 \\
             --condition MCF10A_C1 \\
             --plot-type=heatmap \\
+            --padj 0.01 \\
+            --lfc 2
+        '''
+}
+
+process overlap_subcomps_with_de_genes_pvalue_heatmaps {
+    publishDir "${params.output_dir}/subcomps_vs_rnaseq/plots/", mode: 'copy'
+    label 'process_short'
+
+    input:
+        tuple val(resolution),
+              path(subcomps)
+        path deg_table
+        path gtf
+
+    output:
+        path "${resolution}/*.png", emit: png
+        path "${resolution}/*.svg", emit: svg
+
+    shell:
+        '''
+        mkdir '!{resolution}'
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_WT_vs_MCF10A_T1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_WT_vs_MCF10A_T1_subcomps_vs_deg_significance' \\
+            --contrast MCF10A_WT \\
+            --condition MCF10A_T1 \\
+            --plot-type=pvalue-heatmap \\
+            --padj 0.01 \\
+            --lfc 2
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_WT_vs_MCF10A_C1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_WT_vs_MCF10A_C1_subcomps_vs_deg_significance' \\
+            --contrast MCF10A_WT \\
+            --condition MCF10A_C1 \\
+            --plot-type=pvalue-heatmap \\
+            --padj 0.01 \\
+            --lfc 2
+
+        overlap_subcomps_with_de_genes.py \\
+            '!{subcomps}' \\
+            MCF10A_T1_vs_MCF10A_C1.tsv.gz \\
+            '!{gtf}' \\
+            '!{resolution}/MCF10A_T1_vs_MCF10A_C1_subcomps_vs_deg_significance' \\
+            --contrast MCF10A_T1 \\
+            --condition MCF10A_C1 \\
+            --plot-type=pvalue-heatmap \\
             --padj 0.01 \\
             --lfc 2
         '''

@@ -77,7 +77,7 @@ def make_cli():
     cli.add_argument(
         "--plot-type",
         type=str,
-        choices={"boxplot", "heatmap", "correlation"},
+        choices={"boxplot", "pvalue-heatmap", "heatmap", "correlation"},
         default="correlation",
         help="Plot type.",
     )
@@ -335,6 +335,111 @@ def plot_heatmaps(
     return fig
 
 
+def build_pvalue_matrix_upreg(df: pd.DataFrame, lfc_cutoff: float) -> npt.NDArray:
+    num_comps = len(get_subcompartment_ranks())
+    m = np.full([num_comps, num_comps], np.nan, dtype=float)
+
+    for s1, i1 in get_subcompartment_ranks().items():
+        for s2, i2 in get_subcompartment_ranks().items():
+            if i2 == i1:
+                continue
+
+            dff = df[(df["contrast"].isin({s1, s2})) & (df["condition"].isin({s1, s2}))]
+
+            if i1 > i2:
+                df1 = dff[(dff["log2FoldChange"] >= lfc_cutoff) & (dff["delta"] < 0)]
+            else:
+                df1 = dff[(dff["log2FoldChange"] >= lfc_cutoff) & (dff["delta"] > 0)]
+
+            df2 = dff[(dff["log2FoldChange"] >= lfc_cutoff) & (dff["delta"] != 0)]
+
+            if len(df2) == 0:
+                continue
+
+            res = ss.binomtest(len(df1), len(df2), alternative="greater")
+            m[i1, i2] = res.pvalue
+
+    return m
+
+
+def build_pvalue_matrix_downreg(df: pd.DataFrame, lfc_cutoff: float) -> npt.NDArray:
+    num_comps = len(get_subcompartment_ranks())
+    m = np.full([num_comps, num_comps], np.nan, dtype=float)
+
+    for s1, i1 in get_subcompartment_ranks().items():
+        for s2, i2 in get_subcompartment_ranks().items():
+            if i2 == i1:
+                continue
+
+            dff = df[(df["contrast"].isin({s1, s2})) & (df["condition"].isin({s1, s2}))]
+
+            if i1 > i2:
+                df1 = dff[(dff["log2FoldChange"] <= -lfc_cutoff) & (dff["delta"] < 0)]
+            else:
+                df1 = dff[(dff["log2FoldChange"] <= -lfc_cutoff) & (dff["delta"] > 0)]
+
+            df2 = dff[(dff["log2FoldChange"] <= -lfc_cutoff) & (dff["delta"] != 0)]
+
+            if len(df2) == 0:
+                continue
+
+            res = ss.binomtest(len(df1), len(df2), alternative="greater")
+            m[i1, i2] = res.pvalue
+
+    return m
+
+
+def plot_pvalue_matrix(m: npt.NDArray, ax: plt.Axes):
+    img = ax.imshow(m, vmin=0, vmax=0.05)
+
+    for y in range(m.shape[0]):
+        for x in range(m.shape[1]):
+            ax.text(
+                x,
+                y,
+                f"{m[y, x]:.2f}",
+                ha="center",
+                va="center",
+            )
+
+    subcompartment_labels = list(get_subcompartment_ranks().keys())
+    ax.set_xticks(range(len(subcompartment_labels)))
+    ax.set_yticks(range(len(subcompartment_labels)))
+
+    ax.set_xticklabels(subcompartment_labels)
+    ax.set_yticklabels(subcompartment_labels)
+
+    plt.colorbar(img, ax=ax)
+
+
+def plot_pvalue_heatmaps(
+    df: pd.DataFrame,
+    contrast: str,
+    condition: str,
+    gene_types: List[str],
+    lfc_cutoff: float,
+    padj_cutoff: float,
+):
+    padj = "padj" if "padj" in df else "svalue"
+    mask = df["gene_type"].str.lower().isin([s.lower() for s in gene_types])
+    de = df[(df[padj] <= padj_cutoff) & mask].rename(columns={condition: "condition", contrast: "contrast"})
+    de["delta"] = de["condition"].map(get_subcompartment_ranks()) - de["contrast"].map(get_subcompartment_ranks())
+
+    types = ["down", "up"]
+
+    fig, axs = plt.subplots(1, len(types), figsize=(6.4 * len(types), 6.4))
+
+    pv_downreg = build_pvalue_matrix_downreg(de, lfc_cutoff)
+    pv_upreg = build_pvalue_matrix_upreg(de, lfc_cutoff)
+
+    plot_pvalue_matrix(pv_downreg, axs[0])
+    plot_pvalue_matrix(pv_upreg, axs[1])
+
+    fig.suptitle(f"{contrast} vs {condition} (lfc={lfc_cutoff:.2f}, pval={padj_cutoff:.2f}): " + ";".join(gene_types))
+    fig.tight_layout()
+    return fig
+
+
 def generate_line_collection(x, y, z, cmap="Blues_r"):
     # https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
     points = np.array([x, y]).T.reshape(-1, 1, 2)
@@ -488,12 +593,17 @@ def main():
     if not args["force"]:
         handle_path_collisions(out_table)
 
-    df = overlap_sucompartments_with_tss(
-        import_subcomps(args["bedgraph"], contrast, condition),
-        import_de_gene_table(args["de-table"], contrast, condition),
-        import_gtf(args["gtf"]),
+    df = (
+        overlap_sucompartments_with_tss(
+            import_subcomps(args["bedgraph"], contrast, condition),
+            import_de_gene_table(args["de-table"], contrast, condition),
+            import_gtf(args["gtf"]),
+        )
+        .rename(columns={"gene_name_y": "gene_name"})
+        .drop(columns=["gene_name_x"])
     )
 
+    logging.info(f"Writing table to {out_table}...")
     df.to_csv(out_table, sep="\t", index=False)
 
     if args["plot_type"] == "correlation":
@@ -503,6 +613,10 @@ def main():
     elif args["plot_type"] == "heatmap":
         logging.info("Plotting heatmap...")
         fig = plot_heatmaps(df, contrast, condition, args["gene_types"], args["lfc"], args["padj"])
+        save_plot_to_file(fig, output_prefix, args["force"])
+    elif args["plot_type"] == "pvalue-heatmap":
+        logging.info("Plotting pvalue-heatmap...")
+        fig = plot_pvalue_heatmaps(df, contrast, condition, args["gene_types"], args["lfc"], args["padj"])
         save_plot_to_file(fig, output_prefix, args["force"])
     elif args["plot_type"] == "boxplot":
         logging.info("Plotting boxplot...")
