@@ -129,11 +129,11 @@ def plot_scatters(fig, axs, lb, ub, scores: pd.DataFrame):
                 ax=ax,
             )
 
-            r2 = rsquared(scores[cond1], scores[cond2])
+            r2, pval = rsquared(scores[cond1], scores[cond2])
 
             pos_x = scores[cond1].min() * 1.1
             pos_y = scores[cond2].max() * 0.9
-            ax.text(pos_x, pos_y, f"R^2: {r2:.2f}")
+            ax.text(pos_x, pos_y, f"R^2: {r2:.2f}\npv: {pval:.2g}")
 
     for i in range(num_cols):
         for j in range(num_cols):
@@ -157,10 +157,10 @@ def get_interactions(coords, sel: cooler.api.RangeSelector2D, diagonals_to_mask)
     return m.sum() / area
 
 
-def rsquared(x: npt.NDArray, y: npt.NDArray) -> float:
+def rsquared(x: npt.NDArray, y: npt.NDArray) -> Tuple[float, float]:
     mask = np.isnan(x) | np.isnan(y)
-    _, _, r_value, _, _ = ss.linregress(x[~mask], y[~mask])
-    return r_value**2
+    _, _, r_value, pval, _ = ss.linregress(x[~mask], y[~mask])
+    return r_value**2, pval
 
 
 def main():
