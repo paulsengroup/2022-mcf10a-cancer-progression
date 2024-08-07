@@ -1,6 +1,6 @@
 # Synopsis
 
-This repository contains the source code and input data used for the data analysis and modeling for: Deterioration of multi-level 3D genome organization during breast cancer progression (preprint available soon).
+This repository contains the source code and input data used for the data analysis and modeling for: Loss of multi-level 3D genome organization during breast cancer progression (preprint available soon).
 
 Input data download and subsequent analyses are automated using Nextflow and Singularity/Apptainer.
 
@@ -36,17 +36,20 @@ The execution order of the rest of the worklows varies depending on which parts 
 The following order assumes you want to re-run the entire analysis. If you only want to re-run some steps, feel free to get in touch with us to know which steps you have to run.
 
 1. `run_nfcore_hic.sh`
-2. `run_tad_analysis.sh`
-3. `run_compartment_analysis.sh`
-4. `run_call_tad_cliques_workflow.sh`
-5. `run_chrom3d_workflow.sh`
-6. `run_nfcore_rnaseq.sh`
-7. `run_diff_expression_analysis.sh`
-8. `run_nfcore_chipseq.sh`
-9. `run_comparative_analysis_hic.sh`
-10. `run_comparative_analysis.sh`
+2. `run_compress_nfcore_hic_output.sh`
+3. `run_nfcore_rnaseq.sh`
+4. `run_nfcore_chipseq.sh`
+5. `run_diff_expression_analysis.sh`
+6. `run_comparative_analysis_hic.sh`
+7. `run_detect_structural_variants.sh`
+8. `run_compartment_analysis.sh`
+9. `run_tad_analysis.sh`
+10. `run_call_tad_cliques_workflow.sh`
+11. `run_chrom3d_workflow.sh`
+12. `run_comparative_analysis.sh`
+13. `run_fish.sh`
 
-Inside the `config` folder there are the following base configs:
+Inside the `configs` folder there are the following base configs:
 - `base_hovig.config`
 - `base_linux.config`
 - `base_saga.config`
