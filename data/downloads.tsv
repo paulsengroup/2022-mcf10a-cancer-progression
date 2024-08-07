@@ -1,8 +1,8 @@
 url	sha256	dest	action
-https://www.dropbox.com/scl/fi/7lekl4jeeduym9gav2ajr/backgroundMatrices_hg38.zip?rlkey=bh0pd0pbpedtxf45u6nb2e3m0&dl=1	d0964aa7cb005bd0a1d855175840ccbd26a18f3ec18ec16ebb848a93c441b2de	input/hint/backgroundMatrices_hg38.zip	none
-https://www.dropbox.com/scl/fi/qtac9ptpy5j8066rtr9z6/refData_hg38.zip?rlkey=col12qdnu3nmpdzb461b29sof&dl=1	1d3e34d8a53a6d0fe90db4e49803d6d0452121da53dc9ac69ef9203ce6bdd878	input/hint/refData_hg38.zip	none
-https://www.dropbox.com/scl/fi/gxr3f5wtolcdbifwxix61/inter_expect_1Mb.hg38.txt?rlkey=4qya4yst8qry1n0l9luqjkisq&dl=1	98cbf89605e03b21ef1ab438b434c800d51661a63c379034dc154a0ed1bfcbea	input/hic_breakfinder/inter_expect_1Mb.hg38.txt	none
-https://www.dropbox.com/scl/fi/t6mw9sxnq33qlyyfn5rf3/intra_expect_100kb.hg38.txt?rlkey=gf62gc8dpvi7h069bninagkfv&dl=1	e9910862481aeef61b0be7571c0f85705c4151701041707ddb85141b3e0c4472	input/hic_breakfinder/intra_expected_100kb.hg38.txt
+https://zenodo.org/records/13255303/files/backgroundMatrices_hg38.zip?download=1	d0964aa7cb005bd0a1d855175840ccbd26a18f3ec18ec16ebb848a93c441b2de	input/hint/backgroundMatrices_hg38.zip	none
+https://zenodo.org/records/13255303/files/refData_hg38.zip?download=1	1d3e34d8a53a6d0fe90db4e49803d6d0452121da53dc9ac69ef9203ce6bdd878	input/hint/refData_hg38.zip	none
+https://zenodo.org/records/13255303/files/inter_expect_1Mb.hg38.txt?download=1	98cbf89605e03b21ef1ab438b434c800d51661a63c379034dc154a0ed1bfcbea	input/hic_breakfinder/inter_expect_1Mb.hg38.txt	none
+https://zenodo.org/records/13255303/files/intra_expect_100kb.hg38.txt?download=1	e9910862481aeef61b0be7571c0f85705c4151701041707ddb85141b3e0c4472	input/hic_breakfinder/intra_expected_100kb.hg38.txt
 https://hgdownload.soe.ucsc.edu/goldenPath/hg17/liftOver/hg17ToHg38.over.chain.gz	0e68992e2bf3fabc8f549be61a4c0ee69e4234dfa0b4b116cc5cfca14f8eb806	input/NCBI35/liftover/hg17_to_hg38.over.chain.gz	none
 ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE19nnn/GSE19920/suppl/GSE19920_mcf10a_series_cnat_copynumber.txt.gz	d1605f99440b541056308b5ea819286be5f511e1793e1b105639f080882eeb5e	input/NCBI35/microarrays/GSE19920_MCF10A_series_cnvs.txt.gz	none
 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?mode=raw&is_datatable=true&acc=GPL3718&id=44346&db=GeoDb_blob10	73909b66e63eb287655aa258dbebadafb57baffc34a7941054c7530239d16c9f	input/NCBI35/microarrays/affymetrix_probes_mapping250K_Nsp.tsv.gz	compress
@@ -11,9 +11,9 @@ https://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.chrom.sizes
 https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.fa.gz	ae25ebe0b855e54e823f0b055c0b5e032e7a531dc0b47a440ddae7d2da26c20c	input/hg38/hg38.fa.gz	none
 ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_43/gencode.v43.annotation.gtf.gz	0235ad8420f6801a409661171396b564743aaf1ceb92c6ca4850becf60fe62c0	input/hg38/hg38_gencode_v43.gtf.gz	none
 https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/p14/hg38.p14.chromAlias.txt	0916204dc5efe4c03aee9949820235a0459cf6cbe15917e5f739b3abcf4cc87c	input/hg38/hg38_chrom_alias.txt	none
-https://www.dropbox.com/s/glt0z98vz39jwlk/MCF10CA1a_LMNB1_UnionRep_peaks.bed?dl=1	dd5d2d5394b366e24c21c7d7eaf1165b150deb8d65a173c2a5e4cd5730bc9560	input/lads/hg38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	compress
-https://www.dropbox.com/s/5nyrlo2365bxtlu/MCF10AT1_LMNB1_UnionRep_peaks.bed?dl=1	721a8a3c9a0b1fdd88059f052d7fe2e37f018596a0b5262302b56da99840ac71	input/lads/hg38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	compress
-https://www.dropbox.com/s/3wefqyk5vwk0myx/MCF10A_LMNB1_UnionRep_peaks.bed?dl=1	553b2cbe699c51e48bfbcb3b3dd51f10940e9cee10f8ada12705928075b2977a	input/lads/hg38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	compress
+https://zenodo.org/records/13255505/files/MCF10CA1a_LMNB1_UnionRep_peaks.bed?download=1	dd5d2d5394b366e24c21c7d7eaf1165b150deb8d65a173c2a5e4cd5730bc9560	input/lads/hg38_MCF10A_C1_LMNB1_unionrep_peaks.bed.gz	compress
+https://zenodo.org/records/13255505/files/MCF10AT1_LMNB1_UnionRep_peaks.bed?download=1	721a8a3c9a0b1fdd88059f052d7fe2e37f018596a0b5262302b56da99840ac71	input/lads/hg38_MCF10A_T1_LMNB1_unionrep_peaks.bed.gz	compress
+https://zenodo.org/records/13255505/files/MCF10A_LMNB1_UnionRep_peaks.bed?download=1	553b2cbe699c51e48bfbcb3b3dd51f10940e9cee10f8ada12705928075b2977a	input/lads/hg38_MCF10A_WT_LMNB1_unionrep_peaks.bed.gz	compress
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR550/006/SRR5508146/SRR5508146.fastq.gz	85434819b25646fc622b1c337ea260d6a91538af02dc288304cad50c2f541113	input/raw_data/chipseq/CTCF/ChIP_001_MCF10A_WT_CTCF_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR550/007/SRR5508147/SRR5508147.fastq.gz	9f1e2f0b8bfc7eacef90455b51c80fc328a0cb8717b39705a3fb97d931b2d44f	input/raw_data/chipseq/CTCF/ChIP_002_MCF10A_WT_CTCF_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR550/008/SRR5508148/SRR5508148.fastq.gz	2590cee118ae07f8cc5d4c493cd2a45066851bdf5d7404d6d82685d28ee3b08a	input/raw_data/chipseq/CTCF/ChIP_003_MCF10A_T1_CTCF_R1.fastq.gz	none
@@ -87,4 +87,4 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/066/SRR10434766/SRR10434766.fastq.gz	d
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/068/SRR10434768/SRR10434768.fastq.gz	af6aa6c7d2ac1279fe4e0e153f7d158e8fafba7677c89f3edec5359da40db276	input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/076/SRR11445276/SRR11445276.fastq.gz	2ca82487c3ca7f1e00f54033cb2d2cf8fd59751f54fefecba4ba28001e5a0747	input/raw_data/proseq/PROseq_001_MCF10A_WT_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR114/077/SRR11445277/SRR11445277.fastq.gz	c15589edfa0222fb48d32f4a6aeb5b4f9943a1f1ab3bf68e9ecc2e207054cabd	input/raw_data/proseq/PROseq_002_MCF10A_WT_R1.fastq.gz	none
-https://www.dropbox.com/scl/fi/nunqlzmuml96h6y73bu4u/2022-mcf10a-cancer-progression-fish-db.tar.gz?rlkey=bpszedm0t6gi56vfyryvzdznq&dl=1	698326598d2434f08bc9fa2c3710a7fba6bbd59c5b96bf2c7b7bbaa922b33db2	input/raw_data/fish/fish_db.tar.gz	none
+https://zenodo.org/records/13255559/files/2022-mcf10a-cancer-progression-fish-processed-data.tar.gz?download=1	698326598d2434f08bc9fa2c3710a7fba6bbd59c5b96bf2c7b7bbaa922b33db2	input/raw_data/fish/fish_db.tar.gz	none
