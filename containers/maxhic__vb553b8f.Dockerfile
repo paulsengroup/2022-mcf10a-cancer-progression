@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS downloader
+FROM ubuntu:24.04 AS downloader
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ARG PIP_NO_CACHE_DIR=0
 

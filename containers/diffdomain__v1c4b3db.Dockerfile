@@ -1,7 +1,7 @@
 # Copyright (C) 2023 Roberto Rossini <roberros@uio.no>
 #
 # SPDX-License-Identifier: MIT
-FROM ubuntu:22.04 AS downloader
+FROM ubuntu:24.04 AS downloader
 
 ARG CONTAINER_VERSION
 ARG DIFFDOMAIN_VER=${CONTAINER_VERSION}

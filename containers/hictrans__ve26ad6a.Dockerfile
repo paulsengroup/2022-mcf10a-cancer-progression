@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS download
+FROM ubuntu:24.04 AS download
 
 ARG CONTAINER_VERSION
 ARG HICTRANS_VERSION="${CONTAINER_VERSION}"

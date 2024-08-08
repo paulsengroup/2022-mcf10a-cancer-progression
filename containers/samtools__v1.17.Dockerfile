@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 ARG CONTAINER_VERSION
 ARG SAMTOOLS_VER=${CONTAINER_VERSION}
@@ -60,7 +60,7 @@ RUN cd "/tmp/samtools-$SAMTOOLS_VER" \
 && make install \
 && install -Dm0644 LICENSE /tmp/staging/share/doc/samtools/copyright
 
-FROM ubuntu:22.04 AS base
+FROM ubuntu:24.04 AS base
 ARG CONTAINER_VERSION
 ARG CONTAINER_TITLE
 

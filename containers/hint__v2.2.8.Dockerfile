@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS download
+FROM ubuntu:24.04 AS download
 
 ARG BICSEQ2_SEG_URL='http://www.math.pku.edu.cn/teachers/xirb/downloads/software/BICseq2/BICseq2/BICseq2-seg_v0.7.3.tar.gz'
 

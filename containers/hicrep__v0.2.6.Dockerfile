@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04 AS base
+FROM ubuntu:24.04 AS base
 
 ARG CONTAINER_VERSION
 ARG CONTAINER_TITLE
