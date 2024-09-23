@@ -15,7 +15,7 @@ RUN apt-get update \
 && git checkout "$HICTRANS_VERSION"
 
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:1.5.10 AS base
 
 ARG CONTAINER_VERSION
 

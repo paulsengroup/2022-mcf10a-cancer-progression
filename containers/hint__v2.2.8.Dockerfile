@@ -12,7 +12,7 @@ RUN apt-get update \
 && curl -L "$BICSEQ2_SEG_URL" | tar -xzf -
 
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:1.5.10 AS base
 
 ARG CONTAINER_VERSION
 

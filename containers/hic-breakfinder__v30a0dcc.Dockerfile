@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM mambaorg/micromamba:1.4.3 AS builder
+FROM mambaorg/micromamba:1.5.10 AS builder
 
 ARG CONTAINER_VERSION
 
@@ -33,7 +33,7 @@ RUN cd hic_breakfinder \
 && make -j $(nproc)
 
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:1.5.10 AS base
 
 ARG CONTAINER_VERSION
 
