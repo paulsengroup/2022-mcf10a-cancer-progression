@@ -19,7 +19,7 @@ RUN apt-get update \
 && find diffdomain -type f -exec chmod uga+r {} + \
 && find diffdomain -type d -exec chmod uga+rx {} +
 
-FROM mambaorg/micromamba:1.4.3 AS base
+FROM mambaorg/micromamba:2.0.4 AS base
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
