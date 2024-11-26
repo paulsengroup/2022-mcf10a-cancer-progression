@@ -61,7 +61,7 @@ RUN cd /tmp/hic2cool-ng*/ \
 && cmake --install build
 
 
-FROM mambaorg/micromamba:1.5.8-jammy AS base
+FROM mambaorg/micromamba:1.5.10-jammy AS base
 
 ARG CONTAINER_TITLE
 ARG CONTAINER_VERSION
