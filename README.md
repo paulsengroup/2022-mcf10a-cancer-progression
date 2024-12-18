@@ -1,6 +1,6 @@
 # Synopsis
 
-This repository contains the source code and input data used for the data analysis and modeling for: Loss of multi-level 3D genome organization during breast cancer progression (preprint available soon).
+This repository contains the source code and input data used for the data analysis and modeling for: Loss of multi-level 3D genome organization during breast cancer progression [doi.org/10.1101/2023.11.26.568711](https://doi.org/10.1101/2023.11.26.568711).
 
 Input data download and subsequent analyses are automated using Nextflow and Singularity/Apptainer.
 
