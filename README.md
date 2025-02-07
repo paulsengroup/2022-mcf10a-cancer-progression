@@ -18,15 +18,16 @@ Each workflow is paired with a config file (see `configs` folder). As an example
 
 ## Requirements
 
-- Access to an internet connection (required to download input files and Docker images)
-- Nextflow v20.07.1 or newer
-- Apptainer/Singularity (tested with Apptainer v1.1.6)
+-   Access to an internet connection (required to download input files and Docker images)
+-   Nextflow v20.07.1 or newer
+-   Apptainer/Singularity (tested with Apptainer v1.1.6)
 
 ## Running workflows
 
 Please make sure Nextflow is properly installed and configured before running any of the workflows.
 
 The following workflows should be executed first, as they download and prepare files required by other workflows.
+
 1. `run_fetch_data.nf`
 2. `run_preprocessing.nf`
 
@@ -50,10 +51,11 @@ The following order assumes you want to re-run the entire analysis. If you only 
 13. `run_fish.sh`
 
 Inside the `configs` folder there are the following base configs:
-- `base_hovig.config`
-- `base_linux.config`
-- `base_saga.config`
-- `base_macos.config`
+
+-   `base_hovig.config`
+-   `base_linux.config`
+-   `base_saga.config`
+-   `base_macos.config`
 
 These configs are passed to all workflows, and define available computation resources.
 You will most likely have to update one of the configs with resources available on our machine/cluster.

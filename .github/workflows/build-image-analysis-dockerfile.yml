@@ -5,13 +5,13 @@ name: Build image-analysis Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-image-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/image-analysis*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-image-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

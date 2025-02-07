@@ -5,13 +5,13 @@ name: Build SeqKit Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-seqkit-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/seqkit*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-seqkit-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

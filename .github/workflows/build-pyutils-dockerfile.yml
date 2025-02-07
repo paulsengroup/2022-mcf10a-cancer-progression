@@ -5,13 +5,13 @@ name: Build pyutils Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-pyutils*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/pyutils*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-pyutils*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

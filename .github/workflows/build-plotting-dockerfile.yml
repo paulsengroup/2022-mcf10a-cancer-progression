@@ -5,13 +5,13 @@ name: Build plotting Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-plotting*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/plotting*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-plotting*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

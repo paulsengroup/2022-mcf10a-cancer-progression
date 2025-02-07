@@ -5,13 +5,13 @@ name: Build bedtools Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-bedtools-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/bedtools*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-bedtools-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

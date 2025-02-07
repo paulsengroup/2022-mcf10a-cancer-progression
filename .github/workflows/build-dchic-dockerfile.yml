@@ -5,14 +5,14 @@ name: Build dcHiC Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-dchic*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/dchic*.Dockerfile"
       - "containers/assets/dchic*.tar.xz"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-dchic*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

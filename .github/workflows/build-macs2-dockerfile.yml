@@ -5,13 +5,13 @@ name: Build MACS2 Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-macs2-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/macs2*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-macs2-dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

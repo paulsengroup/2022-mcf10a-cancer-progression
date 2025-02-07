@@ -5,13 +5,13 @@ name: Build hic_breakfinder Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hic-breakfinder*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/hic-breakfinder*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hic-breakfinder*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

@@ -5,13 +5,13 @@ name: Build microarray-analysis Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-microarray-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/microarray-analysis*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-microarray-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

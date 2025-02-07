@@ -5,13 +5,13 @@ name: Build HiCExplorer Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hicexplorer*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/hicexplorer*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hicexplorer*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

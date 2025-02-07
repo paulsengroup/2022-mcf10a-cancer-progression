@@ -5,13 +5,13 @@ name: Build diff-expression-analysis Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-diff-expression-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/diff-expression-analysis*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-diff-expression-analysis*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"

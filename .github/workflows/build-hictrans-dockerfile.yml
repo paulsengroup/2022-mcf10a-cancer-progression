@@ -5,13 +5,13 @@ name: Build HiCTrans Dockerfile
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hictrans*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
       - "containers/hictrans*.Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".github/workflows/build-hictrans*dockerfile.yml"
       - ".github/workflows/build-dockerfile.yml"
