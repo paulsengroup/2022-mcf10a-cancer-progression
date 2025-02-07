@@ -1,8 +1,17 @@
+# Copyright (C) 2025 Roberto Rossini <roberros@uio.no>
+#
+# SPDX-License-Identifier: MIT
+
+default_language_version:
+  python: python3 # Defaults to python2, so override it.
+
 exclude: ^data
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
       - id: check-shebang-scripts-are-executable
         exclude: ^workflows/
       - id: check-symlinks
@@ -13,13 +22,19 @@ repos:
         args:
           - --fix=lf
       - id: trailing-whitespace
-
+  # Formatters should be run late so that they can re-format any prior changes.
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.1.0
+    hooks:
+      - id: black-jupyter
+        args: ["--line-length", "120", "--target-version", "py38"]
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 6.0.0
     hooks:
       - id: isort
-
-  - repo: https://github.com/psf/black
-    rev: 23.1.0
+        args: ["--profile", "black", "--py", "39"]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
     hooks:
-      - id: black
+      - id: prettier
+        types_or: [markdown, yaml]
