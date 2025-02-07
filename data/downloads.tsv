@@ -85,7 +85,7 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/065/SRR10434765/SRR10434765.fastq.gz	0
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/067/SRR10434767/SRR10434767.fastq.gz	bd27732d71daca5da619bcae4a2edf236a8086f32802f08e9769e9361ccb2de9	input/raw_data/chipseq/p53/ChIP_002_MCF10A_WT_p53_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/066/SRR10434766/SRR10434766.fastq.gz	de4d15857e180a43eb5f347bd21ea979e01fa10d453d84b39b41587a930d7a8a	input/raw_data/chipseq/p53/ChIP_003_MCF10A_WT_IgG_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR104/068/SRR10434768/SRR10434768.fastq.gz	af6aa6c7d2ac1279fe4e0e153f7d158e8fafba7677c89f3edec5359da40db276	input/raw_data/chipseq/p53/ChIP_004_MCF10A_WT_IgG_R1.fastq.gz	none
-https://zenodo.org/records/13255559/files/2022-mcf10a-cancer-progression-fish-processed-data.tar.gz?download=1	698326598d2434f08bc9fa2c3710a7fba6bbd59c5b96bf2c7b7bbaa922b33db2	input/raw_data/fish/fish_db.tar.gz	none
+https://zenodo.org/records/13255559/files/2022-mcf10a-cancer-progression-fish-db.tar.gz?download=1	698326598d2434f08bc9fa2c3710a7fba6bbd59c5b96bf2c7b7bbaa922b33db2	input/raw_data/fish/fish_db.tar.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR266/092/SRR26661492/SRR26661492_1.fastq.gz	1ddaab8dfdd0726a638ad1571f6251ade73a66837fcc95f761faa8425d8262d3	input/raw_data/hic/HiC_001_MCF10A_WT_R1.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR266/092/SRR26661492/SRR26661492_2.fastq.gz	c2e29d624c3c0b9c0e925a0cdbdadb2c63168480077df01e1f3997c89e76b26f	input/raw_data/hic/HiC_001_MCF10A_WT_R2.fastq.gz	none
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR266/091/SRR26661491/SRR26661491_1.fastq.gz	2a90fcc91682d2cb854b7b285e481c317709a389308e4ed5f96e47e327d06f68	input/raw_data/hic/HiC_002_MCF10A_WT_R1.fastq.gz	none
