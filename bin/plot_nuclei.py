@@ -173,32 +173,32 @@ def plot_many(
 
         if red_blobs is not None:
             if red_mapping is None:
-                red_mapping = "red"
+                color = "red"
             else:
-                red_mapping = np.array(red_mapping, dtype=float)
-                red_mapping /= red_mapping.sum()
+                color = np.array(red_mapping, dtype=float)
+                color /= color.sum()
             print("Plotting red blobs...", file=sys.stderr)
             ax.scatter(
                 red_blobs["x"],
                 red_blobs["y"],
                 s=20,
-                color=red_mapping,
+                color=color,
                 edgecolors="white",
                 linewidth=1,
             )
 
         if green_blobs is not None:
             if green_mapping is None:
-                green_mapping = "green"
+                color = "green"
             else:
-                green_mapping = np.array(green_mapping, dtype=float)
-                green_mapping /= green_mapping.sum()
+                color = np.array(green_mapping, dtype=float)
+                color /= color.sum()
             print("Plotting green blobs...", file=sys.stderr)
             ax.scatter(
                 green_blobs["x"],
                 green_blobs["y"],
                 s=20,
-                color=green_mapping,
+                color=color,
                 edgecolors="white",
                 linewidth=1,
             )

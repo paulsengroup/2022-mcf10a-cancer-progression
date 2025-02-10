@@ -112,6 +112,8 @@ process plot_nuclei {
     shell:
     outname1="${sample}.pdf"
     outname2="${sample}.blobs.filtered.pdf"
+    outname3="${sample}.colorblind_friendly.pdf"
+    outname4="${sample}.blobs.filtered.colorblind_friendly.pdf"
     '''
     plot_nuclei.py '!{h5}' -o '!{outname1}'
 
@@ -119,6 +121,14 @@ process plot_nuclei {
         -o '!{outname2}' \\
         --overlap-cfx-cutoff='!{overlap_cfx}' \\
         --plot-blobs
+
+    plot_nuclei.py '!{h5}' -o '!{outname3}' --colorblind-friendly
+
+    plot_nuclei.py '!{h5}' \\
+        -o '!{outname4}' \\
+        --overlap-cfx-cutoff='!{overlap_cfx}' \\
+        --plot-blobs \\
+        --colorblind-friendly
     '''
 }
 
