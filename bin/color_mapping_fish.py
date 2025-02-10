@@ -343,7 +343,7 @@ if __name__ == "__main__":
         fig = go.Figure()
 
         if len(img.shape) == 2:
-            fig.add_trace(go.Heatmap(z=img, colorscale="gray"))
+            fig.add_trace(go.Heatmap(z=img, colorscale="gray", showscale=False))
             fig.update_yaxes(autorange="reversed", scaleanchor="x", constrain="domain")
             fig.update_xaxes(constrain="domain")
         else:
