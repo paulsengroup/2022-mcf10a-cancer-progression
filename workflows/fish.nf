@@ -111,21 +111,27 @@ process plot_nuclei {
 
     shell:
     outname1="${sample}.pdf"
-    outname2="${sample}.blobs.filtered.pdf"
-    outname3="${sample}.colorblind_friendly.pdf"
-    outname4="${sample}.blobs.filtered.colorblind_friendly.pdf"
+    outname2="${sample}.red_channel.pdf"
+    outname3="${sample}.green_channel.pdf"
+    outname4="${sample}.blue_channel.pdf"
+    outname5="${sample}.blobs.filtered.pdf"
+    outname6="${sample}.colorblind_friendly.pdf"
+    outname7="${sample}.blobs.filtered.colorblind_friendly.pdf"
     '''
     plot_nuclei.py '!{h5}' -o '!{outname1}'
+    plot_nuclei.py '!{h5}' -o '!{outname2}' --channel R
+    plot_nuclei.py '!{h5}' -o '!{outname3}' --channel G
+    plot_nuclei.py '!{h5}' -o '!{outname4}' --channel B
 
     plot_nuclei.py '!{h5}' \\
-        -o '!{outname2}' \\
+        -o '!{outname5}' \\
         --overlap-cfx-cutoff='!{overlap_cfx}' \\
         --plot-blobs
 
-    plot_nuclei.py '!{h5}' -o '!{outname3}' --colorblind-friendly
+    plot_nuclei.py '!{h5}' -o '!{outname6}' --colorblind-friendly
 
     plot_nuclei.py '!{h5}' \\
-        -o '!{outname4}' \\
+        -o '!{outname7}' \\
         --overlap-cfx-cutoff='!{overlap_cfx}' \\
         --plot-blobs \\
         --colorblind-friendly
