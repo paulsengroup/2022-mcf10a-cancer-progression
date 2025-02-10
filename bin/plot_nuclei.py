@@ -160,13 +160,13 @@ def plot_many(
         green_blobs = import_blobs(blobs_grp, color="green") if plot_blobs else None
         if channel == "R":
             print("Plotting RED channel...", file=sys.stderr)
-            ax.imshow(img[:, :, 0], cmap="Reds")
+            ax.imshow(img[:, :, 0], cmap="gray")
         elif channel == "G":
             print("Plotting GREEN channel...", file=sys.stderr)
-            ax.imshow(img[:, :, 1], cmap="Greens")
+            ax.imshow(img[:, :, 1], cmap="gray")
         elif channel == "B":
             print("Plotting BLUE channel...", file=sys.stderr)
-            ax.imshow(img[:, :, 2], cmap="Blues")
+            ax.imshow(img[:, :, 2], cmap="gray")
         else:
             print("Plotting RGB image...", file=sys.stderr)
             ax.imshow(img)
