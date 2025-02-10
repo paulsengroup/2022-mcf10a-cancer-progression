@@ -9,11 +9,14 @@ import itertools
 import os
 import pathlib
 import sys
-from typing import Any, Dict, List, Union
+import warnings
+from typing import Any, Dict, List, Optional, Union
 
+import cv2
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -76,6 +79,42 @@ def make_cli():
         help="Figure DPI.",
     )
 
+    cli.add_argument(
+        "--colorblind-friendly",
+        action="store_true",
+        default=False,
+        help="Re-paint image using a more color-blind friendly color map.",
+    )
+
+    cli.add_argument(
+        "--red-mapping",
+        nargs=3,
+        type=int,
+        help="RGB code used for mapping the R channel of the given image.",
+    )
+    cli.add_argument(
+        "--green-mapping",
+        nargs=3,
+        type=int,
+        help="RGB code used for mapping the G channel of the given image.",
+    )
+    cli.add_argument(
+        "--blue-mapping",
+        nargs=3,
+        type=int,
+        help="RGB code used for mapping the B channel of the given image.",
+    )
+    cli.add_argument(
+        "--black-cutoff",
+        type=int,
+        help="Cutoff used to detect black pixels.",
+    )
+    cli.add_argument(
+        "--white-cutoff",
+        type=int,
+        help="Cutoff used to detect white pixels.",
+    )
+
     return cli
 
 
@@ -91,6 +130,11 @@ def plot_many(
     blobs_h5: List[Union[h5py.Group, None]],
     channel: str,
     plot_blobs: bool,
+    red_mapping: Optional[List[int]],
+    green_mapping: Optional[List[int]],
+    blue_mapping: Optional[List[int]],
+    black_cutoff: Optional[int],
+    white_cutoff: Optional[int],
 ) -> plt.Figure:
     cols = 4
     rows = max(1, int(np.ceil(len(images_h5) / cols)))
@@ -111,7 +155,7 @@ def plot_many(
         if img_dset is None:
             print("Skipping image...", file=sys.stderr)
             continue
-        img = img_dset[:]
+        img = recolor_image(img_dset[:], red_mapping, green_mapping, blue_mapping, black_cutoff, white_cutoff)
         red_blobs = import_blobs(blobs_grp, color="red")
         green_blobs = import_blobs(blobs_grp, color="green") if plot_blobs else None
         if channel == "R":
@@ -128,23 +172,33 @@ def plot_many(
             ax.imshow(img)
 
         if red_blobs is not None:
+            if red_mapping is None:
+                red_mapping = "red"
+            else:
+                red_mapping = np.array(red_mapping, dtype=float)
+                red_mapping /= red_mapping.sum()
             print("Plotting red blobs...", file=sys.stderr)
             ax.scatter(
                 red_blobs["x"],
                 red_blobs["y"],
                 s=20,
-                color="red",
+                color=red_mapping,
                 edgecolors="white",
                 linewidth=1,
             )
 
         if green_blobs is not None:
+            if green_mapping is None:
+                green_mapping = "green"
+            else:
+                green_mapping = np.array(green_mapping, dtype=float)
+                green_mapping /= green_mapping.sum()
             print("Plotting green blobs...", file=sys.stderr)
             ax.scatter(
                 green_blobs["x"],
                 green_blobs["y"],
                 s=20,
-                color="green",
+                color=green_mapping,
                 edgecolors="white",
                 linewidth=1,
             )
@@ -183,9 +237,75 @@ def process_one_image(uri: str, args: Dict[str, Any]) -> plt.Figure:
                     img_objects[i + 1] = None
                     blobs_objects[i] = None
 
-        fig = plot_many(img_objects, blobs_objects, args["channel"], args["plot_blobs"])
+        fig = plot_many(
+            img_objects,
+            blobs_objects,
+            args["channel"],
+            args["plot_blobs"],
+            red_mapping=args["red_mapping"],
+            green_mapping=args["green_mapping"],
+            blue_mapping=args["blue_mapping"],
+            black_cutoff=args["black_cutoff"],
+            white_cutoff=args["white_cutoff"],
+        )
 
         return fig
+
+
+def recolor_image(
+    img: npt.NDArray,
+    red_mapping: Optional[List[int]],
+    green_mapping: Optional[List[int]],
+    blue_mapping: Optional[List[int]],
+    black_cutoff: Optional[int],
+    white_cutoff: Optional[int],
+):
+    if red_mapping is None:
+        red_mapping = [255, 0, 0]
+    if green_mapping is None:
+        green_mapping = [0, 255, 0]
+    if blue_mapping is None:
+        blue_mapping = [0, 0, 255]
+    if black_cutoff is None:
+        black_cutoff = 0
+    if white_cutoff is None:
+        white_cutoff = 255
+
+    red_mapping = np.array(red_mapping, dtype=float)
+    green_mapping = np.array(green_mapping, dtype=float)
+    blue_mapping = np.array(blue_mapping, dtype=float)
+
+    red_mapping /= red_mapping.sum()
+    green_mapping /= green_mapping.sum()
+    blue_mapping /= blue_mapping.sum()
+
+    black_cutoff /= 255
+    white_cutoff /= 255
+
+    red_channel, green_channel, blue_channel = cv2.split(img / 255)
+
+    red_channel_3d = np.dstack([red_channel] * 3)
+    green_channel_3d = np.dstack([green_channel] * 3)
+    blue_channel_3d = np.dstack([blue_channel] * 3)
+
+    red_channel = red_channel_3d[:, :, 0].T
+    green_channel = green_channel_3d[:, :, 0].T
+    blue_channel = blue_channel_3d[:, :, 0].T
+
+    white_mask = (red_channel > white_cutoff) & (green_channel > white_cutoff) & (blue_channel > white_cutoff)
+    black_mask = (red_channel < black_cutoff) & (green_channel < black_cutoff) & (blue_channel < black_cutoff)
+
+    new_red_channel, new_green_channel, new_blue_channel = (
+        (red_mapping * red_channel_3d) + (green_mapping * green_channel_3d) + (blue_mapping * blue_channel_3d)
+    ).T
+
+    new_red_channel[white_mask | black_mask] = red_channel[white_mask | black_mask]
+    new_green_channel[white_mask | black_mask] = green_channel[white_mask | black_mask]
+    new_blue_channel[white_mask | black_mask] = blue_channel[white_mask | black_mask]
+
+    img = cv2.merge((new_blue_channel.T, new_green_channel.T, new_red_channel.T))
+
+    return cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2RGB)
 
 
 def main():
@@ -196,6 +316,21 @@ def main():
         raise RuntimeError(f'Refusing to overwrite output file "{output}"')
 
     file_path, _, hdf5_path = args["URI"].partition("::")
+
+    if args["colorblind_friendly"]:
+        if args["red_mapping"] is not None:
+            warnings.warn("--red-mapping is ignored when --colorblind-friendly is specified")
+        args["red_mapping"] = [7, 82, 238]
+        if args["green_mapping"] is not None:
+            warnings.warn("--green-mapping is ignored when --colorblind-friendly is specified")
+        args["green_mapping"] = [247, 247, 0]
+        if args["blue_mapping"] is not None:
+            warnings.warn("--blue-mapping is ignored when --colorblind-friendly is specified")
+        args["blue_mapping"] = [245, 249, 249]
+        if args["black_cutoff"] is not None:
+            warnings.warn("--black-cutoff is ignored when --colorblind-friendly is specified")
+        if args["white_cutoff"] is not None:
+            warnings.warn("--white-cutoff is ignored when --colorblind-friendly is specified")
 
     if hdf5_path != "":
         fig = process_one_image(args["URI"], args)
