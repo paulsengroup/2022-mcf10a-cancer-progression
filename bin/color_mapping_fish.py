@@ -348,10 +348,13 @@ if __name__ == "__main__":
             fig.update_xaxes(constrain="domain")
         else:
             fig.add_trace(go.Image(z=img))
+
         fig.update_layout(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             margin=dict(l=0, r=0, t=0, b=0),
+            height=img.shape[0],
+            width=img.shape[1],
         )
 
         fig.write_image(dest)
